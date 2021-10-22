@@ -11,6 +11,11 @@
 	 (*this) += b;
  }
 
+ bytes::bytes(const char * b)
+ {
+	 (*this) += string(b);
+ }
+
  bytes::bytes(char b)
  {
 	 clear();
@@ -146,6 +151,11 @@
 	bytes w = a;
 	return w += b;
 }
+
+ bytes operator+(bytes a, const char * b)
+ {
+	 return a + string(b);
+ }
 
  bool operator==(bytes a, bytes b)
  {

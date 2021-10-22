@@ -44,8 +44,10 @@ public:
 	friend bytes operator + (bytes a, string v);
 	friend bytes operator + (bytes a, bytes b);
 	friend bytes operator + (bytes a, char b);
+	friend bytes operator + (bytes a, const char* b);
 	bytes();
 	bytes(string b);
+	bytes(const char* b);
 	bytes(char b);
 	void clear();
 	void fill(char c);
@@ -71,6 +73,7 @@ private:
 bytes operator + (bytes a, string v);
 bytes operator + (bytes a, bytes b);
 bytes operator + (bytes a, char b);
+bytes operator + (bytes a, const char* b);
 
 bool operator == (bytes a, bytes b);
 bool operator == (bytes a, char b);
