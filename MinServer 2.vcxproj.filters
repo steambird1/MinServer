@@ -13,6 +13,10 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Web files">
+      <UniqueIdentifier>{2cf69f18-3130-4854-8e9e-ab281137bd7b}</UniqueIdentifier>
+      <Extensions>htm;html;js</Extensions>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="framework.cpp">
@@ -29,5 +33,13 @@
     <ClInclude Include="util.h">
       <Filter>头文件</Filter>
     </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="mslib.js">
+      <Filter>Web files</Filter>
+    </None>
+    <None Include="mspara.js">
+      <Filter>Web files</Filter>
+    </None>
   </ItemGroup>
 </Project>
