@@ -123,12 +123,22 @@ int main(int argc, char* argv[]) {
 
 							// 1. Parameters & Post informations
 							string s = readAll("mspara.js").toString();
+							int t = s.length() - 4;			// removing two '%s'
 							// Prepare URL Args
-
+							string ua = "", pa = "";
+							for (auto &i : path_pinfo.exts) {
+								ua += "{key:\"" + i.first + "\",value:\"" + i.second + "\"}\n";
+							}
+							t += ua.length();
 							// Prepare POST Args
+							// ...
 
+
+							t += pa.length();
 							// Print
-
+							char *buf = new char[t + 2];
+							sprintf(buf, s.c_str(), ua.c_str(), pa.c_str());
+							fprintf(fr, "// Args\n%s\n", buf);
 							// End
 
 							// 2. Default APIs
