@@ -23,11 +23,20 @@ string CReadLine(FILE *f) {
 	return tmp;
 }
 
+// start with '$' disallows ANY RW.
+string perm_data_path = "$permission.txt";
+
+char buf[MAX_PATH];
+
 int main(int argc, char* argv[]) {
 	for (int i = 1; i < argc; i++) {
 		string it = argv[i];
-		if (it == "--not-found") {
+		if (it == "--default-page") {
 			not_found = readAll(argv[i + 1]);
+			i++;
+		}
+		else if (it == "--perm-table") {
+			perm_data_path = argv[i + 1];
 			i++;
 		}
 	}
@@ -51,34 +60,94 @@ int main(int argc, char* argv[]) {
 		sndinfo.codeid = 200;
 		sndinfo.code_info = "OK";
 		sndinfo.proto_ver = hinfo.proto_ver;
+		sndinfo.content.clear();
 
 		bool flag;
 
-		if (path_pinfo.path.size() == 1 && path_pinfo.path[0] == "file_operate") {
-			// File operation requestion
-			string op = path_pinfo.exts["operate"];
-			if (op == "open") {
-				// Open file, token returns
-				int tk = findToken();
-				file_token[tk] = fopen(path_pinfo.exts["name"].c_str(), path_pinfo.exts["type"].c_str());
-				sndinfo.content = to_string(tk);
+		if (path_pinfo.path.size() == 1) {
+			if (path_pinfo.path[0] == "file_operate") {
+				// File operation requestion
+				string op = path_pinfo.exts["operate"];
+				if (op == "open") {
+					if (path_pinfo.exts["name"].find('$') != string::npos) {
+						sndinfo.codeid = 403;
+						sndinfo.code_info = "Forbidden";
+					}
+					else {
+						// Open file, token returns
+					// (Here we requires permissions)
+						int utoken, rperm = getPermOf(path_pinfo.exts["type"]);
+						if (path_pinfo.exts.count("utoken")) {
+							utoken = atoi(path_pinfo.exts["utoken"].c_str());
+						}
+						else {
+							utoken = 0;
+						}
+						// Read for permission information
+						int suid = 0;
+						if (!uidctrl::vaild(utoken))
+							suid = 0;
+						else
+							suid = uidctrl::uidof(utoken);
+						FILE *f = fopen(perm_data_path.c_str(), "r");
+						if (f != NULL) {
+							int uid, uperm;
+							while (!feof(f)) {
+								// buf uses begin
+								// uperm = -1 for owner information.
+								fscanf(f, "%d %s %d", &uid, buf, &uperm);
+								if (path_pinfo.exts["name"] == buf && uid == suid && uperm > 0) {
+									break;
+								}
+								// buf uses end
+							}
+							fclose(f);
+							if (!permMatch(rperm, uperm)) {
+								sndinfo.codeid = 403;
+								sndinfo.code_info = "Forbidden";
+							}
+							else {
+								int tk = findToken();
+								file_token[tk] = fopen(path_pinfo.exts["name"].c_str(), path_pinfo.exts["type"].c_str());
+								sndinfo.content = to_string(tk);
+							}
+						}
+						// End...
+						
+					}
+				}
+				else if (op == "close") {
+					// Close file
+					// (Release handles)
+					int tk = atoi(path_pinfo.exts["token"].c_str());
+					fclose(file_token[tk]);
+					file_token.erase(tk);
+				}
+				else if (op == "read") {
+					// Read line
+					int tk = atoi(path_pinfo.exts["token"].c_str());
+					sndinfo.content = CReadLine(file_token[tk]);
+				}
+				else if (op == "write") {
+					// Write line
+					int tk = atoi(path_pinfo.exts["token"].c_str());
+					fputs(hinfo.content.toCharArray(), file_token[tk]);
+				}
+				else if (op == "chown") {
+
+				}
+				else if (op == "chperm") {
+
+				}
 			}
-			else if (op == "close") {
-				// Close file
-				// (Release handles)
-				int tk = atoi(path_pinfo.exts["token"].c_str());
-				fclose(file_token[tk]);
-				file_token.erase(tk);
-			}
-			else if (op == "read") {
-				// Read line
-				int tk = atoi(path_pinfo.exts["token"].c_str());
-				sndinfo.content = CReadLine(file_token[tk]);
-			}
-			else if (op == "write") {
-				// Write line
-				int tk = atoi(path_pinfo.exts["token"].c_str());
-				fputs(hinfo.content.toCharArray(), file_token[tk]);
+			else if (path_pinfo.path[0] == "auth_workspace") {
+				// Authority spaces:
+				// 1. Auth check (and gives 'workspace token').
+				// 2. File-in-token access (for giving list)
+				// 3. Release.
+
+				// Reserved, to be implemented.
+				sndinfo.content = not_supported;
 			}
 		}
 		else {

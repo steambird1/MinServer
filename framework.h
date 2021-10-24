@@ -49,6 +49,7 @@ public:
 	bytes(string b);
 	bytes(const char* b);
 	bytes(char b);
+	bytes(const bytes &other);
 	void clear();
 	void fill(char c);
 	void add(const char * bytes, size_t sz);

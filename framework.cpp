@@ -22,6 +22,12 @@
 	 (*this) += b;
  }
 
+ bytes::bytes(const bytes & other)
+ {
+	 this->clear();
+	 this->add(other.byte_space, other.len);
+ }
+
  void bytes::clear()
 {
 	this->byte_space = nullptr;
