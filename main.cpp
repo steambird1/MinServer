@@ -1,5 +1,6 @@
 #include "framework.h"
 #include "util.h"
+#include "md5.h"
 #include <iostream>
 #include <set>
 // For MSVC:
@@ -35,7 +36,7 @@ string perm_data_path = "$permission.txt";
 string user_data_path = "$users.txt";
 string public_file_path = "$public.txt";
 
-char buf[MAX_PATH];
+char buf[MAX_PATH],buf2[100];
 set<string> pub_fn;
 
 pair<string, string> resolveMinorPath(string full) {
@@ -109,6 +110,7 @@ int main(int argc, char* argv[]) {
 				// File operation requestion
 				string op = path_pinfo.exts["operate"];
 				if (op == "open") {
+					// As "File-in-token".
 					if (path_pinfo.exts["name"].find('$') != string::npos) {
 						sndinfo.codeid = 403;
 						sndinfo.code_info = "Forbidden";
@@ -131,7 +133,7 @@ int main(int argc, char* argv[]) {
 							suid = uidctrl::uidof(utoken);
 						FILE *f = fopen(perm_data_path.c_str(), "r");
 						if (f != NULL) {
-							int uid, uperm;
+							int uid, uperm = 10;
 							while (!feof(f)) {
 								// buf uses begin
 								// uperm = -1 for owner information.
@@ -151,6 +153,9 @@ int main(int argc, char* argv[]) {
 								file_token[tk] = fopen(path_pinfo.exts["name"].c_str(), path_pinfo.exts["type"].c_str());
 								sndinfo.content = to_string(tk);
 							}
+						}
+						else {
+
 						}
 						// End...
 						
@@ -177,14 +182,78 @@ int main(int argc, char* argv[]) {
 			else if (path_pinfo.path[0] == "auth_workspace") {
 				// Authority spaces:
 				// 1. Auth check (and gives 'workspace token').
-				// 2. File-in-token access (for giving list)
+				// 2. File-in-token access (for giving list) ** Moved to file operation.
 				// 3. Release.
 				// 4. ** Change files' owner and permission.
 
 				// Reserved, to be implemented.
 				string op = path_pinfo.exts["operate"];
 				// Codes...
+				if (op == "check") {
+					int uid_got = atoi(path_pinfo.exts["request"].c_str());
+					string passwd = path_pinfo.exts["passwd"];
+					MD5 pass_m = MD5(passwd);
+					FILE *f = fopen(user_data_path.c_str(), "r");
+					if (f != NULL) {
+						int uid;
+						bool flag = false;
+						while (!feof(f)) {
+							fscanf(f, "%d %s", &uid, buf2);
+							if (uid == uid_got) {
+								if (pass_m.toString() == buf2) {
+									sndinfo.content = to_string(uidctrl::request(uid));
+								}
+								else {
+									sndinfo.codeid = 403;
+									sndinfo.code_info = "Forbidden";
+								}
+								flag = true;
+								break;
+							}
+						}
+						fclose(f);
+						if (!flag) {
+							sndinfo.codeid = 403;
+							sndinfo.code_info = "Forbidden";
+						}
+					}
+					else {
+						sndinfo.codeid = 403;
+						sndinfo.code_info = "Forbidden";
+					}
+				}
+				else if (op == "logout") {
+					int token_got = atoi(path_pinfo.exts["token"].c_str());
+					uidctrl::release(token_got);
+				}
+				else if (op == "chown") {
+					string filename = path_pinfo.exts["file"];
+					int token = atoi(path_pinfo.exts["token"].c_str());
+					int chto = atoi(path_pinfo.exts["touid"].c_str());
+					FILE *f = fopen(perm_data_path.c_str(), "r");
+					string dest = makeTemp();
+					FILE *fd = fopen(dest.c_str(), "w");
+					if (f != NULL) {
+						int uid, uperm, uresult;
+						while (!feof(f)) {
+							// uperm = -1 for owner information.
+							fscanf(f, "%d %s %d", &uid, buf, &uperm);
+							if (uperm == -1 && uid == uidctrl::uidof(token)) {
+								fprintf(fd, "%d %s %d", chto, buf, uperm);
+								break;
+							}
+							else {
+								fprintf(fd, "%d %s %d\n", uid, buf, uperm);
+							}
+						}
+						fclose(f);
+					}
+					CopyFile(dest.c_str(), perm_data_path.c_str(), FALSE);
+					fclose(fd);
+				}
+				else if (op == "chperm") {
 
+				}
 				// End of codes
 				// Remove that:
 				sndinfo.codeid = 501;
