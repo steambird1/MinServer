@@ -144,18 +144,28 @@ int main(int argc, char* argv[]) {
 								// buf uses end
 							}
 							fclose(f);
-							if (!permMatch(rperm, uperm)) {
+							if (!permMatch(rperm, uperm) && fileExists(path_pinfo.exts["name"])) {
 								sndinfo.codeid = 403;
 								sndinfo.code_info = "Forbidden";
+								
 							}
 							else {
+								if (!fileExists(path_pinfo.exts["name"])) {
+									f = fopen(perm_data_path.c_str(), "a+");
+									fprintf(f, "%d %s %d\n", suid, path_pinfo.exts["name"].c_str(), -1);
+									fprintf(f, "%d %s %d\n", suid, path_pinfo.exts["name"].c_str(), 7);
+									fclose(f);
+								}
+								//							else {
 								int tk = findToken();
 								file_token[tk] = fopen(path_pinfo.exts["name"].c_str(), path_pinfo.exts["type"].c_str());
 								sndinfo.content = to_string(tk);
-							}
+								//							}
+							}	
 						}
 						else {
-
+							sndinfo.codeid = 403;
+							sndinfo.code_info = "Forbidden";
 						}
 						// End...
 						
@@ -238,9 +248,14 @@ int main(int argc, char* argv[]) {
 						while (!feof(f)) {
 							// uperm = -1 for owner information.
 							fscanf(f, "%d %s %d", &uid, buf, &uperm);
-							if (uperm == -1 && uid == uidctrl::uidof(token)) {
-								fprintf(fd, "%d %s %d", chto, buf, uperm);
-								break;
+							if (uperm == -1 && filename == buf) {
+								if (uidctrl::uidof(token) != uid) {
+									// Bads
+								}
+								else {
+									fprintf(fd, "%d %s %d", chto, buf, uperm);
+								}
+								//break;
 							}
 							else {
 								fprintf(fd, "%d %s %d\n", uid, buf, uperm);
