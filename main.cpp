@@ -251,9 +251,10 @@ int main(int argc, char* argv[]) {
 							if (uperm == -1 && filename == buf) {
 								if (uidctrl::uidof(token) != uid) {
 									// Bads
+									fprintf(fd, "%d %s %d\n", uid, buf, uperm);
 								}
 								else {
-									fprintf(fd, "%d %s %d", chto, buf, uperm);
+									fprintf(fd, "%d %s %d\n", chto, buf, uperm);
 								}
 								//break;
 							}
@@ -267,7 +268,35 @@ int main(int argc, char* argv[]) {
 					fclose(fd);
 				}
 				else if (op == "chperm") {
-
+					string filename = path_pinfo.exts["file"];
+					int token = atoi(path_pinfo.exts["token"].c_str());
+					int chto = atoi(path_pinfo.exts["toperm"].c_str());
+					FILE *f = fopen(perm_data_path.c_str(), "r");
+					string dest = makeTemp();
+					FILE *fd = fopen(dest.c_str(), "w");
+					if (f != NULL) {
+						int uid, uperm, uresult;
+						while (!feof(f)) {
+							// uperm = -1 for owner information.
+							fscanf(f, "%d %s %d", &uid, buf, &uperm);
+							if (uperm != -1 && filename == buf) {
+								if (uidctrl::uidof(token) != uid) {
+									// Bads
+									fprintf(fd, "%d %s %d\n", uid, buf, uperm);
+								}
+								else {
+									fprintf(fd, "%d %s %d\n", uid, buf, chto);
+								}
+								//break;
+							}
+							else {
+								fprintf(fd, "%d %s %d\n", uid, buf, uperm);
+							}
+						}
+						fclose(f);
+					}
+					CopyFile(dest.c_str(), perm_data_path.c_str(), FALSE);
+					fclose(fd);
 				}
 				// End of codes
 				// Remove that:
