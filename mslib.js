@@ -32,6 +32,11 @@ function msfile(token, xhobject, f_operate) {
 
 }
 
+// Usage: var x = new msuser();
+function msuser(token, xhobject) {
+
+}
+
 // Usage: var x = new mslib();
 
 function mslib() {
@@ -44,14 +49,14 @@ function mslib() {
 
     // Operations
     this.f_operate = "/file_operate";
+    this.default_user = new msuser(0, this.xhobject);
 
-    this.open = function (filename, opt) {
-        if (this.xhobject != null) {
-            this.xhobject.open("GET", this.f_operate + "?operate=open&name=" + filename + "&type=" + opt, false);
-            this.xhobject.send(null);
-            //return this.xhobject.responseText;
-            return new msfile(this.xhobject.responseText, this.xhobject, this.f_operate);
-        }
-    };
+    this.auth = function (uid, passwd) {
+
+    }
+
+    this.register = function (passwd) {
+
+    }
 
 }

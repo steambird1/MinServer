@@ -35,6 +35,8 @@ string CReadLine(FILE *f) {
 string perm_data_path = "$permission.txt";
 string user_data_path = "$users.txt";
 string public_file_path = "$public.txt";
+string group_path = "$groups.txt";
+int default_join_g = -1;
 
 char buf[MAX_PATH],buf2[100];
 set<string> pub_fn;
@@ -49,6 +51,38 @@ pair<string, string> resolveMinorPath(string full) {
 	}
 	return make_pair(f2, f3);
 }
+
+// The other operations have to be classed like this
+class user_groups {
+public:
+	static void insert(int uid, int gid) {
+		FILE *f = fopen(group_path.c_str(), "a+");
+		fprintf(f, "%d %d\n", uid, gid);
+		fclose(f);
+	}
+	static void remove(int uid, int gid) {
+		string tmp = makeTemp();
+		FILE *f = fopen(group_path.c_str(), "r"), *ft = fopen(tmp.c_str(),"w");
+		int u, g;
+		while (!feof(f)) {
+			fscanf(f, "%d%d", &u, &g);
+			if (u != uid || g != gid)
+				fprintf(ft, "%d %d\n", u, g);
+		}
+		CopyFile(tmp.c_str(), group_path.c_str(), FALSE);
+	}
+	static set<int> query(int uid) {
+		FILE *f = fopen(group_path.c_str(), "a+");
+		int u, g;
+		set<int> result;
+		while (!feof(f)) {
+			fscanf(f, "%d%d", &u, &g);
+			if (u == uid)
+				result.insert(g);
+		}
+		return result;
+	}
+};
 
 int main(int argc, char* argv[]) {
 	for (int i = 1; i < argc; i++) {
@@ -68,6 +102,27 @@ int main(int argc, char* argv[]) {
 		else if (it == "--public-table") {
 			public_file_path = argv[i + 1];
 			i++;
+		}
+		else if (it == "--default-join") {
+			default_join_g = atoi(argv[i + 1]);
+			i++;
+		}
+		else if (it == "--user-group") {
+			// User-group operations
+			string op = argv[i + 1];
+			if (op == "--insert") {
+				// To be implemented
+				i += 3;
+			}
+			else if (op == "--remove") {
+				// To be implemented
+				i += 3;
+			}
+			else if (op == "--query") {
+				// To be implemented
+				i += 2;
+			}
+			return 0;	// End of resolving
 		}
 	}
 	FILE *f = fopen(public_file_path.c_str(), "r");
@@ -131,6 +186,7 @@ int main(int argc, char* argv[]) {
 							suid = 0;
 						else
 							suid = uidctrl::uidof(utoken);
+						set<int> ug = user_groups::query(suid);
 						FILE *f = fopen(perm_data_path.c_str(), "r");
 						if (f != NULL) {
 							int uid, uperm = 10;
@@ -138,7 +194,7 @@ int main(int argc, char* argv[]) {
 								// buf uses begin
 								// uperm = -1 for owner information.
 								fscanf(f, "%d %s %d", &uid, buf, &uperm);
-								if (path_pinfo.exts["name"] == buf && uid == suid && uperm > 0) {
+								if (path_pinfo.exts["name"] == buf && (uid == suid || (uid < 0 && ug.count(uid))) && uperm > 0) {
 									break;
 								}
 								// buf uses end
@@ -247,6 +303,7 @@ int main(int argc, char* argv[]) {
 						int uid, uperm, uresult;
 						while (!feof(f)) {
 							// uperm = -1 for owner information.
+							// OWNER CAN ONLY BE A PERSON.
 							fscanf(f, "%d %s %d", &uid, buf, &uperm);
 							if (uperm == -1 && filename == buf) {
 								if (uidctrl::uidof(token) != uid) {
@@ -298,11 +355,66 @@ int main(int argc, char* argv[]) {
 					CopyFile(dest.c_str(), perm_data_path.c_str(), FALSE);
 					fclose(fd);
 				}
+				else if (op == "create") {
+					// Create user...
+					int chto = atoi(path_pinfo.exts["id"].c_str());
+					string upasswd = path_pinfo.exts["passwd"];				// Changing to
+					MD5 upass_m = MD5(upasswd);
+					bool state = false;
+					FILE *fd = fopen(user_data_path.c_str(), "r");
+					while (!feof(fd)) {
+						int u;
+						fscanf(fd, "%d %*s", &u);
+						if (u == chto) {
+							state = true;
+							break;
+						}
+					}
+					fclose(fd);
+
+					if (state) {
+						int loggon = uidctrl::uidof(atoi(path_pinfo.exts["token"].c_str()));
+						if (loggon == chto) {
+							string dest = makeTemp();
+							FILE *fd = fopen(user_data_path.c_str(), "r"), *de = fopen(dest.c_str(), "w");
+							while (!feof(fd)) {
+								// buf uses begin
+								int u;
+								fscanf(fd, "%d %s", &u, buf);
+								if (u == chto) {
+									fprintf(de, "%d %s\n", u, upass_m.toString().c_str());
+								}
+								else {
+									fprintf(de, "%d %s\n", u, buf);
+								}
+								// buf uses end
+							}
+							fclose(fd);
+							fclose(de);
+							CopyFile(dest.c_str(), user_data_path.c_str(), FALSE);
+						}
+					}
+					else {
+						FILE *f = fopen(user_data_path.c_str(), "a+");
+						// Check for user-states and create
+						fprintf(f, "%d %s\n", chto, upass_m.toString().c_str());
+						fclose(f);
+						user_groups::insert(chto, default_join_g);
+					}
+					// End
+					fclose(f);
+				}
+				else if (op == "groups_join") {
+				// To be implemented
+				}
+				else if (op == "groups_remove") {
+				// To be implemented
+				}
 				// End of codes
 				// Remove that:
-				sndinfo.codeid = 501;
-				sndinfo.code_info = "Not Implemented";
-				sndinfo.content = not_supported;
+				//sndinfo.codeid = 501;
+				//sndinfo.code_info = "Not Implemented";
+				//sndinfo.content = not_supported;
 			}
 		}
 		else {
