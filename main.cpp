@@ -165,6 +165,12 @@ int main(int argc, char* argv[]) {
 				// File operation requestion
 				string op = path_pinfo.exts["operate"];
 				if (op == "open") {
+					// Provides:
+					// name		- Filename.
+					// utoken	- User token logged on.
+					// type		- Open-type like "r".
+					// @return	- 403 Forbidden / File token
+
 					// As "File-in-token".
 					if (path_pinfo.exts["name"].find('$') != string::npos) {
 						sndinfo.codeid = 403;
@@ -252,7 +258,6 @@ int main(int argc, char* argv[]) {
 				// 3. Release.
 				// 4. ** Change files' owner and permission.
 
-				// Reserved, to be implemented.
 				string op = path_pinfo.exts["operate"];
 				// Codes...
 				if (op == "check") {
@@ -404,12 +409,21 @@ int main(int argc, char* argv[]) {
 					// End
 					fclose(f);
 				}
-				else if (op == "groups_join") {
+
+				/*
+				
+				Groups-join and Groups-query can't be implemented or
+				it'll be meaningless.
+				
+				*/
+
+				//else if (op == "groups_join") {
 				// To be implemented
-				}
-				else if (op == "groups_remove") {
+				//int utoken = atoi(path_pinfo.exts["token"].c_str());
+				//}
+				//else if (op == "groups_remove") {
 				// To be implemented
-				}
+				//}
 				// End of codes
 				// Remove that:
 				//sndinfo.codeid = 501;

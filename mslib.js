@@ -1,4 +1,10 @@
 
+// Usage of exceptions
+function msexception(msg, errid) {
+    this.error = errid;
+    this.message = msg;
+}
+
 // Usage: var x = new msfile();
 
 function msfile(token, xhobject, f_operate) {
@@ -33,7 +39,30 @@ function msfile(token, xhobject, f_operate) {
 }
 
 // Usage: var x = new msuser();
-function msuser(token, xhobject) {
+function msuser(token, xhobject, f_operate) {
+
+    this.xhobject = xhobject;
+    this.token = token;
+    this.f_operate = f_operate;
+
+    // Operations
+    this.openfile = function (filename, operate) {
+        this.xhobject.open("GET", this.f_operate + "?operate=open&name=" + filename + "&utoken=" + this.token + "&type=" + operate, false);
+        this.xhobject.send(null);
+        if (this.xhobject.status != 200) {
+            throw new msexception("Permission denied", 1);
+        } else {
+            return new msfile(this.xhobject.responseText, this.xhobject, this.f_operate);
+        }
+    }
+
+    this.chown = function (filename, chto) {
+
+    }
+
+    this.chperm = function (filename, chto, perm) {
+
+    }
 
 }
 
