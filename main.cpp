@@ -112,14 +112,25 @@ int main(int argc, char* argv[]) {
 			string op = argv[i + 1];
 			if (op == "--insert") {
 				// To be implemented
+				int uid = atoi(argv[i + 2]);
+				int gid = atoi(argv[i + 3]);
+				user_groups::insert(uid, gid);
 				i += 3;
 			}
 			else if (op == "--remove") {
 				// To be implemented
+				int uid = atoi(argv[i + 2]);
+				int gid = atoi(argv[i + 3]);
+				user_groups::remove(uid, gid);
 				i += 3;
 			}
 			else if (op == "--query") {
 				// To be implemented
+				int uid = atoi(argv[i + 2]);
+				auto gr = user_groups::query(uid);
+				for (auto &i : gr) {
+					printf("%d\n", i);
+				}
 				i += 2;
 			}
 			return 0;	// End of resolving
@@ -149,7 +160,7 @@ int main(int argc, char* argv[]) {
 		http_recv hinfo = s.receive();
 		string path = hinfo.path, rpath;
 		auto path_pinfo = hinfo.toPaths();
-		vector<post_info> post_info;			// In file writes WOULD NOT SEND AS POST STANDARD
+		vector<post_info> post_infolist;			// In file writes WOULD NOT SEND AS POST STANDARD
 		http_send sndinfo;
 
 		sndinfo.codeid = 200;
@@ -433,7 +444,7 @@ int main(int argc, char* argv[]) {
 		}
 		else {
 			if (hinfo.process == "POST")
-				post_info = hinfo.toPost(); // Can be safe only here
+				post_infolist = hinfo.toPost(); // Can be safe only here
 			pair<string, string> m = resolveMinorPath(hinfo.path);
 			if (pub_fn.count(m.first)) {
 				// Get path
@@ -478,19 +489,35 @@ int main(int argc, char* argv[]) {
 								string s = readAll("mspara.js").toString();
 								int t = s.length() - 4;			// removing two '%s'
 								// Prepare URL Args
-								string ua = "", pa = "";
+								string ua = "", pa = "", ba = "";
 								for (auto &i : path_pinfo.exts) {
-									ua += "{key:\"" + i.first + "\",value:\"" + i.second + "\"}\n";
+									ua += "{key:\"" + i.first + "\",value:\"" + i.second + "\"},\n";
 								}
+								ua.pop_back(); ua.pop_back();	// ',' and 'LF'.
 								t += ua.length();
 								// Prepare POST Args
 								// ...
-								// *** To be implemented ***
+								for (auto &i : post_infolist) {
+									ua += "{\nattr:[";
+									for (auto &j : i.attr) {
+										ua += "{key:\"" + j.first + "\",value:\"" + j.second + "\"},\n";
+									}
+									ua.pop_back();	// ','
+									ua += "],content:\"\n";
+									// To be implemented ...
+									// Should replace something like 'LF' to '\\n'.
+								}
 
 								t += pa.length();
+								// Prepare BROWSER Args
+
+
+								t += ba.length();
+
 								// Print
 								char *buf = new char[t + 2];
-								sprintf(buf, s.c_str(), ua.c_str(), pa.c_str());
+								//      Buffer|Template|Args -->
+								sprintf(buf, s.c_str(), hinfo.process.c_str(), hinfo.proto_ver.c_str(), ua.c_str(), pa.c_str());
 								fprintf(fr, "// Args\n%s\n", buf);
 								// End
 
