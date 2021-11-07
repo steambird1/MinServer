@@ -39,11 +39,12 @@ function msfile(token, xhobject, f_operate) {
 }
 
 // Usage: var x = new msuser();
-function msuser(token, xhobject, f_operate) {
+function msuser(token, xhobject, f_operate, u_operate) {
 
     this.xhobject = xhobject;
     this.token = token;
     this.f_operate = f_operate;
+    this.u_operate = u_operate;
 
     // Operations
     this.openfile = function (filename, operate) {
@@ -57,11 +58,21 @@ function msuser(token, xhobject, f_operate) {
     }
 
     this.chown = function (filename, chto) {
-
+        this.xhobject.open("GET", this.u_operate + "?operate=chown&file=" + filename + "&token=" + this.token + "&touid=" + chto, false);
+        this.xhobject.send(null);
+        if (this.xhobject.status != 200) {
+            throw new msexception("Permission denied", 1);
+        }
     }
 
     this.chperm = function (filename, chto, perm) {
 
+    }
+
+    this.logout = function () {
+        this.xhobject.open("GET", this.u_operate + "?operate=logout&token=" + this.token, false);
+        this.xhobject.send(null);
+        this.token = null;
     }
 
 }
@@ -70,18 +81,28 @@ function msuser(token, xhobject, f_operate) {
 
 function mslib() {
     this.xhobject = null;
+
     if (window.XMLHttpRequest) {
         this.xhobject = new XMLHttpRequest();
     } else if (window.ActiveXObject) {
         this.xhobject = new ActiveXObject("Microsoft.XMLHTTP");
+    } else {
+        throw new msexception("This bowser does not support XMLHTTP for connection!", -1);
     }
 
     // Operations
     this.f_operate = "/file_operate";
+    this.u_operate = "/auth_workspace";
     this.default_user = new msuser(0, this.xhobject);
 
     this.auth = function (uid, passwd) {
-
+        this.xhobject.open("GET", this.u_operate + "?operate=check&request=" + uid + "&passwd=" + passwd, false);
+        this.xhobject.send(null);
+        if (this.xhobject.status != 200) {
+            throw new msexception("Incorrect user name or password", 2);
+        } else {
+            return new msuser(this.xhobject.responseText, this.xhobject, this.f_operate, this.u_operate);
+        }
     }
 
     this.register = function (passwd) {

@@ -134,7 +134,7 @@ int main(int argc, char* argv[]) {
 				i += 2;
 			}
 			return 0;	// End of resolving
-		}
+		}// Here will be a lot to be implemented
 	}
 	FILE *f = fopen(public_file_path.c_str(), "r");
 	if (f != NULL) {
@@ -342,34 +342,66 @@ int main(int argc, char* argv[]) {
 				}
 				else if (op == "chperm") {
 					string filename = path_pinfo.exts["file"];
-					int token = atoi(path_pinfo.exts["token"].c_str());
+					int token = atoi(path_pinfo.exts["token"].c_str());	// Should be owner
+					int chid = atoi(path_pinfo.exts["touid"].c_str());
 					int chto = atoi(path_pinfo.exts["toperm"].c_str());
-					FILE *f = fopen(perm_data_path.c_str(), "r");
-					string dest = makeTemp();
-					FILE *fd = fopen(dest.c_str(), "w");
-					if (f != NULL) {
+					// Get ownership first
+					FILE *fo = fopen(perm_data_path.c_str(), "r");
+					int uids = uidctrl::uidof(token);
+					set<int> ok_groups = user_groups::query(uids);
+					if (fo != NULL) {
 						int uid, uperm, uresult;
-						while (!feof(f)) {
-							// uperm = -1 for owner information.
-							fscanf(f, "%d %s %d", &uid, buf, &uperm);
-							if (uperm != -1 && filename == buf) {
-								if (uidctrl::uidof(token) != uid) {
-									// Bads
-									fprintf(fd, "%d %s %d\n", uid, buf, uperm);
+						bool flag = false;
+						while (!feof(fo)) {
+							fscanf(fo, "%d %s %d", &uid, buf, &uperm);
+							if (uperm == -1) {
+								// Ownership information
+								if (uids == uid || ok_groups.count(uid)) {
+									flag = true;
+									break;
 								}
-								else {
-									fprintf(fd, "%d %s %d\n", uid, buf, chto);
-								}
-								//break;
-							}
-							else {
-								fprintf(fd, "%d %s %d\n", uid, buf, uperm);
 							}
 						}
-						fclose(f);
+						fclose(fo);
+						if (!flag) {
+							sndinfo.codeid = 403;
+							sndinfo.code_info = "Forbidden";
+						}
+						else {
+							FILE *f = fopen(perm_data_path.c_str(), "r");
+							string dest = makeTemp();
+							FILE *fd = fopen(dest.c_str(), "w");
+							if (f != NULL) {
+								while (!feof(f)) {
+									// uperm = -1 for owner information.
+									fscanf(f, "%d %s %d", &uid, buf, &uperm);
+									if (uperm != -1 && filename == buf) {
+										if (uidctrl::uidof(token) != uid) {
+											// Bads
+											fprintf(fd, "%d %s %d\n", uid, buf, uperm);
+										}
+										else {
+											fprintf(fd, "%d %s %d\n", uid, buf, chto);
+										}
+										//break;
+									}
+									else {
+										fprintf(fd, "%d %s %d\n", uid, buf, uperm);
+									}
+								}
+								fclose(f);
+							}
+							CopyFile(dest.c_str(), perm_data_path.c_str(), FALSE);
+							fclose(fd);
+						}
+
 					}
-					CopyFile(dest.c_str(), perm_data_path.c_str(), FALSE);
-					fclose(fd);
+					else {
+						sndinfo.codeid = 403;
+						sndinfo.code_info = "Forbidden";
+					}
+
+					
 				}
 				else if (op == "create") {
 					// Create user...
