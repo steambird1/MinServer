@@ -84,6 +84,46 @@ public:
 	}
 };
 
+// Operation of users
+// (Requires check first)
+class user_operator {
+public:
+	static void chown(string filename, int chto) {
+		FILE *f;
+		string dest = makeTemp();
+		FILE *fd = fopen(dest.c_str(), "w");
+		int uid, uperm;
+		char buf[1024];
+		f = fopen(perm_data_path.c_str(), "r");
+		if (f != NULL) {
+			while (!feof(f)) {
+				// uperm = -1 for owner information.
+				// OWNER CAN ONLY BE A PERSON.
+				fscanf(f, "%d %s %d", &uid, buf, &uperm);
+				if (uperm == -1 && filename == buf) {
+//					if (uidctrl::uidof(token) != uid) {
+						// Bads
+//						fprintf(fd, "%d %s %d\n", uid, buf, uperm);
+//					}
+//					else {
+						fprintf(fd, "%d %s %d\n", chto, buf, uperm);
+//					}
+					//break;
+				}
+				else {
+					fprintf(fd, "%d %s %d\n", uid, buf, uperm);
+				}
+			}
+			fclose(f);
+		}
+		CopyFile(dest.c_str(), perm_data_path.c_str(), FALSE);
+		fclose(fd);
+	}
+	static void chperm(string file, int to_uid, int to_perm) {
+
+	}
+};
+
 int main(int argc, char* argv[]) {
 	for (int i = 1; i < argc; i++) {
 		string it = argv[i];
@@ -134,6 +174,9 @@ int main(int argc, char* argv[]) {
 				i += 2;
 			}
 			return 0;	// End of resolving
+		}
+		else if (it == "--user-operate") {
+
 		}// Here will be a lot to be implemented
 	}
 	FILE *f = fopen(public_file_path.c_str(), "r");
@@ -173,6 +216,7 @@ int main(int argc, char* argv[]) {
 
 		if (path_pinfo.path.size() == 1) {
 			if (path_pinfo.path[0] == "file_operate") {
+				// It's not necessary to change to command format. Why not directly fopen()?
 				// File operation requestion
 				string op = path_pinfo.exts["operate"];
 				if (op == "open") {
@@ -313,32 +357,29 @@ int main(int argc, char* argv[]) {
 					int token = atoi(path_pinfo.exts["token"].c_str());
 					int chto = atoi(path_pinfo.exts["touid"].c_str());
 					FILE *f = fopen(perm_data_path.c_str(), "r");
-					string dest = makeTemp();
-					FILE *fd = fopen(dest.c_str(), "w");
+					// Should check owner first
+					// They're common:
+					int uid, uperm, uresult;
+					bool flag = false;
 					if (f != NULL) {
-						int uid, uperm, uresult;
 						while (!feof(f)) {
-							// uperm = -1 for owner information.
-							// OWNER CAN ONLY BE A PERSON.
 							fscanf(f, "%d %s %d", &uid, buf, &uperm);
 							if (uperm == -1 && filename == buf) {
-								if (uidctrl::uidof(token) != uid) {
-									// Bads
-									fprintf(fd, "%d %s %d\n", uid, buf, uperm);
+								if (uidctrl::uidof(token) == uid) {
+									flag = true;
+									break;
 								}
-								else {
-									fprintf(fd, "%d %s %d\n", chto, buf, uperm);
-								}
-								//break;
-							}
-							else {
-								fprintf(fd, "%d %s %d\n", uid, buf, uperm);
 							}
 						}
 						fclose(f);
 					}
-					CopyFile(dest.c_str(), perm_data_path.c_str(), FALSE);
-					fclose(fd);
+					if (!flag) {
+						sndinfo.codeid = 403;
+						sndinfo.code_info = "Forbidden";
+					}
+					else {
+						user_operator::chown(filename, chto);
+					}
 				}
 				else if (op == "chperm") {
 					string filename = path_pinfo.exts["file"];
