@@ -87,7 +87,11 @@ int random(void) {
 }
 
 string makeTemp(void) {
-	return string(getenv("temp")) + "\\" + to_string(random());
+	string s;
+	do {
+		s = string(getenv("temp")) + "\\" + to_string(random());
+	} while (fileExists(s));
+	return s;
 }
 
 bytes not_found = "<html><head><title>Page not found - 404</title></head><body><h1>404 Not found</h1><p>Requested page not found on this server.</p><hr /><p>MinServer 2.0</p></body></html>";
@@ -152,6 +156,29 @@ int getPermOf(string expr) {
 	}
 }
 
+string dec2hex(int n) {
+	string res = "";
+	while (n != 0) {
+		int x = n % 16;
+		if (x < 10) {
+			res = char(x + '0') + res;
+		}
+		else {
+			res = char(x + 'A' - 10) + res;
+		}
+		n /= 16;
+	}
+}
+
 inline int permMatch(int req, int cur) {
 	return (req & cur) == req;
+}
+
+// encode. e.g. '0' -> '\x30'.
+string encodeBytes(bytes b) {
+	string res = "";
+	for (size_t i = 0; i < b.length(); i++) {
+		res += "\\x" + dec2hex(b[i]);
+	}
+	return res;
 }

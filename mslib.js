@@ -66,7 +66,7 @@ function msuser(token, xhobject, f_operate, u_operate) {
     }
 
     this.chperm = function (filename, chto, perm) {
-
+        // To be implemented...
     }
 
     this.logout = function () {
@@ -106,7 +106,7 @@ function mslib() {
     }
 
     this.register = function (passwd) {
-
+        // To be implemented ...
     }
 
 }

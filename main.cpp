@@ -88,6 +88,66 @@ public:
 // (Requires check first)
 class user_operator {
 public:
+	// It can only be runned local:
+	// (* This is ADD)
+	static void adduser(int uid, string passwd) {
+		MD5 m = MD5(passwd);
+		string tmps = makeTemp();
+		FILE *f = fopen(user_data_path.c_str(), "r"), *ft = fopen(tmps.c_str(), "w");
+		if (f != NULL) {
+			while (!feof(f)) {
+				int uid;
+				fscanf(f, "%d %s", uid, buf2);
+				fprintf(ft, "%d %s\n", uid, buf2);
+			}
+		}
+		fclose(f);
+		fprintf(ft, "%d %s\n", uid, m.toString());
+		fclose(ft);
+		CopyFile(tmps.c_str(), user_data_path.c_str(), FALSE);
+	}
+
+	// (* This is MODIFY)
+	static void moduser(int uid, string passwd) {
+		MD5 m = MD5(passwd);
+		string tmps = makeTemp();
+		FILE *f = fopen(user_data_path.c_str(), "r"), *ft = fopen(tmps.c_str(), "w");
+		if (f != NULL) {
+			while (!feof(f)) {
+				int uid2;
+				fscanf(f, "%d %s", uid2, buf2);
+				if (uid == uid2) {
+					fprintf(ft, "%d %s\n", uid, m.toString());
+				}
+				else {
+					fprintf(ft, "%d %s\n", uid2, buf2);
+				}
+			}
+		}
+		fclose(f);
+		fclose(ft);
+		CopyFile(tmps.c_str(), user_data_path.c_str(), FALSE);
+	}
+
+	// (* This is QUERY)
+	// (Returns: MD5 password (empty for user not exist)
+	static string quser(int uid, string passwd) {
+		MD5 m = MD5(passwd);
+		FILE *f = fopen(user_data_path.c_str(), "r");
+		if (f != NULL) {
+			while (!feof(f)) {
+				int uid2;
+				fscanf(f, "%d %s", uid2, buf2);
+				if (uid == uid2) {
+					fclose(f);
+					return buf2;
+				}
+			}
+		}
+		fclose(f);
+		return "";
+	}
+
 	static void chown(string filename, int chto) {
 		FILE *f;
 		string dest = makeTemp();
@@ -120,7 +180,7 @@ public:
 		fclose(fd);
 	}
 	static void chperm(string file, int to_uid, int to_perm) {
-
+		// To be implemented
 	}
 };
 
@@ -176,7 +236,22 @@ int main(int argc, char* argv[]) {
 			return 0;	// End of resolving
 		}
 		else if (it == "--user-operate") {
+			string op = argv[i + 1];
+			if (op == "--add") {
 
+			}
+			else if (op == "--query") {
+
+			}
+			else if (op == "--set") {
+
+			}
+			else if (op == "--chfown") {
+
+			}
+			else if (op == "--chfperm") {
+
+			}
 		}// Here will be a lot to be implemented
 	}
 	FILE *f = fopen(public_file_path.c_str(), "r");
@@ -562,7 +637,7 @@ int main(int argc, char* argv[]) {
 								string s = readAll("mspara.js").toString();
 								int t = s.length() - 4;			// removing two '%s'
 								// Prepare URL Args
-								string ua = "", pa = "", ba = "";
+								string ua = "", pa = "[", ba = "";
 								for (auto &i : path_pinfo.exts) {
 									ua += "{key:\"" + i.first + "\",value:\"" + i.second + "\"},\n";
 								}
@@ -571,19 +646,19 @@ int main(int argc, char* argv[]) {
 								// Prepare POST Args
 								// ...
 								for (auto &i : post_infolist) {
-									ua += "{\nattr:[";
+									pa += "{\nattr:[";
 									for (auto &j : i.attr) {
-										ua += "{key:\"" + j.first + "\",value:\"" + j.second + "\"},\n";
+										pa += "{key:\"" + j.first + "\",value:\"" + j.second + "\"},\n";
 									}
-									ua.pop_back();	// ','
-									ua += "],content:\"\n";
-									// To be implemented ...
-									// Should replace something like 'LF' to '\\n'.
+									pa.pop_back();	// ','
+									pa += "],content:\"" + encodeBytes(i.content) + "\"},";
 								}
+								pa.pop_back();
+								pa += "]";
 
 								t += pa.length();
 								// Prepare BROWSER Args
-
+								// To be implemented ...
 
 								t += ba.length();
 
