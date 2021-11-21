@@ -41,6 +41,8 @@ int default_join_g = -1;
 char buf[MAX_PATH],buf2[100];
 set<string> pub_fn;
 
+// First: path
+// Second: entire args
 pair<string, string> resolveMinorPath(string full) {
 	string f2 = full, f3 = "";
 	for (size_t i = 0; i < full.length(); i++) {
@@ -131,8 +133,8 @@ public:
 
 	// (* This is QUERY)
 	// (Returns: MD5 password (empty for user not exist)
-	static string quser(int uid, string passwd) {
-		MD5 m = MD5(passwd);
+	static string quser(int uid) {
+		//MD5 m = MD5(passwd);	// It's not necessery
 		FILE *f = fopen(user_data_path.c_str(), "r");
 		if (f != NULL) {
 			while (!feof(f)) {
@@ -254,6 +256,7 @@ int main(int argc, char* argv[]) {
 			}
 		}// Here will be a lot to be implemented
 	}
+	/*
 	FILE *f = fopen(public_file_path.c_str(), "r");
 	if (f != NULL) {
 		while (!feof(f)) {
@@ -264,6 +267,7 @@ int main(int argc, char* argv[]) {
 		}
 		fclose(f);
 	}
+	*/
 	ssocket s = ssocket(80);
 	if (!s.vaild()) {
 		cout << "Can't bind or listen!" << endl;
@@ -523,9 +527,24 @@ int main(int argc, char* argv[]) {
 					// Create user...
 					int chto = atoi(path_pinfo.exts["id"].c_str());
 					string upasswd = path_pinfo.exts["passwd"];				// Changing to
-					MD5 upass_m = MD5(upasswd);
+					//MD5 upass_m = MD5(upasswd);
 					bool state = false;
-					FILE *fd = fopen(user_data_path.c_str(), "r");
+					if (user_operator::quser(chto).empty()) {
+						// Just create
+						user_operator::adduser(chto, upasswd);
+					}
+					else {
+						// Modify
+						int otoken = atoi(path_pinfo.exts["token"].c_str());
+						if (uidctrl::uidof(otoken) != chto) {
+							sndinfo.codeid = 403;
+							sndinfo.code_info = "Forbidden";
+						}
+						else {
+							user_operator::moduser(chto, upasswd);
+						}
+					}
+					/*FILE *fd = fopen(user_data_path.c_str(), "r");
 					while (!feof(fd)) {
 						int u;
 						fscanf(fd, "%d %*s", &u);
@@ -566,7 +585,7 @@ int main(int argc, char* argv[]) {
 						user_groups::insert(chto, default_join_g);
 					}
 					// End
-					fclose(f);
+					//fclose(f);*/
 				}
 
 				/*
@@ -594,7 +613,21 @@ int main(int argc, char* argv[]) {
 			if (hinfo.process == "POST")
 				post_infolist = hinfo.toPost(); // Can be safe only here
 			pair<string, string> m = resolveMinorPath(hinfo.path);
-			if (pub_fn.count(m.first)) {
+			bool flag2 = false;
+			FILE *f = fopen(public_file_path.c_str(), "r");
+			if (f != NULL) {
+				while (!feof(f)) {
+					// buf uses begin
+					fgets(buf, MAX_PATH, f);
+					if (m.first == buf) {
+						flag2 = true;
+						break;
+					}
+					// buf uses end
+				}
+				fclose(f);
+			}
+			if (flag2) {
 				// Get path
 				flag = false;
 				for (auto &i : defiles) {
@@ -653,12 +686,8 @@ int main(int argc, char* argv[]) {
 									pa.pop_back();	// ','
 									pa += "],content:\"" + encodeBytes(i.content) + "\"},";
 								}
-								pa.pop_back();
+								pa.pop_back(); // ','
 								pa += "]";
-
-								t += pa.length();
-								// Prepare BROWSER Args
-								// To be implemented ...
 
 								t += ba.length();
 
@@ -685,6 +714,9 @@ int main(int argc, char* argv[]) {
 						fputc(c, fr);
 					}
 					fclose(f);
+					fclose(fr);
+					fr = fopen(dest.c_str(), "r");
+					sndinfo.loadContent(fr);
 					fclose(fr);
 				}
 				else {

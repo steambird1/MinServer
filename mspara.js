@@ -5,9 +5,6 @@
 var pageinfo = {
     operate: "%s",
     http_version: "%s",
-    client_args: [
-        %s
-    ],
     url_args: [
         %s
     ],

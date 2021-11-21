@@ -69,6 +69,10 @@ function msuser(token, xhobject, f_operate, u_operate) {
         // To be implemented...
     }
 
+    this.modify = function (new_pass) {
+        // To be implemented...
+    }
+
     this.logout = function () {
         this.xhobject.open("GET", this.u_operate + "?operate=logout&token=" + this.token, false);
         this.xhobject.send(null);
