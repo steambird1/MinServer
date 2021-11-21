@@ -36,8 +36,8 @@ private:
 	string bytesToHexString(const byte* input, size_t length);
 
 	/* class uncopyable */
-	MD5(const MD5&) = delete;
-	MD5& operator=(const MD5&) = delete;	//???
+	//MD5(const MD5&) = delete;
+	//MD5& operator=(const MD5&) = delete;	//???
 
 private:
 	uint32 _state[4]; /* state (ABCD) */

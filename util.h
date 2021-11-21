@@ -98,9 +98,6 @@ bytes not_found = "<html><head><title>Page not found - 404</title></head><body><
 bytes not_supported = "<html><head><title>Not Implemented - 501</title></head><body><h1>Not Implemented</h1><p>Request not implemented by server.</p><hr /><p>MinServer 2.0</p></body></html>";
 bytes no_perm = "<html><head><title>Forbidden - 403</title></head><body><h1>Forbidden</h1><p>You can't view this.</p><hr /><p>MinServer 2.0</p></body></html>";
 
-// Pre-declaration for memory space
-map<int, int> uidctrl::token_to_uid, uidctrl::uid_to_token;
-
 // Controller class.
 class uidctrl {
 public:
@@ -131,6 +128,9 @@ public:
 private:
 	static map<int, int> token_to_uid, uid_to_token;
 };
+
+// Pre-declaration for memory space
+map<int, int> uidctrl::token_to_uid, uidctrl::uid_to_token;
 
 // Permission showing:
 

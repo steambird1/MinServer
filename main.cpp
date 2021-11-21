@@ -99,12 +99,12 @@ public:
 		if (f != NULL) {
 			while (!feof(f)) {
 				int uid;
-				fscanf(f, "%d %s", uid, buf2);
+				fscanf(f, "%d %s", &uid, buf2);
 				fprintf(ft, "%d %s\n", uid, buf2);
 			}
 		}
 		fclose(f);
-		fprintf(ft, "%d %s\n", uid, m.toString());
+		fprintf(ft, "%d %s\n", uid, m.toString().c_str());
 		fclose(ft);
 		CopyFile(tmps.c_str(), user_data_path.c_str(), FALSE);
 	}
@@ -117,9 +117,9 @@ public:
 		if (f != NULL) {
 			while (!feof(f)) {
 				int uid2;
-				fscanf(f, "%d %s", uid2, buf2);
+				fscanf(f, "%d %s", &uid2, buf2);
 				if (uid == uid2) {
-					fprintf(ft, "%d %s\n", uid, m.toString());
+					fprintf(ft, "%d %s\n", uid, m.toString().c_str());
 				}
 				else {
 					fprintf(ft, "%d %s\n", uid2, buf2);
@@ -139,7 +139,7 @@ public:
 		if (f != NULL) {
 			while (!feof(f)) {
 				int uid2;
-				fscanf(f, "%d %s", uid2, buf2);
+				fscanf(f, "%d %s", &uid2, buf2);
 				if (uid == uid2) {
 					fclose(f);
 					return buf2;
