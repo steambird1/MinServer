@@ -151,9 +151,12 @@ int getPermOf(string expr) {
 			case 'w': case 'a':
 				res |= 4;
 				break;
+			default:
+				break;
 			}
 		}
 	}
+	return res;
 }
 
 string dec2hex(int n) {
@@ -168,6 +171,7 @@ string dec2hex(int n) {
 		}
 		n /= 16;
 	}
+	return res;
 }
 
 inline int permMatch(int req, int cur) {
@@ -181,4 +185,10 @@ string encodeBytes(bytes b) {
 		res += "\\x" + dec2hex(b[i]);
 	}
 	return res;
+}
+
+string sToLower(string s) {
+	string t = "";
+	for (auto &i : s) t += tolower(i);
+	return t;
 }

@@ -438,7 +438,7 @@ int main(int argc, char* argv[]) {
 					FILE *f = fopen(perm_data_path.c_str(), "r");
 					// Should check owner first
 					// They're common:
-					int uid, uperm, uresult;
+					int uid, uperm, uresult;	// Here might causes warning -- It's ok
 					bool flag = false;
 					if (f != NULL) {
 						while (!feof(f)) {
@@ -470,7 +470,7 @@ int main(int argc, char* argv[]) {
 					int uids = uidctrl::uidof(token);
 					set<int> ok_groups = user_groups::query(uids);
 					if (fo != NULL) {
-						int uid, uperm, uresult;
+						int uid, uperm, uresult;	// Here might causes warning -- It's ok
 						bool flag = false;
 						while (!feof(fo)) {
 							fscanf(fo, "%d %s %d", &uid, buf, &uperm);
@@ -613,12 +613,15 @@ int main(int argc, char* argv[]) {
 			if (hinfo.process == "POST")
 				post_infolist = hinfo.toPost(); // Can be safe only here
 			pair<string, string> m = resolveMinorPath(hinfo.path);
+			cout << "Expected main path: " << m.first << endl;
+			cout << "Expected external: " << m.second << endl;
 			bool flag2 = false;
 			FILE *f = fopen(public_file_path.c_str(), "r");
 			if (f != NULL) {
 				while (!feof(f)) {
 					// buf uses begin
 					fgets(buf, MAX_PATH, f);
+					cout << "Try: Got: " << buf << endl;
 					if (m.first == buf) {
 						flag2 = true;
 						break;
@@ -630,13 +633,18 @@ int main(int argc, char* argv[]) {
 			if (flag2) {
 				// Get path
 				flag = false;
+				string wpath = path;
+				wpath.erase(wpath.begin());	// As removing '/' at first
 				for (auto &i : defiles) {
-					rpath = path + i;
+					rpath = wpath + i;
+					if (!rpath.length()) continue;
+					if (rpath[0] == '\\') rpath.erase(rpath.begin());	// As removing '\\' at first
 					if (fileExists(rpath)) {
 						flag = true;
 						break;
 					}
 				}
+				cout << "Finally path: " << rpath << endl;
 				if (!flag) {
 					sndinfo.codeid = 404;
 					sndinfo.code_info = "Not found";
@@ -646,23 +654,29 @@ int main(int argc, char* argv[]) {
 				sndinfo.attr["Connection"] = "keep-alive";
 				sndinfo.attr["Content-Type"] = findType(rpath);
 
+				cout << "Sending type: " << sndinfo.attr["Content-Type"] << endl;
+
 				if (sndinfo.attr["Content-Type"] == "text/html") {
 					// Insert script
+					cout << "Inserting script ..." << endl;
 					string dest = makeTemp();
+					cout << "Tempatory file: " << dest << endl;
 					//CopyFile(rpath.c_str(), dest.c_str(), FALSE);
 					// Simply resolve <head> or <body>.
 					string qu = "";
 					bool mode1 = false;
 					FILE *f = fopen(rpath.c_str(), "r"), *fr = fopen(dest.c_str(), "w");
-					while (!feof(f)) {
+					while (true) {
 						char c = fgetc(f);
+						if (feof(f)) break;	 // Preventing EOF remaining
 						if (c == '<') {
 							qu = "";
 							mode1 = true;
 						}
 						else if (c == '>') {
+							cout << "Label got: " << c << endl;
 							mode1 = false;
-							if (qu == "head" || qu == "body") {
+							if (sToLower(qu) == "head" || sToLower(qu) == "body") {
 								// Insert script, now!
 								fprintf(fr, "><script>\n");
 
@@ -674,7 +688,9 @@ int main(int argc, char* argv[]) {
 								for (auto &i : path_pinfo.exts) {
 									ua += "{key:\"" + i.first + "\",value:\"" + i.second + "\"},\n";
 								}
-								ua.pop_back(); ua.pop_back();	// ',' and 'LF'.
+								if (ua.length()) {
+									ua.pop_back(); ua.pop_back();
+								} 	// ',' and 'LF'.
 								t += ua.length();
 								// Prepare POST Args
 								// ...
@@ -687,14 +703,32 @@ int main(int argc, char* argv[]) {
 									pa += "],content:\"" + encodeBytes(i.content) + "\"},";
 								}
 								pa.pop_back(); // ','
-								pa += "]";
+								if (pa.length()) pa += "]";	// As not removed all of things
 
-								t += ba.length();
+								//t += ba.length();
 
+								t += hinfo.process.length();
+								t += hinfo.proto_ver.length();
+
+							//	cout << "S: " << s << endl;
+								
+						//	//	cout << "BA: " << ba << endl;	//???
+
+								if (!ua.length()) ua = " ";	// To be not really empty ???
+								if (!pa.length()) pa = " ";
+
+							//	cout << "UA: " << ua << endl;
+							//	cout << "PA: " << pa << endl;
+
+							//	cout << "HP: " << hinfo.process << endl;
+							//	cout << "PV: " << hinfo.proto_ver << endl;
+								
 								// Print
-								char *buf = new char[t + 2];
+								cout << "Allocated length for buf: " << t + 20 << endl;
+								char *buf = new char[t + 20];	// Also added ua/pa spaces
 								//      Buffer|Template|Args -->
-								sprintf(buf, s.c_str(), hinfo.process.c_str(), hinfo.proto_ver.c_str(), ua.c_str(), pa.c_str());
+								sprintf(buf, s.c_str(), hinfo.process.c_str(), hinfo.proto_ver.c_str(), ua.c_str(), pa.c_str());	// Fails here, but why?
+								//cout << "Builtin scripts: " << endl << buf << endl << "== END ==" << endl;
 								fprintf(fr, "// Args\n%s\n", buf);
 								// End
 
@@ -705,6 +739,7 @@ int main(int argc, char* argv[]) {
 								// End
 								fprintf(fr, "\n</script>");
 
+								delete[] buf;
 								continue;
 							}
 						}
@@ -715,8 +750,8 @@ int main(int argc, char* argv[]) {
 					}
 					fclose(f);
 					fclose(fr);
-					fr = fopen(dest.c_str(), "r");
-					sndinfo.loadContent(fr);
+					fr = fopen(dest.c_str(), "rb");
+					sndinfo.loadContent(fr);	// Here doesn't leak
 					fclose(fr);
 				}
 				else {
@@ -733,8 +768,18 @@ int main(int argc, char* argv[]) {
 			}
 		}
 			
-
-		s.sends(sndinfo.toSender());
+		bytes bs = sndinfo.toSender();
+		/*
+			// To prove
+			string desprov = makeTemp();
+		cout << "Proving file: " << desprov << endl;
+		FILE *fx = fopen(desprov.c_str(), "wb");
+		fwrite(bs.toCharArray(), sizeof(char), sndinfo.content.length(), fx);
+		fclose(fx);
+		// End
+		*/
+		// Leakage disappears, but I don't know why.
+		s.sends(bs);
 		s.end_accept();
 	}
 

@@ -601,7 +601,7 @@
 	 if (autolen) attr["Content-Length"] = to_string(this->content.length());
 	 for (auto i = attr.begin(); i != attr.end(); i++)
 		 b += (i->first + ": " + i->second) + "\n";
-	 b += string("\n");
+	 b += '\n';
 	 b += content;
 	 return b;
  }

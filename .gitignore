@@ -262,3 +262,5 @@ __pycache__/
 
 *.lnk
 *.url
+*.txt
+/index.html
