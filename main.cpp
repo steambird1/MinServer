@@ -397,12 +397,26 @@ int main(int argc, char* argv[]) {
 				else if (op == "read") {
 					// Read line
 					int tk = atoi(path_pinfo.exts["token"].c_str());
-					sndinfo.content = CReadLine(file_token[tk]);
+					if (file_token.count(tk)) {
+						sndinfo.content = CReadLine(file_token[tk]);
+					}
+					else {
+						sndinfo.codeid = 400;
+						sndinfo.code_info = "Bad request";
+					}
+					
 				}
 				else if (op == "write") {
 					// Write line
 					int tk = atoi(path_pinfo.exts["token"].c_str());
-					fputs(hinfo.content.toCharArray(), file_token[tk]);
+					if (file_token.count(tk)) {
+						fputs(hinfo.content.toCharArray(), file_token[tk]);
+					}
+					else {
+						sndinfo.codeid = 400;
+						sndinfo.code_info = "Bad request";
+					}
+					
 				}
 				else {
 					sndinfo.codeid = 501;
