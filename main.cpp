@@ -25,7 +25,7 @@ int findToken() {
 string CReadLine(FILE *f) {
 	char c = '\0';
 	string tmp = "";
-	while (c == '\n' || feof(f)) {
+	while ((c != '\n') && (!feof(f))) {
 		tmp += (c = fgetc(f));
 	}
 	return tmp;
@@ -241,10 +241,21 @@ int main(int argc, char* argv[]) {
 		else if (it == "--user-operate") {
 			string op = argv[i + 1];
 			if (op == "--add") {
-
+				int ureq = atoi(argv[i + 2]);
+				string pwd = argv[i + 3];
+				user_operator::adduser(ureq, pwd);
+				i += 3;
 			}
 			else if (op == "--query") {
-
+				int ureq = atoi(argv[i + 2]);
+				string res = user_operator::quser(ureq);
+				if (res.length()) {
+					cout << "Password MD5: " << res << endl;
+				}
+				else {
+					cout << "User not exist" << endl;
+				}
+				i += 2;
 			}
 			else if (op == "--set") {
 
@@ -330,40 +341,47 @@ int main(int argc, char* argv[]) {
 							suid = uidctrl::uidof(utoken);
 						set<int> ug = user_groups::query(suid);
 						FILE *f = fopen(perm_data_path.c_str(), "r");
-						if (f != NULL) {
-							int uid, uperm = 10;
-							while (!feof(f)) {
-								// buf uses begin
-								// uperm = -1 for owner information.
-								fscanf(f, "%d %s %d", &uid, buf, &uperm);
-								if (path_pinfo.exts["name"] == buf && (uid == suid || (uid < 0 && ug.count(uid))) && uperm > 0) {
-									break;
-								}
-								// buf uses end
-							}
+						bool flag3 = false;
+						int uid, uperm = 10;
+						if (!fileExists(path_pinfo.exts["name"])) {
+							flag3 = true;
+							if (f != NULL) fclose(f);	// Close older one
+							f = fopen(perm_data_path.c_str(), "a+");
+							fprintf(f, "%d %s %d\n", suid, path_pinfo.exts["name"].c_str(), -1);
+							fprintf(f, "%d %s %d\n", suid, path_pinfo.exts["name"].c_str(), 7);
 							fclose(f);
-							if (!permMatch(rperm, uperm) && fileExists(path_pinfo.exts["name"])) {
-								sndinfo.codeid = 403;
-								sndinfo.code_info = "Forbidden";
-								
-							}
-							else {
-								if (!fileExists(path_pinfo.exts["name"])) {
-									f = fopen(perm_data_path.c_str(), "a+");
-									fprintf(f, "%d %s %d\n", suid, path_pinfo.exts["name"].c_str(), -1);
-									fprintf(f, "%d %s %d\n", suid, path_pinfo.exts["name"].c_str(), 7);
-									fclose(f);
-								}
-								//							else {
-								int tk = findToken();
-								file_token[tk] = fopen(path_pinfo.exts["name"].c_str(), path_pinfo.exts["type"].c_str());
-								sndinfo.content = to_string(tk);
-								//							}
-							}	
 						}
-						else {
+						if (f != NULL) {
+							
+								while (!feof(f)) {
+									// buf uses begin
+									// uperm = -1 for owner information.
+									int f4 = fscanf(f, "%d %s %d", &uid, buf, &uperm);
+									if (f4 != 3) break;	//??
+									if (path_pinfo.exts["name"] == buf && (uid == suid || (uid < 0 && ug.count(uid))) && uperm > 0) {
+										flag3 = true;
+										break;
+									}
+									// buf uses end
+								}
+								fclose(f);
+						}
+						if ((!flag3) || (!permMatch(rperm, uperm) && fileExists(path_pinfo.exts["name"]))) {
 							sndinfo.codeid = 403;
 							sndinfo.code_info = "Forbidden";
+
+						}
+						else {
+							int tk = findToken();
+							FILE *fp = fopen(path_pinfo.exts["name"].c_str(), path_pinfo.exts["type"].c_str());
+							if (fp == NULL) {
+								sndinfo.codeid = 400;
+								sndinfo.code_info = "Bad request";
+							}
+							else {
+								file_token[tk] = fp;
+								sndinfo.content = to_string(tk);
+							}
 						}
 						// End...
 						
