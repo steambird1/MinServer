@@ -705,6 +705,7 @@ int main(int argc, char* argv[]) {
 									}
 									pa.pop_back(); // ','
 									if (pa.length()) pa += "]";	// As not removed all of things
+									t += pa.length();
 
 									//t += ba.length();
 
