@@ -697,10 +697,16 @@ int main(int argc, char* argv[]) {
 									// ...
 									for (auto &i : post_infolist) {
 										pa += "{\nattr:[";
+										bool flag11 = false;
 										for (auto &j : i.attr) {
-											pa += "{key:\"" + j.first + "\",value:\"" + j.second + "\"},\n";
+											pa += "{key:\"" + j.first + "\",value:\"" + encodeBytes(j.second) + "\"},\n";
+											flag11 = true;
 										}
-										pa.pop_back();	// ','
+										if (flag11) {
+											pa.pop_back();	// 'LF'
+											pa.pop_back();	// ','
+										}
+										
 										pa += "],content:\"" + encodeBytes(i.content) + "\"},";
 									}
 									pa.pop_back(); // ','

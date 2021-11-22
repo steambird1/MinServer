@@ -300,15 +300,18 @@
 	 //}
 	 printf_d("Additional receiving:(ASCII=%d, pos=%zd, l=%d)",b[pos],pos,l);				// debuggin
 	 printf_d("Contented informations:\n");
+	 int lres = 0;	// Might be <0 !!!								// Do NOT use signed int!!!
 	 for (size_t i = pos; i < l + pos; i++) {
 		 h.content += b[i];
+		 lres++;
 		 //printf("{%d->%d}%d ",i,l+pos,b[i]);								// debugging
 		 printf_d("%c", b[i]);
 	 }
 	 printf_d("Another raw receive for contents remaining:\n");
 	 // BUT, FOR CONTENT
 	 // WE HAVE TO GET MORE
-	 for (int i = 0; i < l; i += this->rcbsz) {
+	 printf_d("Less: %d\n", lres);
+	 for (int i = 0; i < l - lres; i += this->rcbsz) {
 		 h.content += raw_receive();
 	 }
 	 printf_d("End\n");										// debugging
