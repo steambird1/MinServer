@@ -28,14 +28,17 @@ bool fileExists(string path) {
 	return FilePathExists(path.c_str());
 }
 
-/*
-https ://blog.csdn.net/goodnew/article/details/8446575
-*/
+// Already modified...
 int getSize(string filename) {
 	FILE *f = fopen(filename.c_str(), "r");
 	if (f == NULL) return 0;
 	fseek(f, 0, SEEK_END);
 	int res = ftell(f);
+/*	int res = 0;
+	while (!feof(f)) {
+		fgetc(f);
+		res++;
+	}*/
 	fclose(f);
 	return res;
 }
@@ -197,4 +200,10 @@ string sRemovingEOL(string s) {
 	string t = s;
 	while (t[t.length() - 1] == '\n') t.pop_back();
 	return t;
+}
+
+string sCurrDir(string s = "") {
+	char buf3[MAX_PATH];
+	GetCurrentDirectory(MAX_PATH, buf3);
+	return string(buf3) + "\\" + s;
 }

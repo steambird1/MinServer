@@ -71,6 +71,8 @@ public:
 			if (u != uid || g != gid)
 				fprintf(ft, "%d %d\n", u, g);
 		}
+		fclose(f);
+		fclose(ft);
 		CopyFile(tmp.c_str(), group_path.c_str(), FALSE);
 	}
 	static set<int> query(int uid) {
@@ -179,15 +181,51 @@ public:
 			}
 			fclose(f);
 		}
-		CopyFile(dest.c_str(), perm_data_path.c_str(), FALSE);
 		fclose(fd);
+		CopyFile(dest.c_str(), perm_data_path.c_str(), FALSE);
+		
 	}
 	static void chperm(string file, int to_uid, int to_perm) {
 		// To be implemented
 	}
+	static int allocnew(void) {
+		int r;
+		do {
+			r = random();
+		} while (quser(r).length());
+		return r;
+	}
 };
 
+// Not includes all
+class file_operator {
+public:
+	static bool release(int tk) {
+		if (!file_token.count(tk)) return false;
+		fclose(file_token[tk]);
+		file_token.erase(tk);
+		return true;
+	}
+};
+
+/*
+#ifdef CopyFile
+#undef CopyFile
+#endif
+
+// To keep
+void __bCopyFile(const char *oldf, const char *newf) {
+	FILE *fnew = fopen(newf, "wb");
+	const char* ob = readAll(oldf).toCharArray();
+	cout << "Copy data: " << endl << ob << endl << "== END ==" << endl;
+	fwrite(ob, sizeof(char), readAll(oldf).length(), fnew);
+	fclose(fnew);
+}
+#define CopyFile(oldf, newf, sv) __bCopyFile(oldf, newf)
+*/
+
 int main(int argc, char* argv[]) {
+	cout << "Running in directory: " << sCurrDir("example") << endl;
 	for (int i = 1; i < argc; i++) {
 		string it = argv[i];
 		if (it == "--default-page") {
@@ -391,14 +429,23 @@ int main(int argc, char* argv[]) {
 					// Close file
 					// (Release handles)
 					int tk = atoi(path_pinfo.exts["token"].c_str());
-					fclose(file_token[tk]);
-					file_token.erase(tk);
+					if (!file_operator::release(tk)) {
+						sndinfo.codeid = 400;
+						sndinfo.code_info = "Bad request";
+					}
 				}
 				else if (op == "read") {
 					// Read line
 					int tk = atoi(path_pinfo.exts["token"].c_str());
 					if (file_token.count(tk)) {
-						sndinfo.content = CReadLine(file_token[tk]);
+						FILE *fk = file_token[tk];
+						if (feof(fk)) {
+							sndinfo.codeid = 400;
+							sndinfo.code_info = "Bad request";
+							// At the end of file
+							file_operator::release(tk);
+						}
+						sndinfo.content = CReadLine(fk);
 					}
 					else {
 						sndinfo.codeid = 400;
@@ -530,17 +577,19 @@ int main(int argc, char* argv[]) {
 							FILE *f = fopen(perm_data_path.c_str(), "r");
 							string dest = makeTemp();
 							FILE *fd = fopen(dest.c_str(), "w");
+							bool flag = false;
 							if (f != NULL) {
 								while (!feof(f)) {
 									// uperm = -1 for owner information.
 									fscanf(f, "%d %s %d", &uid, buf, &uperm);
 									if (uperm != -1 && filename == buf) {
-										if (uidctrl::uidof(token) != uid) {
+										if (uid != chid) {
 											// Bads
 											fprintf(fd, "%d %s %d\n", uid, buf, uperm);
 										}
 										else {
-											fprintf(fd, "%d %s %d\n", uid, buf, chto);
+											flag = true;
+											fprintf(fd, "%d %s %d\n", chid, buf, chto);
 										}
 										//break;
 									}
@@ -550,8 +599,14 @@ int main(int argc, char* argv[]) {
 								}
 								fclose(f);
 							}
-							CopyFile(dest.c_str(), perm_data_path.c_str(), FALSE);
+							if (!flag) {
+								fprintf(fd, "%d %s %d\n", chid, filename.c_str(), chto);
+							}
 							fclose(fd);
+							cout << "Copyfile: " << dest << " -> " << perm_data_path << endl;
+							CopyFile(dest.c_str(), perm_data_path.c_str(), FALSE);
+							cout << "Lasterr: " << GetLastError() << endl;
+							
 						}
 
 					}
@@ -564,7 +619,14 @@ int main(int argc, char* argv[]) {
 				}
 				else if (op == "create") {
 					// Create user...
-					int chto = atoi(path_pinfo.exts["id"].c_str());
+					int chto;
+					if (path_pinfo.exts.count("id")) {
+						chto = atoi(path_pinfo.exts["id"].c_str());
+					}
+					else {
+						chto = user_operator::allocnew();
+					}
+					
 					string upasswd = path_pinfo.exts["passwd"];				// Changing to
 					//MD5 upass_m = MD5(upasswd);
 					bool state = false;

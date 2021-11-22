@@ -39,12 +39,13 @@ function msfile(token, xhobject, f_operate) {
 }
 
 // Usage: var x = new msuser();
-function msuser(token, xhobject, f_operate, u_operate) {
+function msuser(token, xhobject, f_operate, u_operate, myuid) {
 
     this.xhobject = xhobject;
     this.token = token;
     this.f_operate = f_operate;
     this.u_operate = u_operate;
+    this.myuid = myuid;
 
     // Operations
     this.openfile = function (filename, operate) {
@@ -70,7 +71,10 @@ function msuser(token, xhobject, f_operate, u_operate) {
     }
 
     this.modify = function (new_pass) {
-        // To be implemented...
+        this.xhobject.send("GET", this.u_operate + "?operate=create&id=" + this.myuid + "&passwd=" + new_pass + "&token=" + this.token, false);
+        if (this.xhobject.status != 200) {
+            throw new msexception("Permission denied", 1);
+        }
     }
 
     this.logout = function () {
@@ -105,12 +109,23 @@ function mslib() {
         if (this.xhobject.status != 200) {
             throw new msexception("Incorrect user name or password", 2);
         } else {
-            return new msuser(this.xhobject.responseText, this.xhobject, this.f_operate, this.u_operate);
+            return new msuser(this.xhobject.responseText, this.xhobject, this.f_operate, this.u_operate, uid);
         }
     }
 
-    this.register = function (passwd) {
+    this.register = function (passwd, uid) {
         // To be implemented ...
+        ider = "";
+        if (uid == undefined) {
+            ider = "";
+        } else {
+            ider = "&id=" + uid;
+        }
+        this.xhobject.send("GET", this.u_operate + "?operate=create" + ider + "&passwd=" + passwd, false);
+        this.xhobject.send(null);
+        if (this.xhobject.status != 200) {
+            throw new msexception("User exists and requires login", 2);
+        }
     }
 
 }
