@@ -102,8 +102,9 @@ public:
 				fscanf(f, "%d %s", &uid, buf2);
 				fprintf(ft, "%d %s\n", uid, buf2);
 			}
+			fclose(f);
 		}
-		fclose(f);
+		
 		fprintf(ft, "%d %s\n", uid, m.toString().c_str());
 		fclose(ft);
 		CopyFile(tmps.c_str(), user_data_path.c_str(), FALSE);
@@ -145,8 +146,8 @@ public:
 					return buf2;
 				}
 			}
+			fclose(f);
 		}
-		fclose(f);
 		return "";
 	}
 
@@ -385,6 +386,11 @@ int main(int argc, char* argv[]) {
 					int tk = atoi(path_pinfo.exts["token"].c_str());
 					fputs(hinfo.content.toCharArray(), file_token[tk]);
 				}
+				else {
+					sndinfo.codeid = 501;
+					sndinfo.code_info = "Not Implemented";
+					sndinfo.content = not_supported;
+				}
 			}
 			else if (path_pinfo.path[0] == "auth_workspace") {
 				// Authority spaces:
@@ -587,6 +593,11 @@ int main(int argc, char* argv[]) {
 					}
 					// End
 					//fclose(f);*/
+				}
+				else {
+				sndinfo.codeid = 501;
+				sndinfo.code_info = "Not Implemented";
+				sndinfo.content = not_supported;
 				}
 
 				/*

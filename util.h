@@ -108,7 +108,7 @@ public:
 		int tk;
 		do {
 			tk = random();
-		} while (!token_to_uid.count(tk));
+		} while (token_to_uid.count(tk));
 		token_to_uid[tk] = uid;
 		uid_to_token[uid] = tk;
 		return tk;
