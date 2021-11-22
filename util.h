@@ -192,3 +192,9 @@ string sToLower(string s) {
 	for (auto &i : s) t += tolower(i);
 	return t;
 }
+
+string sRemovingEOL(string s) {
+	string t = s;
+	while (t[t.length() - 1] == '\n') t.pop_back();
+	return t;
+}

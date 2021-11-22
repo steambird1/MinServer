@@ -44,7 +44,7 @@ set<string> pub_fn;
 // First: path
 // Second: entire args
 pair<string, string> resolveMinorPath(string full) {
-	string f2 = full, f3 = "";
+	string f2 = full, f3 = full;
 	for (size_t i = 0; i < full.length(); i++) {
 		if (full[i] == '?') {
 			f2 = f2.substr(0, i); // abc? (0,3) -> abc
@@ -293,7 +293,8 @@ int main(int argc, char* argv[]) {
 
 		bool flag;
 
-		if (path_pinfo.path.size() == 1) {
+		set<string> operations = { "file_operate", "auth_workspace" };
+		if (path_pinfo.path.size() == 1 && operations.count(path_pinfo.path[0])) {
 			if (path_pinfo.path[0] == "file_operate") {
 				// It's not necessary to change to command format. Why not directly fopen()?
 				// File operation requestion
@@ -622,7 +623,8 @@ int main(int argc, char* argv[]) {
 					// buf uses begin
 					fgets(buf, MAX_PATH, f);
 					cout << "Try: Got: " << buf << endl;
-					if (m.first == buf) {
+					if (m.first == sRemovingEOL(buf)) {	// As there is end of line in BUF
+						cout << "Equals: " << m.first << endl;
 						flag2 = true;
 						break;
 					}
@@ -633,7 +635,7 @@ int main(int argc, char* argv[]) {
 			if (flag2) {
 				// Get path
 				flag = false;
-				string wpath = path;
+				string wpath = m.first;
 				wpath.erase(wpath.begin());	// As removing '/' at first
 				for (auto &i : defiles) {
 					rpath = wpath + i;
@@ -649,116 +651,116 @@ int main(int argc, char* argv[]) {
 					sndinfo.codeid = 404;
 					sndinfo.code_info = "Not found";
 					sndinfo.content = not_found;
-				}
+				} else {
+					sndinfo.attr["Connection"] = "keep-alive";
+					sndinfo.attr["Content-Type"] = findType(rpath);
 
-				sndinfo.attr["Connection"] = "keep-alive";
-				sndinfo.attr["Content-Type"] = findType(rpath);
+					cout << "Sending type: " << sndinfo.attr["Content-Type"] << endl;
 
-				cout << "Sending type: " << sndinfo.attr["Content-Type"] << endl;
-
-				if (sndinfo.attr["Content-Type"] == "text/html") {
-					// Insert script
-					cout << "Inserting script ..." << endl;
-					string dest = makeTemp();
-					cout << "Tempatory file: " << dest << endl;
-					//CopyFile(rpath.c_str(), dest.c_str(), FALSE);
-					// Simply resolve <head> or <body>.
-					string qu = "";
-					bool mode1 = false;
-					FILE *f = fopen(rpath.c_str(), "r"), *fr = fopen(dest.c_str(), "w");
-					while (true) {
-						char c = fgetc(f);
-						if (feof(f)) break;	 // Preventing EOF remaining
-						if (c == '<') {
-							qu = "";
-							mode1 = true;
-						}
-						else if (c == '>') {
-							cout << "Label got: " << c << endl;
-							mode1 = false;
-							if (sToLower(qu) == "head" || sToLower(qu) == "body") {
-								// Insert script, now!
-								fprintf(fr, "><script>\n");
-
-								// 1. Parameters & Post informations
-								string s = readAll("mspara.js").toString();
-								int t = s.length() - 4;			// removing two '%s'
-								// Prepare URL Args
-								string ua = "", pa = "[", ba = "";
-								for (auto &i : path_pinfo.exts) {
-									ua += "{key:\"" + i.first + "\",value:\"" + i.second + "\"},\n";
-								}
-								if (ua.length()) {
-									ua.pop_back(); ua.pop_back();
-								} 	// ',' and 'LF'.
-								t += ua.length();
-								// Prepare POST Args
-								// ...
-								for (auto &i : post_infolist) {
-									pa += "{\nattr:[";
-									for (auto &j : i.attr) {
-										pa += "{key:\"" + j.first + "\",value:\"" + j.second + "\"},\n";
-									}
-									pa.pop_back();	// ','
-									pa += "],content:\"" + encodeBytes(i.content) + "\"},";
-								}
-								pa.pop_back(); // ','
-								if (pa.length()) pa += "]";	// As not removed all of things
-
-								//t += ba.length();
-
-								t += hinfo.process.length();
-								t += hinfo.proto_ver.length();
-
-							//	cout << "S: " << s << endl;
-								
-						//	//	cout << "BA: " << ba << endl;	//???
-
-								if (!ua.length()) ua = " ";	// To be not really empty ???
-								if (!pa.length()) pa = " ";
-
-							//	cout << "UA: " << ua << endl;
-							//	cout << "PA: " << pa << endl;
-
-							//	cout << "HP: " << hinfo.process << endl;
-							//	cout << "PV: " << hinfo.proto_ver << endl;
-								
-								// Print
-								cout << "Allocated length for buf: " << t + 20 << endl;
-								char *buf = new char[t + 20];	// Also added ua/pa spaces
-								//      Buffer|Template|Args -->
-								sprintf(buf, s.c_str(), hinfo.process.c_str(), hinfo.proto_ver.c_str(), ua.c_str(), pa.c_str());	// Fails here, but why?
-								//cout << "Builtin scripts: " << endl << buf << endl << "== END ==" << endl;
-								fprintf(fr, "// Args\n%s\n", buf);
-								// End
-
-								// 2. Default APIs
-								// (Copy from javascript)
-								fprintf(fr, "// Default MSLIB API\n%s\n", readAll("mslib.js").toCharArray());
-
-								// End
-								fprintf(fr, "\n</script>");
-
-								delete[] buf;
-								continue;
+					if (sndinfo.attr["Content-Type"] == "text/html") {
+						// Insert script
+						cout << "Inserting script ..." << endl;
+						string dest = makeTemp();
+						cout << "Tempatory file: " << dest << endl;
+						//CopyFile(rpath.c_str(), dest.c_str(), FALSE);
+						// Simply resolve <head> or <body>.
+						string qu = "";
+						bool mode1 = false;
+						FILE *f = fopen(rpath.c_str(), "r"), *fr = fopen(dest.c_str(), "w");
+						while (true) {
+							char c = fgetc(f);
+							if (feof(f)) break;	 // Preventing EOF remaining
+							if (c == '<') {
+								qu = "";
+								mode1 = true;
 							}
+							else if (c == '>') {
+								cout << "Label got: " << c << endl;
+								mode1 = false;
+								if (sToLower(qu) == "head" || sToLower(qu) == "body") {
+									// Insert script, now!
+									fprintf(fr, "><script>\n");
+
+									// 1. Parameters & Post informations
+									string s = readAll("mspara.js").toString();
+									int t = s.length() - 4;			// removing two '%s'
+									// Prepare URL Args
+									string ua = "", pa = "[", ba = "";
+									for (auto &i : path_pinfo.exts) {
+										ua += "{key:\"" + i.first + "\",value:\"" + i.second + "\"},\n";
+									}
+									if (ua.length()) {
+										ua.pop_back(); ua.pop_back();
+									} 	// ',' and 'LF'.
+									t += ua.length();
+									// Prepare POST Args
+									// ...
+									for (auto &i : post_infolist) {
+										pa += "{\nattr:[";
+										for (auto &j : i.attr) {
+											pa += "{key:\"" + j.first + "\",value:\"" + j.second + "\"},\n";
+										}
+										pa.pop_back();	// ','
+										pa += "],content:\"" + encodeBytes(i.content) + "\"},";
+									}
+									pa.pop_back(); // ','
+									if (pa.length()) pa += "]";	// As not removed all of things
+
+									//t += ba.length();
+
+									t += hinfo.process.length();
+									t += hinfo.proto_ver.length();
+
+									//	cout << "S: " << s << endl;
+
+								//	//	cout << "BA: " << ba << endl;	//???
+
+									if (!ua.length()) ua = " ";	// To be not really empty ???
+									if (!pa.length()) pa = " ";
+
+									//	cout << "UA: " << ua << endl;
+									//	cout << "PA: " << pa << endl;
+
+									//	cout << "HP: " << hinfo.process << endl;
+									//	cout << "PV: " << hinfo.proto_ver << endl;
+
+										// Print
+									cout << "Allocated length for buf: " << t + 20 << endl;
+									char *buf = new char[t + 20];	// Also added ua/pa spaces
+									//      Buffer|Template|Args -->
+									sprintf(buf, s.c_str(), hinfo.process.c_str(), hinfo.proto_ver.c_str(), ua.c_str(), pa.c_str());	// Fails here, but why?
+									//cout << "Builtin scripts: " << endl << buf << endl << "== END ==" << endl;
+									fprintf(fr, "// Args\n%s\n", buf);
+									// End
+
+									// 2. Default APIs
+									// (Copy from javascript)
+									fprintf(fr, "// Default MSLIB API\n%s\n", readAll("mslib.js").toCharArray());
+
+									// End
+									fprintf(fr, "\n</script>");
+
+									delete[] buf;
+									continue;
+								}
+							}
+							else if (mode1) {
+								qu += c;
+							}
+							fputc(c, fr);
 						}
-						else if (mode1) {
-							qu += c;
-						}
-						fputc(c, fr);
+						fclose(f);
+						fclose(fr);
+						fr = fopen(dest.c_str(), "rb");
+						sndinfo.loadContent(fr);	// Here doesn't leak
+						fclose(fr);
 					}
-					fclose(f);
-					fclose(fr);
-					fr = fopen(dest.c_str(), "rb");
-					sndinfo.loadContent(fr);	// Here doesn't leak
-					fclose(fr);
-				}
-				else {
-					// Send directly
-					FILE *f = fopen(rpath.c_str(), "rb");
-					sndinfo.loadContent(f);
-					fclose(f);
+					else {
+						// Send directly
+						FILE *f = fopen(rpath.c_str(), "rb");
+						sndinfo.loadContent(f);
+						fclose(f);
+					}
 				}
 			}
 			else {
