@@ -18,15 +18,32 @@ function msfile(token, xhobject, f_operate) {
     this.read = function () {
         this.xhobject.open("GET", this.f_operate + "?operate=read&token=" + this.token, false);
         this.xhobject.send(null);
-        return this.xhobject.responseText;
+        if (this.xhobject.status != 200) {
+            throw new msexception("Bad request", 3);
+        } else {
+            return this.xhobject.responseText;
+        }
     };
 
     // Write a line
     this.write = function (line) {
         this.xhobject.open("POST", this.f_operate + "?operate=write&token=" + this.token, false);
         this.xhobject.send(line);
-        //return this.xhobject.status;  // Always 200
+        if (this.xhobject.status != 200) {
+            throw new msexception("Bad request", 3);
+        }
     };
+
+    // Is end-of-file
+    this.eof = function () {
+        this.xhobject.open("GET", this.f_operate + "?operate=eof&token=" + this.token, false);
+        this.xhobject.send(null);
+        if (this.xhobject.status != 200) {
+            throw new msexception("Bad request", 3);
+        } else {
+            return this.xhobject.responseText;
+        }
+    }
 
     // Close token
     this.close = function () {

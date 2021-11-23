@@ -439,13 +439,16 @@ int main(int argc, char* argv[]) {
 					int tk = atoi(path_pinfo.exts["token"].c_str());
 					if (file_token.count(tk)) {
 						FILE *fk = file_token[tk];
-						if (feof(fk)) {
+						try {
+							sndinfo.content = CReadLine(fk);
+						}
+						catch (...) {
 							sndinfo.codeid = 400;
 							sndinfo.code_info = "Bad request";
 							// At the end of file
-							file_operator::release(tk);
+							//file_operator::release(tk);
 						}
-						sndinfo.content = CReadLine(fk);
+						
 					}
 					else {
 						sndinfo.codeid = 400;
@@ -457,13 +460,29 @@ int main(int argc, char* argv[]) {
 					// Write line
 					int tk = atoi(path_pinfo.exts["token"].c_str());
 					if (file_token.count(tk)) {
-						fputs(hinfo.content.toCharArray(), file_token[tk]);
+						try {
+							fputs(hinfo.content.toCharArray(), file_token[tk]);
+						}
+						catch (...) {
+							sndinfo.codeid = 400;
+							sndinfo.code_info = "Bad request";
+						}
 					}
 					else {
 						sndinfo.codeid = 400;
 						sndinfo.code_info = "Bad request";
 					}
 					
+				}
+				else if (op == "eof") {
+					int tk = atoi(path_pinfo.exts["token"].c_str());
+					if (file_token.count(tk)) {
+						sndinfo.content = int(feof(file_token[tk])) + '0';
+					}
+					else {
+						sndinfo.codeid = 400;
+						sndinfo.code_info = "Bad request";
+					}
 				}
 				else {
 					sndinfo.codeid = 501;
