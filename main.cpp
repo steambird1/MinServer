@@ -158,6 +158,7 @@ public:
 		string dest = makeTemp();
 		FILE *fd = fopen(dest.c_str(), "w");
 		int uid, uperm;
+		bool flag = false;
 		char buf[1024];
 		f = fopen(perm_data_path.c_str(), "r");
 		if (f != NULL) {
@@ -165,13 +166,14 @@ public:
 				// uperm = -1 for owner information.
 				// OWNER CAN ONLY BE A PERSON.
 				fscanf(f, "%d %s %d", &uid, buf, &uperm);
-				if (uperm == -1 && filename == buf) {
+				if (uperm == -1 && filename == buf && (!flag)) {
 //					if (uidctrl::uidof(token) != uid) {
 						// Bads
 //						fprintf(fd, "%d %s %d\n", uid, buf, uperm);
 //					}
 //					else {
-						fprintf(fd, "%d %s %d\n", chto, buf, uperm);
+					flag = true;
+						fprintf(fd, "%d %s %d\n", chto, buf, uperm);	// uperm = -1
 //					}
 					//break;
 				}
@@ -180,6 +182,9 @@ public:
 				}
 			}
 			fclose(f);
+		}
+		if (!flag) {
+			fprintf(fd, "%d %s -1\n", chto, filename.c_str());
 		}
 		fclose(fd);
 		CopyFile(dest.c_str(), perm_data_path.c_str(), FALSE);
@@ -601,15 +606,9 @@ int main(int argc, char* argv[]) {
 								while (!feof(f)) {
 									// uperm = -1 for owner information.
 									fscanf(f, "%d %s %d", &uid, buf, &uperm);
-									if (uperm != -1 && filename == buf) {
-										if (uid != chid) {
-											// Bads
-											fprintf(fd, "%d %s %d\n", uid, buf, uperm);
-										}
-										else {
-											flag = true;
-											fprintf(fd, "%d %s %d\n", chid, buf, chto);
-										}
+									if (uperm != -1 && filename == buf && uid == chid && (!flag)) {
+										flag = true;
+										fprintf(fd, "%d %s %d\n", chid, buf, chto);
 										//break;
 									}
 									else {
