@@ -11,7 +11,38 @@
 #endif
 using namespace std;
 
-map<int, FILE*> file_token;
+set<char> roks = { 'r', '+' }, woks = { 'w','a','+' };
+
+// Uses for MinServer file opener for permission verify
+class file_structure {
+public:
+	file_structure() : read_ok(false), write_ok(false) {
+		// For map
+	}
+	file_structure(const char *filename, const char *operate) {
+		size_t sl = strlen(operate);
+		for (size_t i = 0; i < sl; i++) {
+			if (roks.count(operate[i])) this->read_ok = true;
+			if (woks.count(operate[i])) this->write_ok = true;
+		}
+		this->place = fopen(filename, operate);
+	}
+	file_structure(FILE *obj, bool rok, bool wok) : place(obj), read_ok(rok), write_ok(wok) {}
+	operator FILE*&() {
+		return this->place;
+	}
+	bool readable() {
+		return this->read_ok;
+	}
+	bool writeable() {
+		return this->write_ok;
+	}
+private:
+	FILE *place;
+	bool read_ok, write_ok;
+};
+
+map<int, file_structure> file_token;
 
 int findToken() {
 	int r;
@@ -166,14 +197,18 @@ public:
 				// uperm = -1 for owner information.
 				// OWNER CAN ONLY BE A PERSON.
 				fscanf(f, "%d %s %d", &uid, buf, &uperm);
-				if (uperm == -1 && filename == buf && (!flag)) {
+				if (uperm == -1 && filename == buf) {
 //					if (uidctrl::uidof(token) != uid) {
 						// Bads
 //						fprintf(fd, "%d %s %d\n", uid, buf, uperm);
 //					}
 //					else {
-					flag = true;
-						fprintf(fd, "%d %s %d\n", chto, buf, uperm);	// uperm = -1
+					
+					if (!flag) {
+						flag = true;
+						fprintf(fd, "%d %s %d\n", chto, buf, uperm);
+					}
+							// uperm = -1
 //					}
 					//break;
 				}
@@ -309,6 +344,7 @@ int main(int argc, char* argv[]) {
 			else if (op == "--chfperm") {
 
 			}
+			return 0;
 		}// Here will be a lot to be implemented
 	}
 	/*
@@ -416,7 +452,7 @@ int main(int argc, char* argv[]) {
 						}
 						else {
 							int tk = findToken();
-							FILE *fp = fopen(path_pinfo.exts["name"].c_str(), path_pinfo.exts["type"].c_str());
+							file_structure fp = file_structure(path_pinfo.exts["name"].c_str(), path_pinfo.exts["type"].c_str());
 							if (fp == NULL) {
 								sndinfo.codeid = 400;
 								sndinfo.code_info = "Bad request";
@@ -443,13 +479,17 @@ int main(int argc, char* argv[]) {
 					// Read line
 					int tk = atoi(path_pinfo.exts["token"].c_str());
 					if (file_token.count(tk)) {
-						FILE *fk = file_token[tk];
-						try {
+						file_structure fk = file_token[tk];
+						if (!fk.readable()) {
+							sndinfo.codeid = 400;
+							sndinfo.code_info = "Bad request";
+						}
+						else try {
 							sndinfo.content = CReadLine(fk);
 						}
 						catch (...) {
-							sndinfo.codeid = 400;
-							sndinfo.code_info = "Bad request";
+							sndinfo.codeid = 500;
+							sndinfo.code_info = "Internal server error";
 							// At the end of file
 							//file_operator::release(tk);
 						}
@@ -465,12 +505,16 @@ int main(int argc, char* argv[]) {
 					// Write line
 					int tk = atoi(path_pinfo.exts["token"].c_str());
 					if (file_token.count(tk)) {
-						try {
+						if (!file_token[tk].writeable()) {
+							sndinfo.codeid = 400;
+							sndinfo.code_info = "Bad request";
+						}
+						else try {
 							fputs(hinfo.content.toCharArray(), file_token[tk]);
 						}
 						catch (...) {
-							sndinfo.codeid = 400;
-							sndinfo.code_info = "Bad request";
+							sndinfo.codeid = 500;
+							sndinfo.code_info = "Internal server error";
 						}
 					}
 					else {
@@ -605,10 +649,18 @@ int main(int argc, char* argv[]) {
 							if (f != NULL) {
 								while (!feof(f)) {
 									// uperm = -1 for owner information.
+									// To do that??
+									//char buf3[1024];
+									// fgets(buf3, 1024, f);
+									// It does not work any (just have multi-line bug in case of fscanf multi-reading)
 									fscanf(f, "%d %s %d", &uid, buf, &uperm);
-									if (uperm != -1 && filename == buf && uid == chid && (!flag)) {
-										flag = true;
-										fprintf(fd, "%d %s %d\n", chid, buf, chto);
+									//int res = sscanf(buf3, "%d %s %d", &uid, buf, &uperm);
+									if (uperm != -1 && filename == buf && uid == chid) {
+										if (!flag) {
+											flag = true;
+											fprintf(fd, "%d %s %d\n", chid, buf, chto);
+										}
+										
 										//break;
 									}
 									else {
@@ -651,6 +703,7 @@ int main(int argc, char* argv[]) {
 					if (user_operator::quser(chto).empty()) {
 						// Just create
 						user_operator::adduser(chto, upasswd);
+						user_groups::insert(chto, -1);
 					}
 					else {
 						// Modify
