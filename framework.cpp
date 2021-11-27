@@ -308,13 +308,20 @@
 		 //printf("{%d->%d}%d ",i,l+pos,b[i]);								// debugging
 		 printf_d("%c", b[i]);
 	 }
+
 	 printf_d("Another raw receive for contents remaining:\n");
 	 // BUT, FOR CONTENT
 	 // WE HAVE TO GET MORE
 	 printf_d("Less: %d\n", lres);
-	 for (int i = 0; i < l - lres; i += this->rcbsz) {
+	 for (int i = 0; i < l - lres; i += this->last_receive) {
 		 h.content += raw_receive();
 	 }
+	 // As for non-external document promises full
+	 /*
+	 FILE *f = fopen("promise.gif", "wb");
+	 fwrite(h.content.toCharArray(), sizeof(char), h.content.length(), f);
+	 fclose(f);*/
+	 // End
 	 printf_d("End\n");										// debugging
 	 return h;
  }
@@ -353,6 +360,7 @@
  bytes ssocket::raw_receive()
  {
 	 int ret = recv(this->ace, this->recv_buf, sizeof(char)*this->rcbsz, 0);
+	 this->last_receive = ret;
 	 if (ret > 0) {
 		 bytes b;
 		 b.add(this->recv_buf, ret);
@@ -474,14 +482,21 @@
 			 bool wflag = false;
 			 string s = tmp.toString();
 			 //if (!s.empty()) s.pop_back();	// Here wasn't this kind of thing ('r').
+			 while (s.length() && (s[s.length() - 1] == '\n' || s[s.length() - 1] == '\r')) s.pop_back();
 			 while (s.length() && s[0] == '-') s.erase(s.begin());
-			 while (s.length() && s[s.length() - 1] == '-') s.pop_back();
-			 //printf("Debugger: s=\"%s\"\nDebugger:ba=\"%s\"\n", s.c_str(),ba.c_str());
+//			 while (s.length() && s[s.length() - 1] == '-') s.pop_back();
+			 if (s.length() > 2 && s.substr(s.length() - 2) == "--") {
+				 printf_d("EOB Checking...\n");
+				 s = s.substr(0, s.length() - 2);
+				 printf_d("EOB Info: \"%s\"\nEO Bound: \"%s\"", s.c_str(), ba.c_str());
+				 if (s == ba) break;	// End of processing already
+			 }
+			 //printf_d("Debugger: s=\"%s\"\nDebugger:ba=\"%s\"\n", s.c_str(),ba.c_str());
 			 if (s == ba && state == 0) {
 				 // Start boundary execution
 				 state = 1;
 				 // Clear too much end-lines
-				 if (p.content.length()) p.content.pop_back();
+				 //if (p.content.length()) p.content.pop_back();
 				 t.push_back(p);
 				 p = post_info();
 				 p.boundary = tmp.toString();
@@ -489,8 +504,9 @@
 				 continue;
 			 }
 			 else if (state == 1) {
-				 if (tmp.toString() == "") {
+				 if (s == "") {
 					 state = 0;
+					 tmp.clear();
 					 continue;
 				 }
 				 vector<string> s = splitLines(tmp.toCharArray(), ':', true, ' ');
@@ -506,11 +522,7 @@
 				 continue;
 			 }
 		 }
-		 else if (c[i] == '\r') {
-			 // Ignoring this kind of thing
-			 continue;
-		 }
-		 tmp += c[i];
+		 else tmp += c[i];
 	 }
 	 t.erase(t.begin());		// Erase first unused information
 	 //p.content += tmp;

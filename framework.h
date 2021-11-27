@@ -156,6 +156,6 @@ private:
 	SOCKET s,ace; // ace = Accepted socket
 	sockaddr acc; // acc = Accepted socket address
 	char *recv_buf;
-	int rcbsz;
+	int rcbsz, last_receive;
 	bool acc_errored,errored;
 };

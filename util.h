@@ -182,6 +182,13 @@ string dec2hex(int n) {
 	return res;
 }
 
+string dec2hexw(int n) {
+	string s = dec2hex(n);
+	char tmp[8];
+	sprintf(tmp, "%02s", s.c_str());
+	return tmp;
+}
+
 inline int permMatch(int req, int cur) {
 	return (req & cur) == req;
 }
@@ -190,7 +197,7 @@ inline int permMatch(int req, int cur) {
 string encodeBytes(bytes b) {
 	string res = "";
 	for (size_t i = 0; i < b.length(); i++) {
-		res += "\\x" + dec2hex(b[i]);
+		res += "\\x" + dec2hexw(b[i]);
 	}
 	return res;
 }

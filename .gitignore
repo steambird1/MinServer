@@ -265,3 +265,5 @@ __pycache__/
 *.txt
 /index.html
 /ms.exe
+/a.gif
+*.gif
