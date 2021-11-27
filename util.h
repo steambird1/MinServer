@@ -212,6 +212,14 @@ string sCurrDir(string s = "") {
 	GetCurrentDirectory(MAX_PATH, buf3);
 	return string(buf3) + "\\" + s;
 }
+
+string sRemovingQuotes(string s) {
+	string t = s;
+	if (t[0] == '"' || t[0] == '\'') t = t.substr(1);
+	if (t[t.length() - 1] == '"' || t[t.length() - 1] == '\'') t.pop_back();
+	return t;
+}
+
 /*
 void fclose_m(FILE *f) {
 	fclose(f);

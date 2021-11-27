@@ -26,6 +26,11 @@ public:
 			if (woks.count(operate[i])) this->write_ok = true;
 		}
 		this->place = fopen(filename, operate);
+		// Make sure no error on RW
+		if (this->place == NULL) {
+			this->read_ok = false;
+			this->write_ok = false;
+		}
 	}
 	file_structure(FILE *obj, bool rok, bool wok) : place(obj), read_ok(rok), write_ok(wok) {}
 	operator FILE*&() {
@@ -314,7 +319,7 @@ void __bCopyFile(const char *oldf, const char *newf) {
 char buf4[4096], buf5[4096];
 
 int main(int argc, char* argv[]) {
-	cout << "Running in directory: " << sCurrDir("example") << endl;
+	//cout << "Running in directory: " << sCurrDir("example") << endl;
 	for (int i = 1; i < argc; i++) {
 		string it = argv[i];
 		if (it == "--default-page") {
@@ -822,7 +827,7 @@ int main(int argc, char* argv[]) {
 					for (auto &i : post_infolist) {
 						// Knowledges: https://blog.csdn.net/devil_2009/article/details/8013356
 						disp_info d = i.toDispInfo();
-						int t = file_operator::open(uids, d.attr["name"], "wb");
+						int t = file_operator::open(uids, sCurrDir(sRemovingQuotes(d.attr["name"])), "wb");
 						if (t < 0) {
 							sndinfo.codeid = 500;
 							sndinfo.code_info = "Internal server error";
