@@ -13,6 +13,7 @@
 
  bytes::bytes(const char * b)
  {
+	 clear();
 	 (*this) += string(b);
  }
 
@@ -301,7 +302,7 @@
 	 printf_d("Additional receiving:(ASCII=%d, pos=%zd, l=%d)",b[pos],pos,l);				// debuggin
 	 printf_d("Contented informations:\n");
 	 int lres = 0;	// Might be <0 !!!								// Do NOT use signed int!!!
-	 for (size_t i = pos; i < l + pos; i++) {
+	 for (size_t i = pos; i < min(l + pos, b.length()); i++) {
 		 h.content += b[i];
 		 lres++;
 		 //printf("{%d->%d}%d ",i,l+pos,b[i]);								// debugging
@@ -560,6 +561,7 @@
 	 return res;
  }
 
+ // It requires open in write/append binary.
  void post_info::saveContent(FILE * hnd)
  {
 	 fwrite(this->content.toCharArray(), sizeof(char), this->content.length(), hnd);

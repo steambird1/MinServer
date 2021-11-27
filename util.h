@@ -101,6 +101,11 @@ bytes not_found = "<html><head><title>Page not found - 404</title></head><body><
 bytes not_supported = "<html><head><title>Not Implemented - 501</title></head><body><h1>Not Implemented</h1><p>Request not implemented by server.</p><hr /><p>MinServer 2.0</p></body></html>";
 bytes no_perm = "<html><head><title>Forbidden - 403</title></head><body><h1>Forbidden</h1><p>You can't view this.</p><hr /><p>MinServer 2.0</p></body></html>";
 
+// !! It requires sprintf() with redirection information !!
+string ok = "<html><head><title>OK - 200</title></head><body><h1>OK</h1><p>Requested operation completed successfully.</p>%s<hr /><p>MinServer 2.0</p></body></html>";
+// !! It requires sprintf() for the link and ENCODED LINK and sprintf to 'ok' !!
+string redirect = "<p>You are going to be redirect. If this page does not redirect automaticly, click <a href=\"%s\">here</a>.</p><script>window.location.href = \"%s\"</script>";
+
 // Controller class.
 class uidctrl {
 public:
@@ -207,3 +212,10 @@ string sCurrDir(string s = "") {
 	GetCurrentDirectory(MAX_PATH, buf3);
 	return string(buf3) + "\\" + s;
 }
+/*
+void fclose_m(FILE *f) {
+	fclose(f);
+	f = NULL;
+}*/
+
+#define fclose_m(file_ptr) do { fclose(file_ptr); file_ptr = NULL; } while (false)

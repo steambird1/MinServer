@@ -16,8 +16,8 @@ set<char> roks = { 'r', '+' }, woks = { 'w','a','+' };
 // Uses for MinServer file opener for permission verify
 class file_structure {
 public:
-	file_structure() : read_ok(false), write_ok(false) {
-		// For map
+	file_structure(int nptr = 0) : read_ok(false), write_ok(false) {
+		// For map or fclose_m()
 	}
 	file_structure(const char *filename, const char *operate) {
 		size_t sl = strlen(operate);
@@ -91,7 +91,7 @@ public:
 	static void insert(int uid, int gid) {
 		FILE *f = fopen(group_path.c_str(), "a+");
 		fprintf(f, "%d %d\n", uid, gid);
-		fclose(f);
+		fclose_m(f);
 	}
 	static void remove(int uid, int gid) {
 		string tmp = makeTemp();
@@ -102,8 +102,8 @@ public:
 			if (u != uid || g != gid)
 				fprintf(ft, "%d %d\n", u, g);
 		}
-		fclose(f);
-		fclose(ft);
+		fclose_m(f);
+		fclose_m(ft);
 		CopyFile(tmp.c_str(), group_path.c_str(), FALSE);
 	}
 	static set<int> query(int uid) {
@@ -135,11 +135,11 @@ public:
 				fscanf(f, "%d %s", &uid, buf2);
 				fprintf(ft, "%d %s\n", uid, buf2);
 			}
-			fclose(f);
+			fclose_m(f);
 		}
 		
 		fprintf(ft, "%d %s\n", uid, m.toString().c_str());
-		fclose(ft);
+		fclose_m(ft);
 		CopyFile(tmps.c_str(), user_data_path.c_str(), FALSE);
 	}
 
@@ -160,8 +160,8 @@ public:
 				}
 			}
 		}
-		fclose(f);
-		fclose(ft);
+		fclose_m(f);
+		fclose_m(ft);
 		CopyFile(tmps.c_str(), user_data_path.c_str(), FALSE);
 	}
 
@@ -175,11 +175,11 @@ public:
 				int uid2;
 				fscanf(f, "%d %s", &uid2, buf2);
 				if (uid == uid2) {
-					fclose(f);
+					fclose_m(f);
 					return buf2;
 				}
 			}
-			fclose(f);
+			fclose_m(f);
 		}
 		return "";
 	}
@@ -216,12 +216,12 @@ public:
 					fprintf(fd, "%d %s %d\n", uid, buf, uperm);
 				}
 			}
-			fclose(f);
+			fclose_m(f);
 		}
 		if (!flag) {
 			fprintf(fd, "%d %s -1\n", chto, filename.c_str());
 		}
-		fclose(fd);
+		fclose_m(fd);
 		CopyFile(dest.c_str(), perm_data_path.c_str(), FALSE);
 		
 	}
@@ -242,9 +242,55 @@ class file_operator {
 public:
 	static bool release(int tk) {
 		if (!file_token.count(tk)) return false;
-		fclose(file_token[tk]);
+		fclose_m(file_token[tk]);
 		file_token.erase(tk);
 		return true;
+	}
+	const static int perm_denied = -400;	// Permission denied
+	const static int op_err = -500;		// Error in operation
+	// To abs() for sending code id
+	static int open(int suid, string filename, string operate) {
+		set<int> ug = user_groups::query(suid);
+		FILE *f = fopen(perm_data_path.c_str(), "r");
+		bool flag3 = false;
+		int uid, uperm = 10, rperm = getPermOf(operate);
+		if (!fileExists(filename)) {
+			flag3 = true;
+			if (f != NULL) fclose_m(f);	// Close older one
+			f = fopen(perm_data_path.c_str(), "a+");
+			fprintf(f, "%d %s %d\n", suid, filename.c_str(), -1);
+			fprintf(f, "%d %s %d\n", suid, filename.c_str(), 7);
+			fclose_m(f);
+		}
+		if (f != NULL) {
+
+			while (!feof(f)) {
+				// buf uses begin
+				// uperm = -1 for owner information.
+				int f4 = fscanf(f, "%d %s %d", &uid, buf, &uperm);
+				if (f4 != 3) break;	//??
+				if (filename == buf && (uid == suid || (uid < 0 && ug.count(uid))) && uperm > 0 && (permMatch(rperm, uperm))) {
+					flag3 = true;
+					break;
+				}
+				// buf uses end
+			}
+			fclose_m(f);
+		}
+		if (!flag3) {
+			return perm_denied;
+		}
+		else {
+			int tk = findToken();
+			file_structure fp = file_structure(filename.c_str(), operate.c_str());
+			if (fp == NULL) {
+				return op_err;
+			}
+			else {
+				file_token[tk] = fp;
+				return tk;
+			}
+		}
 	}
 };
 
@@ -259,10 +305,13 @@ void __bCopyFile(const char *oldf, const char *newf) {
 	const char* ob = readAll(oldf).toCharArray();
 	cout << "Copy data: " << endl << ob << endl << "== END ==" << endl;
 	fwrite(ob, sizeof(char), readAll(oldf).length(), fnew);
-	fclose(fnew);
+	fclose_m(fnew);
 }
 #define CopyFile(oldf, newf, sv) __bCopyFile(oldf, newf)
 */
+
+// Allocate ONCE
+char buf4[4096], buf5[4096];
 
 int main(int argc, char* argv[]) {
 	cout << "Running in directory: " << sCurrDir("example") << endl;
@@ -356,7 +405,7 @@ int main(int argc, char* argv[]) {
 			pub_fn.insert(buf);
 			// buf uses end
 		}
-		fclose(f);
+		fclose_m(f);
 	}
 	*/
 	ssocket s = ssocket(80);
@@ -384,7 +433,7 @@ int main(int argc, char* argv[]) {
 
 		bool flag;
 
-		set<string> operations = { "file_operate", "auth_workspace" };
+		set<string> operations = { "file_operate", "auth_workspace", "uploader" };
 		if (path_pinfo.path.size() == 1 && operations.count(path_pinfo.path[0])) {
 			if (path_pinfo.path[0] == "file_operate") {
 				// It's not necessary to change to command format. Why not directly fopen()?
@@ -405,7 +454,7 @@ int main(int argc, char* argv[]) {
 					else {
 						// Open file, token returns
 					// (Here we requires permissions)
-						int utoken, rperm = getPermOf(path_pinfo.exts["type"]);
+						int utoken;
 						if (path_pinfo.exts.count("utoken")) {
 							utoken = atoi(path_pinfo.exts["utoken"].c_str());
 						}
@@ -418,49 +467,26 @@ int main(int argc, char* argv[]) {
 							suid = 0;
 						else
 							suid = uidctrl::uidof(utoken);
-						set<int> ug = user_groups::query(suid);
-						FILE *f = fopen(perm_data_path.c_str(), "r");
-						bool flag3 = false;
-						int uid, uperm = 10;
-						if (!fileExists(path_pinfo.exts["name"])) {
-							flag3 = true;
-							if (f != NULL) fclose(f);	// Close older one
-							f = fopen(perm_data_path.c_str(), "a+");
-							fprintf(f, "%d %s %d\n", suid, path_pinfo.exts["name"].c_str(), -1);
-							fprintf(f, "%d %s %d\n", suid, path_pinfo.exts["name"].c_str(), 7);
-							fclose(f);
-						}
-						if (f != NULL) {
-							
-								while (!feof(f)) {
-									// buf uses begin
-									// uperm = -1 for owner information.
-									int f4 = fscanf(f, "%d %s %d", &uid, buf, &uperm);
-									if (f4 != 3) break;	//??
-									if (path_pinfo.exts["name"] == buf && (uid == suid || (uid < 0 && ug.count(uid))) && uperm > 0) {
-										flag3 = true;
-										break;
-									}
-									// buf uses end
-								}
-								fclose(f);
-						}
-						if ((!flag3) || (!permMatch(rperm, uperm) && fileExists(path_pinfo.exts["name"]))) {
-							sndinfo.codeid = 403;
-							sndinfo.code_info = "Forbidden";
-
+						// Begin of having uid, filename and type
+						int tr = file_operator::open(suid, path_pinfo.exts["name"], path_pinfo.exts["type"]);
+						if (tr < 0) {
+							string msg = "";
+							tr = 0 - tr;
+							switch (tr) {
+								case 400:
+									msg = "Permission denied";
+									break;
+								case 500:
+									msg = "Internal server error";
+									break;
+								default:
+									break;
+							}
+							sndinfo.codeid = tr;
+							sndinfo.code_info = msg;
 						}
 						else {
-							int tk = findToken();
-							file_structure fp = file_structure(path_pinfo.exts["name"].c_str(), path_pinfo.exts["type"].c_str());
-							if (fp == NULL) {
-								sndinfo.codeid = 400;
-								sndinfo.code_info = "Bad request";
-							}
-							else {
-								file_token[tk] = fp;
-								sndinfo.content = to_string(tk);
-							}
+							sndinfo.content = to_string(tr);
 						}
 						// End...
 						
@@ -570,7 +596,7 @@ int main(int argc, char* argv[]) {
 								break;
 							}
 						}
-						fclose(f);
+						fclose_m(f);
 						if (!flag) {
 							sndinfo.codeid = 403;
 							sndinfo.code_info = "Forbidden";
@@ -604,7 +630,7 @@ int main(int argc, char* argv[]) {
 								}
 							}
 						}
-						fclose(f);
+						fclose_m(f);
 					}
 					if (!flag) {
 						sndinfo.codeid = 403;
@@ -636,7 +662,7 @@ int main(int argc, char* argv[]) {
 								}
 							}
 						}
-						fclose(fo);
+						fclose_m(fo);
 						if (!flag) {
 							sndinfo.codeid = 403;
 							sndinfo.code_info = "Forbidden";
@@ -667,12 +693,12 @@ int main(int argc, char* argv[]) {
 										fprintf(fd, "%d %s %d\n", uid, buf, uperm);
 									}
 								}
-								fclose(f);
+								fclose_m(f);
 							}
 							if (!flag) {
 								fprintf(fd, "%d %s %d\n", chid, filename.c_str(), chto);
 							}
-							fclose(fd);
+							fclose_m(fd);
 							cout << "Copyfile: " << dest << " -> " << perm_data_path << endl;
 							CopyFile(dest.c_str(), perm_data_path.c_str(), FALSE);
 							cout << "Lasterr: " << GetLastError() << endl;
@@ -725,7 +751,7 @@ int main(int argc, char* argv[]) {
 							break;
 						}
 					}
-					fclose(fd);
+					fclose_m(fd);
 
 					if (state) {
 						int loggon = uidctrl::uidof(atoi(path_pinfo.exts["token"].c_str()));
@@ -744,8 +770,8 @@ int main(int argc, char* argv[]) {
 								}
 								// buf uses end
 							}
-							fclose(fd);
-							fclose(de);
+							fclose_m(fd);
+							fclose_m(de);
 							CopyFile(dest.c_str(), user_data_path.c_str(), FALSE);
 						}
 					}
@@ -753,11 +779,11 @@ int main(int argc, char* argv[]) {
 						FILE *f = fopen(user_data_path.c_str(), "a+");
 						// Check for user-states and create
 						fprintf(f, "%d %s\n", chto, upass_m.toString().c_str());
-						fclose(f);
+						fclose_m(f);
 						user_groups::insert(chto, default_join_g);
 					}
 					// End
-					//fclose(f);*/
+					//fclose_m(f);*/
 				}
 				else {
 				sndinfo.codeid = 501;
@@ -772,18 +798,50 @@ int main(int argc, char* argv[]) {
 				
 				*/
 
-				//else if (op == "groups_join") {
-				// To be implemented
-				//int utoken = atoi(path_pinfo.exts["token"].c_str());
-				//}
-				//else if (op == "groups_remove") {
-				// To be implemented
-				//}
 				// End of codes
 				// Remove that:
 				//sndinfo.codeid = 501;
 				//sndinfo.code_info = "Not Implemented";
 				//sndinfo.content = not_supported;
+			}
+			else if (path_pinfo.path[0] == "uploader") {
+
+				/*sndinfo.codeid = 501;
+				sndinfo.code_info = "Not Implemented";
+				sndinfo.content = not_supported;
+				*/
+
+				post_infolist = hinfo.toPost();
+				int uids = 0;
+				if (path_pinfo.exts.count("utoken"))
+				{
+					uids = uidctrl::uidof(atoi(path_pinfo.exts["utoken"].c_str()));
+				}
+
+				bool flag = false;
+					for (auto &i : post_infolist) {
+						// Knowledges: https://blog.csdn.net/devil_2009/article/details/8013356
+						disp_info d = i.toDispInfo();
+						int t = file_operator::open(uids, d.attr["name"], "wb");
+						if (t < 0) {
+							sndinfo.codeid = 500;
+							sndinfo.code_info = "Internal server error";
+							flag = true;
+							break;
+						}
+						i.saveContent(file_token[t]);
+						file_operator::release(t);
+					}
+
+					if (!flag) {
+						memset(buf4, 0, sizeof(buf4));
+						if (path_pinfo.exts.count("jumpto")) {
+							sprintf(buf4, redirect.c_str(), path_pinfo.exts["jumpto"].c_str(), encodeBytes(path_pinfo.exts["jumpto"]).c_str());
+						}
+						sprintf(buf5, ok.c_str(), buf4);
+						sndinfo.content = buf5;
+					}
+					
 			}
 		}
 		else {
@@ -806,7 +864,7 @@ int main(int argc, char* argv[]) {
 					}
 					// buf uses end
 				}
-				fclose(f);
+				fclose_m(f);
 			}
 			if (flag2) {
 				// Get path
@@ -828,7 +886,7 @@ int main(int argc, char* argv[]) {
 					sndinfo.code_info = "Not found";
 					sndinfo.content = not_found;
 				} else {
-					sndinfo.attr["Connection"] = "keep-alive";
+					sndinfo.attr["Connection"] = "close";	// It's stupid to keep alive
 					sndinfo.attr["Content-Type"] = findType(rpath);
 
 					cout << "Sending type: " << sndinfo.attr["Content-Type"] << endl;
@@ -932,17 +990,17 @@ int main(int argc, char* argv[]) {
 							}
 							fputc(c, fr);
 						}
-						fclose(f);
-						fclose(fr);
+						fclose_m(f);
+						fclose_m(fr);
 						fr = fopen(dest.c_str(), "rb");
 						sndinfo.loadContent(fr);	// Here doesn't leak
-						fclose(fr);
+						fclose_m(fr);
 					}
 					else {
 						// Send directly
 						FILE *f = fopen(rpath.c_str(), "rb");
 						sndinfo.loadContent(f);
-						fclose(f);
+						fclose_m(f);
 					}
 				}
 			}
@@ -960,7 +1018,7 @@ int main(int argc, char* argv[]) {
 		cout << "Proving file: " << desprov << endl;
 		FILE *fx = fopen(desprov.c_str(), "wb");
 		fwrite(bs.toCharArray(), sizeof(char), sndinfo.content.length(), fx);
-		fclose(fx);
+		fclose_m(fx);
 		// End
 		*/
 		// Leakage disappears, but I don't know why.
