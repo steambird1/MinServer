@@ -318,12 +318,22 @@ void __bCopyFile(const char *oldf, const char *newf) {
 // Allocate ONCE
 char buf4[4096], buf5[4096];
 
+int portz = 80;
+
 int main(int argc, char* argv[]) {
 	//cout << "Running in directory: " << sCurrDir("example") << endl;
 	for (int i = 1; i < argc; i++) {
 		string it = argv[i];
 		if (it == "--default-page") {
 			not_found = readAll(argv[i + 1]);
+			i++;
+		}
+		else if (it == "--default-ns") {
+			not_supported = readAll(argv[i + 1]);
+			i++;
+		}
+		else if (it == "--default-ok") {
+			ok = readAll(argv[i + 1]).toString();
 			i++;
 		}
 		else if (it == "--perm-table") {
@@ -338,8 +348,16 @@ int main(int argc, char* argv[]) {
 			public_file_path = argv[i + 1];
 			i++;
 		}
+		else if (it == "--groups-table") {
+			group_path = argv[i + 1];
+			i++;
+		}
 		else if (it == "--default-join") {
 			default_join_g = atoi(argv[i + 1]);
+			i++;
+		}
+		else if (it == "--port") {
+			portz = atoi(argv[i + 1]);
 			i++;
 		}
 		else if (it == "--user-group") {
@@ -390,7 +408,7 @@ int main(int argc, char* argv[]) {
 				i += 2;
 			}
 			else if (op == "--set") {
-
+				
 			}
 			else if (op == "--chfown") {
 
@@ -413,11 +431,12 @@ int main(int argc, char* argv[]) {
 		fclose_m(f);
 	}
 	*/
-	ssocket s = ssocket(80);
+	ssocket s = ssocket(portz);
 	if (!s.vaild()) {
 		cout << "Can't bind or listen!" << endl;
 		exit(1);
 	}
+	cout << "* Listening started at port " << portz << " *" << endl;
 	while (true) {
 		s.accepts();
 		if (!s.accept_vaild()) {
@@ -704,9 +723,9 @@ int main(int argc, char* argv[]) {
 								fprintf(fd, "%d %s %d\n", chid, filename.c_str(), chto);
 							}
 							fclose_m(fd);
-							cout << "Copyfile: " << dest << " -> " << perm_data_path << endl;
+							cout_d << "Copyfile: " << dest << " -> " << perm_data_path << endl_d;
 							CopyFile(dest.c_str(), perm_data_path.c_str(), FALSE);
-							cout << "Lasterr: " << GetLastError() << endl;
+							cout_d << "Lasterr: " << GetLastError() << endl_d;
 							
 						}
 
@@ -734,7 +753,7 @@ int main(int argc, char* argv[]) {
 					if (user_operator::quser(chto).empty()) {
 						// Just create
 						user_operator::adduser(chto, upasswd);
-						user_groups::insert(chto, -1);
+						user_groups::insert(chto, default_join_g);
 					}
 					else {
 						// Modify
@@ -853,17 +872,17 @@ int main(int argc, char* argv[]) {
 			if (hinfo.process == "POST")
 				post_infolist = hinfo.toPost(); // Can be safe only here
 			pair<string, string> m = resolveMinorPath(hinfo.path);
-			cout << "Expected main path: " << m.first << endl;
-			cout << "Expected external: " << m.second << endl;
+			cout_d << "Expected main path: " << m.first << endl_d;
+			cout_d << "Expected external: " << m.second << endl_d;
 			bool flag2 = false;
 			FILE *f = fopen(public_file_path.c_str(), "r");
 			if (f != NULL) {
 				while (!feof(f)) {
 					// buf uses begin
 					fgets(buf, MAX_PATH, f);
-					cout << "Try: Got: " << buf << endl;
+					cout_d << "Try: Got: " << buf << endl_d;
 					if (m.first == sRemovingEOL(buf)) {	// As there is end of line in BUF
-						cout << "Equals: " << m.first << endl;
+						cout_d << "Equals: " << m.first << endl_d;
 						flag2 = true;
 						break;
 					}
@@ -885,7 +904,7 @@ int main(int argc, char* argv[]) {
 						break;
 					}
 				}
-				cout << "Finally path: " << rpath << endl;
+				cout_d << "Finally path: " << rpath << endl_d;
 				if (!flag) {
 					sndinfo.codeid = 404;
 					sndinfo.code_info = "Not found";
@@ -894,13 +913,13 @@ int main(int argc, char* argv[]) {
 					sndinfo.attr["Connection"] = "close";	// It's stupid to keep alive
 					sndinfo.attr["Content-Type"] = findType(rpath);
 
-					cout << "Sending type: " << sndinfo.attr["Content-Type"] << endl;
+					cout_d << "Sending type: " << sndinfo.attr["Content-Type"] << endl_d;
 
 					if (sndinfo.attr["Content-Type"] == "text/html") {
 						// Insert script
-						cout << "Inserting script ..." << endl;
+						cout_d << "Inserting script ..." << endl_d;
 						string dest = makeTemp();
-						cout << "Tempatory file: " << dest << endl;
+						cout_d << "Tempatory file: " << dest << endl_d;
 						//CopyFile(rpath.c_str(), dest.c_str(), FALSE);
 						// Simply resolve <head> or <body>.
 						string qu = "";
@@ -914,7 +933,7 @@ int main(int argc, char* argv[]) {
 								mode1 = true;
 							}
 							else if (c == '>') {
-								cout << "Label got: " << c << endl;
+								cout_d << "Label got: " << c << endl_d;
 								mode1 = false;
 								if (sToLower(qu) == "head" || sToLower(qu) == "body") {
 									// Insert script, now!
@@ -957,21 +976,11 @@ int main(int argc, char* argv[]) {
 									t += hinfo.process.length();
 									t += hinfo.proto_ver.length();
 
-									//	cout << "S: " << s << endl;
-
-								//	//	cout << "BA: " << ba << endl;	//???
-
 									if (!ua.length()) ua = " ";	// To be not really empty ???
 									if (!pa.length()) pa = " ";
 
-									//	cout << "UA: " << ua << endl;
-									//	cout << "PA: " << pa << endl;
-
-									//	cout << "HP: " << hinfo.process << endl;
-									//	cout << "PV: " << hinfo.proto_ver << endl;
-
 										// Print
-									cout << "Allocated length for buf: " << t + 20 << endl;
+									cout_d << "Allocated length for buf: " << t + 20 << endl_d;
 									char *buf = new char[t + 20];	// Also added ua/pa spaces
 									//      Buffer|Template|Args -->
 									sprintf(buf, s.c_str(), hinfo.process.c_str(), hinfo.proto_ver.c_str(), ua.c_str(), pa.c_str());	// Fails here, but why?

@@ -27,8 +27,12 @@ New changes:
 // Not include BUG (NOT FEATURE) FIXES.
 #define SEABIRD_NET_STRUCTURE_VAR 2
 
-#define SEABIRD_NET_DEBUG 1
-#define SEABIRD_NET_DEBUG_PRINT(...) if (SEABIRD_NET_DEBUG) printf(__VA_ARGS__)
+#define SEABIRD_NET_DEBUG 0
+#if SEABIRD_NET_DEBUG
+#define SEABIRD_NET_DEBUG_PRINT(...) printf(__VA_ARGS__)
+#else
+#define SEABIRD_NET_DEBUG_PRINT(...) __noop
+#endif
 #define printf_d(...) SEABIRD_NET_DEBUG_PRINT(__VA_ARGS__)
 
 map<string, string> contentTypes();

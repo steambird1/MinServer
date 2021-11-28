@@ -234,3 +234,28 @@ void fclose_m(FILE *f) {
 }*/
 
 #define fclose_m(file_ptr) do { fclose(file_ptr); file_ptr = NULL; } while (false)
+
+// Uses for debug:
+// A support of none-stream
+
+#define MINSERVER_DEBUG 0
+#if MINSERVER_DEBUG
+#define cout_d cout
+#define endl_d endl
+#else
+
+class null_stream {
+public:
+	null_stream() {
+
+	}
+} n_stream;
+
+// For some reason ??
+template <typename Ty>
+null_stream& operator << (null_stream &origin, Ty other) {
+	return origin;
+}
+#define cout_d n_stream
+#define endl_d nullptr
+#endif
