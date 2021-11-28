@@ -136,6 +136,9 @@
     <None Include="mslib.js" />
     <None Include="mspara.js" />
   </ItemGroup>
+  <ItemGroup>
+    <Text Include="help.txt" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

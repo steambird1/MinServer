@@ -1,0 +1,32 @@
+MinServer 1.1
+Usage: MinServer [options]
+
+Run MinServer without executable options to launch server.
+Options are:
+	--default-page		Set default display page (Show on 404).
+	--default-ns		Set not-implemented page (Show on 500).
+	--default-ok		Set default OK page (Show on 200, especially /upload).
+	--perm-table		Set where permission table is (Default: $permission.txt).
+	--users-table		Set where user table is (Default: $users.txt).
+	--public-table		Set where published-file table is (Can be visited directly or as a 403, Default: $public.txt).
+	--groups-table		Set where group-file table is (Default: $groups.txt).
+
+Executable options are:
+	--user-operate		User operations.
+	Operations are:
+		--add [uid] [passwd]
+		--query [uid]
+		--set [uid] [passwd]
+		--chfown [to uid] [file]
+		--chfperm [to uid] [set perm] [file]
+
+	--user-group		User groups.
+	Operations are:
+		--insert [uid] [gid]
+		--remove [uid] [gid]
+		--query [uid]
+
+	--help				Show help message and exit.
+
+	After these options MinServer will exit without launching server.
+

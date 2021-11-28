@@ -262,8 +262,17 @@ __pycache__/
 
 *.lnk
 *.url
-*.txt
 /index.html
 /ms.exe
 /a.gif
 *.gif
+/$groups.txt
+/$permission.txt
+/$public.txt
+/$users.txt
+/a.txt
+/Future plans.txt
+/z.txt
+/w2.txt
+/w.txt
+/q.txt

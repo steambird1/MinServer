@@ -67,13 +67,6 @@ string CReadLine(FILE *f) {
 	return tmp;
 }
 
-// start with '$' disallows ANY RW.
-string perm_data_path = "$permission.txt";
-string user_data_path = "$users.txt";
-string public_file_path = "$public.txt";
-string group_path = "$groups.txt";
-int default_join_g = -1;
-
 char buf[MAX_PATH],buf2[100];
 set<string> pub_fn;
 
@@ -131,6 +124,7 @@ public:
 	// It can only be runned local:
 	// (* This is ADD)
 	static void adduser(int uid, string passwd) {
+		user_groups::insert(uid, default_join_g);
 		MD5 m = MD5(passwd);
 		string tmps = makeTemp();
 		FILE *f = fopen(user_data_path.c_str(), "r"), *ft = fopen(tmps.c_str(), "w");
@@ -142,7 +136,6 @@ public:
 			}
 			fclose_m(f);
 		}
-		
 		fprintf(ft, "%d %s\n", uid, m.toString().c_str());
 		fclose_m(ft);
 		CopyFile(tmps.c_str(), user_data_path.c_str(), FALSE);
@@ -230,8 +223,36 @@ public:
 		CopyFile(dest.c_str(), perm_data_path.c_str(), FALSE);
 		
 	}
-	static void chperm(string file, int to_uid, int to_perm) {
-		// To be implemented
+	// Requires after-auth.
+	static void chperm(string filename, int chid, int chto) {
+		//	else {
+		int uid, uperm;
+				FILE *f = fopen(perm_data_path.c_str(), "r");
+				string dest = makeTemp();
+				FILE *fd = fopen(dest.c_str(), "w");
+				bool flag = false;
+				if (f != NULL) {
+					while (!feof(f)) {
+						fscanf(f, "%d %s %d", &uid, buf, &uperm);
+						if (uperm != -1 && filename == buf && uid == chid) {
+							if (!flag) {
+								flag = true;
+								fprintf(fd, "%d %s %d\n", chid, buf, chto);
+							}
+						}
+						else {
+							fprintf(fd, "%d %s %d\n", uid, buf, uperm);
+						}
+					}
+					fclose_m(f);
+				}
+				if (!flag) {
+					fprintf(fd, "%d %s %d\n", chid, filename.c_str(), chto);
+				}
+				fclose_m(fd);
+				CopyFile(dest.c_str(), perm_data_path.c_str(), FALSE);
+
+		//	}
 	}
 	static int allocnew(void) {
 		int r;
@@ -299,26 +320,16 @@ public:
 	}
 };
 
-/*
-#ifdef CopyFile
-#undef CopyFile
-#endif
-
-// To keep
-void __bCopyFile(const char *oldf, const char *newf) {
-	FILE *fnew = fopen(newf, "wb");
-	const char* ob = readAll(oldf).toCharArray();
-	cout << "Copy data: " << endl << ob << endl << "== END ==" << endl;
-	fwrite(ob, sizeof(char), readAll(oldf).length(), fnew);
-	fclose_m(fnew);
-}
-#define CopyFile(oldf, newf, sv) __bCopyFile(oldf, newf)
-*/
-
 // Allocate ONCE
 char buf4[4096], buf5[4096];
 
 int portz = 80;
+// start with '$' disallows ANY RW.
+string perm_data_path = "$permission.txt";
+string user_data_path = "$users.txt";
+string public_file_path = "$public.txt";
+string group_path = "$groups.txt";
+int default_join_g = -1;
 
 int main(int argc, char* argv[]) {
 	//cout << "Running in directory: " << sCurrDir("example") << endl;
@@ -408,16 +419,30 @@ int main(int argc, char* argv[]) {
 				i += 2;
 			}
 			else if (op == "--set") {
-				
+				int ureq = atoi(argv[i + 2]);
+				string pwd = argv[i + 3];
+				user_operator::moduser(ureq, pwd);
+				i += 3;
 			}
 			else if (op == "--chfown") {
-
+				int uto = atoi(argv[i + 2]);
+				string file = argv[i + 3];
+				user_operator::chown(file, uto);
+				i += 2;
 			}
 			else if (op == "--chfperm") {
-
+				int uto = atoi(argv[i + 2]);
+				int pto = atoi(argv[i + 3]);
+				string file = argv[i + 4];
+				user_operator::chperm(file, uto, pto);
+				i += 3;
 			}
 			return 0;
-		}// Here will be a lot to be implemented
+		}
+		else if (it == "--help") {
+		cout << readAll("help.txt").toString() << endl;
+		return 0;
+		}
 	}
 	/*
 	FILE *f = fopen(public_file_path.c_str(), "r");
@@ -670,8 +695,8 @@ int main(int argc, char* argv[]) {
 					int chid = atoi(path_pinfo.exts["touid"].c_str());
 					int chto = atoi(path_pinfo.exts["toperm"].c_str());
 					// Get ownership first
-					FILE *fo = fopen(perm_data_path.c_str(), "r");
 					int uids = uidctrl::uidof(token);
+					FILE *fo = fopen(perm_data_path.c_str(), "r");
 					set<int> ok_groups = user_groups::query(uids);
 					if (fo != NULL) {
 						int uid, uperm, uresult;	// Here might causes warning -- It's ok
@@ -692,43 +717,9 @@ int main(int argc, char* argv[]) {
 							sndinfo.code_info = "Forbidden";
 						}
 						else {
-							FILE *f = fopen(perm_data_path.c_str(), "r");
-							string dest = makeTemp();
-							FILE *fd = fopen(dest.c_str(), "w");
-							bool flag = false;
-							if (f != NULL) {
-								while (!feof(f)) {
-									// uperm = -1 for owner information.
-									// To do that??
-									//char buf3[1024];
-									// fgets(buf3, 1024, f);
-									// It does not work any (just have multi-line bug in case of fscanf multi-reading)
-									fscanf(f, "%d %s %d", &uid, buf, &uperm);
-									//int res = sscanf(buf3, "%d %s %d", &uid, buf, &uperm);
-									if (uperm != -1 && filename == buf && uid == chid) {
-										if (!flag) {
-											flag = true;
-											fprintf(fd, "%d %s %d\n", chid, buf, chto);
-										}
-										
-										//break;
-									}
-									else {
-										fprintf(fd, "%d %s %d\n", uid, buf, uperm);
-									}
-								}
-								fclose_m(f);
-							}
-							if (!flag) {
-								fprintf(fd, "%d %s %d\n", chid, filename.c_str(), chto);
-							}
-							fclose_m(fd);
-							cout_d << "Copyfile: " << dest << " -> " << perm_data_path << endl_d;
-							CopyFile(dest.c_str(), perm_data_path.c_str(), FALSE);
-							cout_d << "Lasterr: " << GetLastError() << endl_d;
-							
+							user_operator::chperm(filename, chid, chto);
 						}
-
+						// End
 					}
 					else {
 						sndinfo.codeid = 403;
@@ -753,7 +744,6 @@ int main(int argc, char* argv[]) {
 					if (user_operator::quser(chto).empty()) {
 						// Just create
 						user_operator::adduser(chto, upasswd);
-						user_groups::insert(chto, default_join_g);
 					}
 					else {
 						// Modify
