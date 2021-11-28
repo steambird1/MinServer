@@ -84,7 +84,11 @@ function msuser(token, xhobject, f_operate, u_operate, myuid) {
     }
 
     this.chperm = function (filename, chto, perm) {
-        // To be implemented...
+        this.xhobject.open("GET", this.u_operate + "?operate=chperm&file=" + filename + "&token=" + this.token + "&touid=" + chto + "&toperm=" + perm, false);
+        this.xhobject.send(null);
+        if (this.xhobject.status != 200) {
+            throw new msexception("Permission denied", 1);
+        }
     }
 
     this.modify = function (new_pass) {
