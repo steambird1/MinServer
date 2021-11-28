@@ -12,6 +12,12 @@
 using namespace std;
 
 set<char> roks = { 'r', '+' }, woks = { 'w','a','+' };
+// start with '$' disallows ANY RW.
+string perm_data_path = "$permission.txt";
+string user_data_path = "$users.txt";
+string public_file_path = "$public.txt";
+string group_path = "$groups.txt";
+int default_join_g = -1;
 
 // Uses for MinServer file opener for permission verify
 class file_structure {
@@ -324,12 +330,6 @@ public:
 char buf4[4096], buf5[4096];
 
 int portz = 80;
-// start with '$' disallows ANY RW.
-string perm_data_path = "$permission.txt";
-string user_data_path = "$users.txt";
-string public_file_path = "$public.txt";
-string group_path = "$groups.txt";
-int default_join_g = -1;
 
 int main(int argc, char* argv[]) {
 	//cout << "Running in directory: " << sCurrDir("example") << endl;
