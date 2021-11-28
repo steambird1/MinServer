@@ -471,7 +471,7 @@ int main(int argc, char* argv[]) {
 					// @return	- 403 Forbidden / File token
 
 					// As "File-in-token".
-					if (path_pinfo.exts["name"].find('$') != string::npos) {
+					if (resolveMinorPath(hinfo.path).first.find('$') != string::npos) {
 						sndinfo.codeid = 403;
 						sndinfo.code_info = "Forbidden";
 					}
@@ -874,6 +874,11 @@ int main(int argc, char* argv[]) {
 			pair<string, string> m = resolveMinorPath(hinfo.path);
 			cout_d << "Expected main path: " << m.first << endl_d;
 			cout_d << "Expected external: " << m.second << endl_d;
+			if (m.first.find('$') != string::npos) {
+				sndinfo.codeid = 403;
+				sndinfo.code_info = "Forbidden";
+				goto sendup;	// As for less jumpers
+			}
 			bool flag2 = false;
 			FILE *f = fopen(public_file_path.c_str(), "r");
 			if (f != NULL) {
@@ -1024,8 +1029,7 @@ int main(int argc, char* argv[]) {
 				sndinfo.content = no_perm;
 			}
 		}
-			
-		bytes bs = sndinfo.toSender();
+	sendup: bytes bs = sndinfo.toSender();
 		/*
 			// To prove
 			string desprov = makeTemp();
