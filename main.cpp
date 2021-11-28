@@ -877,6 +877,7 @@ int main(int argc, char* argv[]) {
 			if (m.first.find('$') != string::npos) {
 				sndinfo.codeid = 403;
 				sndinfo.code_info = "Forbidden";
+				sndinfo.content = no_perm;
 				goto sendup;	// As for less jumpers
 			}
 			bool flag2 = false;
