@@ -9,6 +9,6 @@ var pageinfo = {
         %s
     ],
     post_args: [
-        %s,
+        %s
     ]
 };

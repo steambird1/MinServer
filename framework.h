@@ -15,17 +15,13 @@ using namespace std;
 #pragma comment(lib, "ws2_32.lib")
 
 // Change if code changed.
-#define SEABIRD_NET_FRAMEWORK_VAR 202110L
-/*
-New changes:
-	- Add erase(), pop_back(), front() and rear() for bytes.
-	- Bug fixes of toPost().
-*/
-#define SEABIRD_NET_FRAMEWORK_SUBVAR 100010L
+#define SEABIRD_NET_FRAMEWORK_VER 202111L
+// ???
+#define SEABIRD_NET_FRAMEWORK_SUBVER
 
 // Change if STRUCTURE or its PUBLIC BEHAIVOR changed.
 // Not include BUG (NOT FEATURE) FIXES.
-#define SEABIRD_NET_STRUCTURE_VAR 2
+#define SEABIRD_NET_STRUCTURE_VER 2
 
 #define SEABIRD_NET_DEBUG 0
 #if SEABIRD_NET_DEBUG
@@ -54,6 +50,7 @@ public:
 	bytes(const char* b);
 	bytes(char b);
 	bytes(const bytes &other);
+	void release();
 	void clear();
 	void fill(char c);
 	void add(const char * bytes, size_t sz);

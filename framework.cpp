@@ -29,10 +29,17 @@
 	 this->add(other.byte_space, other.len);
  }
 
+void bytes::release()
+ {
+	 if (this->byte_space != nullptr) delete[] this->byte_space;
+	 this->len = 0;
+ }
+
  void bytes::clear()
 {
 	this->byte_space = nullptr;
 	this->len = 0;
+	 //release();
 }
 
  void bytes::fill(char c)
@@ -139,6 +146,7 @@
 	if (this->len) {
 		memcpy(byte_space, bs_old, sizeof(char)*this->len);
 	}
+	if (bs_old != nullptr) delete[] bs_old;
 	this->len = sz;
 }
 
@@ -324,12 +332,15 @@
 	 fclose(f);*/
 	 // End
 	 printf_d("End\n");										// debugging
+	 b.release();
 	 return h;
  }
 
  bool ssocket::sends(bytes data)
  {
-	 return send(this->ace, data.toCharArray(), data.length(), 0) != SOCKET_ERROR;
+	 const char* dc = data.toCharArray();
+	 return send(this->ace,dc, data.length(), 0) != SOCKET_ERROR;
+	 delete[] dc;
  }
 
  void ssocket::end_accept()
