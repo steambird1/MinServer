@@ -133,6 +133,7 @@
 	if (this->len) {
 		memcpy(bs_old, this->byte_space, sizeof(char)*this->len);
 	}
+	delete[] this->byte_space;		// Release old pointer, after copied
 	this->byte_space = new char[sz];
 	memset(this->byte_space, 0, sizeof(char)*sz);
 	if (this->len) {
