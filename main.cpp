@@ -875,7 +875,7 @@ int main(int argc, char* argv[]) {
 				d_func df = (d_func)GetProcAddress(h, "ServerMain");	// So uses as: const char* ServerMain(const char *receive)
 				if (df == NULL) {
 					FreeLibrary(h);
-					cout << "Warning: Error loading ServerMain() of library " << md << endl;
+					cout << "Warning: Error " << GetLastError() << " while loading ServerMain() of library " << md << endl;
 					sndinfo.codeid = 400;
 					sndinfo.code_info = "Bad Request";
 				}

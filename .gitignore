@@ -260,6 +260,7 @@ paket-files/
 __pycache__/
 *.pyc
 
+# These are testers:
 *.lnk
 *.url
 /index.html
@@ -281,3 +282,5 @@ __pycache__/
 /aqq.txt
 /aww.txt
 /MinServer 2.exe
+testers/
+/Dll1.dll
