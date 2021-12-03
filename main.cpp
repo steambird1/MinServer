@@ -469,6 +469,7 @@ int main(int argc, char* argv[]) {
 		exit(1);
 	}
 	cout << "* Listening started at port " << portz << " *" << endl;
+	bytes bs;
 	while (true) {
 		s.accepts();
 		if (!s.accept_vaild()) {
@@ -874,9 +875,13 @@ int main(int argc, char* argv[]) {
 				d_func df = (d_func)GetProcAddress(h, "ServerMain");	// So uses as: const char* ServerMain(const char *receive)
 				if (df == NULL) {
 					FreeLibrary(h);
-					cout << "Error loading ServerMain of library " << md << endl;
+					cout << "Warning: Error loading ServerMain() of library " << md << endl;
 					sndinfo.codeid = 400;
 					sndinfo.code_info = "Bad Request";
+				}
+				else {
+					s.sends(df(s.get_prev().toCharArray()));
+					goto after_sentup;
 				}
 }
 		}
@@ -1042,7 +1047,7 @@ int main(int argc, char* argv[]) {
 				sndinfo.content = no_perm;
 			}
 		}
-	sendup: bytes bs = sndinfo.toSender();
+	sendup: bs = sndinfo.toSender();
 		/*
 			// To prove
 			string desprov = makeTemp();
@@ -1054,7 +1059,7 @@ int main(int argc, char* argv[]) {
 		*/
 		// Leakage disappears, but I don't know why.
 		s.sends(bs);
-		bs.release();
+		after_sentup: bs.release();
 		s.end_accept();
 		s.release_prev();
 	}
