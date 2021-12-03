@@ -217,6 +217,9 @@ string sRemovingEOL(string s) {
 string sCurrDir(string s = "") {
 	char buf3[MAX_PATH];
 	GetCurrentDirectory(MAX_PATH, buf3);
+	if (s.length()) {
+		if (s[0] == '/' || s[0] == '\\') s.erase(s.begin());
+	}
 	return string(buf3) + "\\" + s;
 }
 
@@ -227,21 +230,19 @@ string sRemovingQuotes(string s) {
 	return t;
 }
 
-/*
-void fclose_m(FILE *f) {
-	fclose(f);
-	f = NULL;
-}*/
+typedef const char *cc_str;
+typedef cc_str(*d_func)(cc_str);
 
 #define fclose_m(file_ptr) do { fclose(file_ptr); file_ptr = NULL; } while (false)
 
 // Uses for debug:
 // A support of none-stream
 
-#define MINSERVER_DEBUG 0
+#define MINSERVER_DEBUG 1
 #if MINSERVER_DEBUG
 #define cout_d cout
 #define endl_d endl
+#define MINSERVER_EXT_DEBUG 1
 #else
 
 class null_stream {

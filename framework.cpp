@@ -260,7 +260,9 @@ void bytes::release()
 
  http_recv ssocket::receive()
  {
+	 this->prev_recv.clear();	// May be unsafe ?
 	 bytes b = raw_receive();
+	 this->prev_recv += b;
 	 http_recv h;
 	 // Getting 1st line (surely can use string
 	 // that will not contains '\0')
@@ -322,8 +324,12 @@ void bytes::release()
 	 // BUT, FOR CONTENT
 	 // WE HAVE TO GET MORE
 	 printf_d("Less: %d\n", lres);
+	 bytes nr;
 	 for (int i = 0; i < l - lres; i += this->last_receive) {
-		 h.content += raw_receive();
+		 nr = raw_receive();
+		 h.content += nr;
+		 this->prev_recv += nr;
+		 nr.release();
 	 }
 	 // As for non-external document promises full
 	 /*
@@ -355,8 +361,19 @@ void bytes::release()
 	 closesocket(this->s);
  }
 
+ bytes ssocket::get_prev()
+ {
+	 return this->prev_recv;
+ }
+
+ void ssocket::release_prev()
+ {
+	 this->prev_recv.release();
+ }
+
  void ssocket::sock_init(int rcvsz)
  {
+	 this->prev_recv.clear();
 	 this->errored = false;
 	 static bool initalized = false;	// Initalize state
 	 if (!initalized) {

@@ -9,6 +9,11 @@
 #else
 #include <bits/stl_pair.h>
 #endif
+/*
+#ifdef MINSERVER_EXT_DEBUG
+#include "test1.h"
+#endif
+*/
 using namespace std;
 
 set<char> roks = { 'r', '+' }, woks = { 'w','a','+' };
@@ -282,6 +287,8 @@ public:
 	const static int op_err = -500;		// Error in operation
 	// To abs() for sending code id
 	static int open(int suid, string filename, string operate) {
+		if (filename[0] == '\\' || filename[0] == '/') filename.erase(filename.begin());
+//		filename = sCurrDir(filename);	// Or out of box
 		set<int> ug = user_groups::query(suid);
 		FILE *f = fopen(perm_data_path.c_str(), "r");
 		bool flag3 = false;
@@ -469,6 +476,9 @@ int main(int argc, char* argv[]) {
 			continue;
 		}
 		http_recv hinfo = s.receive();
+		cout_d << "Receiver receives:" << endl_d << endl_d;
+		cout_d << s.get_prev().toString() << endl_d;
+		cout_d << "End" << endl_d;
 		string path = hinfo.path, rpath;
 		auto path_pinfo = hinfo.toPaths();
 		vector<post_info> post_infolist;			// In file writes WOULD NOT SEND AS POST STANDARD
@@ -482,7 +492,7 @@ int main(int argc, char* argv[]) {
 
 		bool flag;
 
-		set<string> operations = { "file_operate", "auth_workspace", "uploader" };
+		set<string> operations = { "file_operate", "auth_workspace", "uploader", "caller" };
 		if (path_pinfo.path.size() == 1 && operations.count(path_pinfo.path[0])) {
 			if (path_pinfo.path[0] == "file_operate") {
 				// It's not necessary to change to command format. Why not directly fopen()?
@@ -857,6 +867,18 @@ int main(int argc, char* argv[]) {
 					}
 					
 			}
+			else if (path_pinfo.path[0] == "caller") {
+			string md = path_pinfo.exts["module"];
+				HINSTANCE h = LoadLibrary(sCurrDir(md).c_str());
+				// Maybe there will be libraries later.
+				d_func df = (d_func)GetProcAddress(h, "ServerMain");	// So uses as: const char* ServerMain(const char *receive)
+				if (df == NULL) {
+					FreeLibrary(h);
+					cout << "Error loading ServerMain of library " << md << endl;
+					sndinfo.codeid = 400;
+					sndinfo.code_info = "Bad Request";
+				}
+}
 		}
 		else {
 			if (hinfo.process == "POST")
@@ -1032,7 +1054,9 @@ int main(int argc, char* argv[]) {
 		*/
 		// Leakage disappears, but I don't know why.
 		s.sends(bs);
+		bs.release();
 		s.end_accept();
+		s.release_prev();
 	}
 
 	WSACleanup();

@@ -13,6 +13,9 @@
 using namespace std;
 
 #pragma comment(lib, "ws2_32.lib")
+#ifndef __cplusplus
+#error Can't be used in C mode
+#endif
 
 // Change if code changed.
 #define SEABIRD_NET_FRAMEWORK_VER 202111L
@@ -150,10 +153,13 @@ public:
 	bool sends(bytes data);
 	void end_accept();
 	void end();
+	bytes get_prev();
+	void release_prev();
 private:
 	void sock_init(int rcvsz = RCV_DEFAULT);
 	bytes raw_receive();		// It can keep receiving
 
+	bytes prev_recv;
 	SOCKET s,ace; // ace = Accepted socket
 	sockaddr acc; // acc = Accepted socket address
 	char *recv_buf;
