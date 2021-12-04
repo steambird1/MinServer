@@ -142,9 +142,34 @@ extern "C" {
 			res.data.param[i].content = (char*)calloc(read_buffer, sizeof(char));
 		}
 		//}
+		char ldata[1024] = {}, *ltmpdata = (char*)calloc(read_buffer, sizeof(char));
+		int lptr = 0;
+		bool state = false;
 		for (int i = 0; i < content_length; i++) {
-			
+			if (content[i] == '\n') {
+				if (lptr == 0) {
+					// Empty line, data start
+					state = false;
+				}
+				else if (strcmp(ldata, boundary) == 0) {
+					state = true;
+					memset(ldata, 0, sizeof(ldata));
+				}
+				else {
+					ldata[lptr - 2] = '\0';
+					if (strcmp(ldata, boundary) == 0) {
+						break;
+					}
+					if (state) {
+						// Args
+					}
+					else {
+						// Data
+					}
+				}
+			}
 		}
+		free(ltmpdata);
 		return res;
 	}
 
