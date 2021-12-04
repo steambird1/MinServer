@@ -12,6 +12,9 @@ extern "C" {
 #define false 0
 #endif
 
+	// Declaration
+	typedef struct _sdata sdata;
+
 	typedef const char *cc_str;
 	typedef cc_str(*d_func)(cc_str, sdata*);
 

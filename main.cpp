@@ -894,7 +894,9 @@ int main(int argc, char* argv[]) {
 				else {
 					sdata s_prep;
 					s_prep.cal_lib = { uidctrl::request, uidctrl::vaild, uidctrl::uidof, uidctrl::release, c_user_auth, file_operator::release, c_file_open };
-					s.sends(df(s.get_prev().toCharArray(), &s_prep));
+					const char *tc = s.get_prev().toCharArray();
+					s.sends(df(tc, &s_prep));
+					delete[] tc;
 					goto after_sentup;
 				}
 }
