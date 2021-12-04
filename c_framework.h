@@ -72,7 +72,7 @@ extern "C" {
 		r_ptr++;	// EOL remains
 		sscanf(buf, "%s %s %s", res.method, res.path, res.proto);	// buf now occupied
 		sr_ptr = r_ptr;
-		while (!(req[r_ptr] == '\n' && (req[r_ptr - 1] == '\n' || req[r_ptr - 2] == '\n'))) {
+		while ((!(req[r_ptr] == '\n' && (req[r_ptr - 1] == '\n' || req[r_ptr - 2] == '\n'))) && r_ptr < r_len) {
 			if (req[r_ptr] == '\n') sr_len++;
 			r_ptr++;
 		}
@@ -86,7 +86,7 @@ extern "C" {
 		}
 		bool mode = false;
 		int mode_len = 0, cur_len = 0;
-		while (!(req[r_ptr] == '\n' && (req[r_ptr - 1] == '\n' || req[r_ptr - 2] == '\n'))) {
+		while ((!(req[r_ptr] == '\n' && (req[r_ptr - 1] == '\n' || req[r_ptr - 2] == '\n'))) && r_ptr < r_len) {
 			if (req[r_ptr] == '\n') {
 				mode = false;
 				mode_len = 0;
@@ -110,7 +110,7 @@ extern "C" {
 		}
 		r_ptr++;	// EOL Remains
 		res.content = (char*)calloc(r_len - r_ptr + 1, sizeof(char));
-		for (int i = 0; i < r_ptr - r_len; i++) res.content[i] = req[r_ptr + i];
+		for (int i = 0; i < r_len - r_ptr; i++) res.content[i] = req[r_ptr + i];
 		return res;
 	}
 
