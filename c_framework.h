@@ -136,9 +136,12 @@ extern "C" {
 	// Gets how many succeed (Automaticly stopped if size > read_buffer or count > read_count..)
 	post_info c_postres(const char *content, const char *boundary, int content_length, int read_count, int read_buffer) {
 		post_info res;
+		//for (int i = 0; i < read_count; i++) {
+		res.data.param = (struct _single_post_info*)calloc(read_count, sizeof(struct _single_post_info));
 		for (int i = 0; i < read_count; i++) {
-			
+			res.data.param[i].content = (char*)calloc(read_buffer, sizeof(char));
 		}
+		//}
 		for (int i = 0; i < content_length; i++) {
 			
 		}
