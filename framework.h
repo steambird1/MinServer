@@ -20,7 +20,7 @@ using namespace std;
 // Change if code changed.
 #define SEABIRD_NET_FRAMEWORK_VER 202111L
 // ???
-#define SEABIRD_NET_FRAMEWORK_SUBVER
+#define SEABIRD_NET_FRAMEWORK
 
 // Change if STRUCTURE or its PUBLIC BEHAIVOR changed.
 // Not include BUG (NOT FEATURE) FIXES.
