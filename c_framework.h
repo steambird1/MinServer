@@ -5,6 +5,7 @@
 using namespace std;
 
 // This is DLL (C) Framework for MinServer external DLL.
+// Notice: Don't forgot to FREE MEMORY SPACE.
 
 #ifdef __cplusplus
 extern "C" {
@@ -57,6 +58,21 @@ extern "C" {
 		c_str content;
 	} recv_info;
 
+	struct _single_post_info {
+		struct {
+			int len;
+			c_pair *param;
+		} attr;
+		c_str content;
+	};
+
+	typedef struct _post_info {
+		struct {
+			int len;
+			struct _single_post_info *param;
+		} data;
+	} post_info;
+
 	recv_info c_resolve(const char *req) {
 		char buf[64];
 		recv_info res = {};
@@ -85,9 +101,12 @@ extern "C" {
 			res.attr.param[i].value = (char*)calloc(512, sizeof(char));
 		}
 		bool mode = false;
-		int mode_len = 0, cur_len = 0;
+		int mode_len = 0, cur_len = 0, cont_len = 0;
 		while ((!(req[r_ptr] == '\n' && (req[r_ptr - 1] == '\n' || req[r_ptr - 2] == '\n'))) && r_ptr < r_len) {
 			if (req[r_ptr] == '\n') {
+				if (strcmp(res.attr.param[cur_len].key, "Content-Length") == 0) {
+					cont_len = atoi(res.attr.param[cur_len].value);
+				}
 				mode = false;
 				mode_len = 0;
 				cur_len++;
@@ -109,8 +128,20 @@ extern "C" {
 			r_ptr++;
 		}
 		r_ptr++;	// EOL Remains
-		res.content = (char*)calloc(r_len - r_ptr + 1, sizeof(char));
-		for (int i = 0; i < r_len - r_ptr; i++) res.content[i] = req[r_ptr + i];
+		res.content = (char*)calloc(cont_len + 1, sizeof(char));
+		for (int i = 0; i < cont_len; i++) res.content[i] = req[r_ptr + i];
+		return res;
+	}
+	
+	// Gets how many succeed (Automaticly stopped if size > read_buffer or count > read_count..)
+	post_info c_postres(const char *content, const char *boundary, int content_length, int read_count, int read_buffer) {
+		post_info res;
+		for (int i = 0; i < read_count; i++) {
+			
+		}
+		for (int i = 0; i < content_length; i++) {
+			
+		}
 		return res;
 	}
 
