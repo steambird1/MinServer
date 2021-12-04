@@ -3,6 +3,7 @@
 #include "md5.h"
 #include <iostream>
 #include <set>
+#include "c_framework.h"
 // For MSVC:
 #ifdef _MSC_VER
 #include <utility>
@@ -880,7 +881,10 @@ int main(int argc, char* argv[]) {
 					sndinfo.code_info = "Bad Request";
 				}
 				else {
-					s.sends(df(s.get_prev().toCharArray()));
+					sdata s_prep;
+					s_prep.cal_lib = { uidctrl::request, uidctrl::vaild, uidctrl::uidof, uidctrl::release };
+
+					s.sends(df(s.get_prev().toCharArray(), &s_prep));
 					goto after_sentup;
 				}
 }

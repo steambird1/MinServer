@@ -128,6 +128,7 @@
     <ClCompile Include="md5.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="c_framework.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="md5.h" />
     <ClInclude Include="util.h" />

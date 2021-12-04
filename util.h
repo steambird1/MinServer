@@ -6,6 +6,7 @@
 #include <vector>
 #include <map>
 #include <string>
+#include "c_framework.h"
 using namespace std;
 
 BOOL FindFirstFileExists(LPCTSTR lpPath, DWORD dwFilter)
@@ -231,7 +232,7 @@ string sRemovingQuotes(string s) {
 }
 
 typedef const char *cc_str;
-typedef cc_str(*d_func)(cc_str);
+typedef cc_str(*d_func)(cc_str,sdata*);
 
 #define fclose_m(file_ptr) do { fclose(file_ptr); file_ptr = NULL; } while (false)
 
