@@ -231,9 +231,6 @@ string sRemovingQuotes(string s) {
 	return t;
 }
 
-typedef const char *cc_str;
-typedef cc_str(*d_func)(cc_str,sdata*);
-
 #define fclose_m(file_ptr) do { fclose(file_ptr); file_ptr = NULL; } while (false)
 
 // Uses for debug:

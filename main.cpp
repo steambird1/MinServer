@@ -334,6 +334,17 @@ public:
 	}
 };
 
+// C Supportings
+extern "C" {
+	bool c_user_auth(int uid, cc_str textpwd) {
+		MD5 m = MD5(textpwd);
+		return (m.toString() == user_operator::quser(uid));
+	}
+	int c_file_open(int uid, cc_str filename, cc_str method) {
+		return file_operator::open(uid, filename, method);
+	}
+}
+
 // Allocate ONCE
 char buf4[4096], buf5[4096];
 
@@ -882,8 +893,7 @@ int main(int argc, char* argv[]) {
 				}
 				else {
 					sdata s_prep;
-					s_prep.cal_lib = { uidctrl::request, uidctrl::vaild, uidctrl::uidof, uidctrl::release };
-
+					s_prep.cal_lib = { uidctrl::request, uidctrl::vaild, uidctrl::uidof, uidctrl::release, c_user_auth, file_operator::release, c_file_open };
 					s.sends(df(s.get_prev().toCharArray(), &s_prep));
 					goto after_sentup;
 				}
