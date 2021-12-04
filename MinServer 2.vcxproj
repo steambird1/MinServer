@@ -136,6 +136,7 @@
   <ItemGroup>
     <None Include="mslib.js" />
     <None Include="mspara.js" />
+    <None Include="README.md" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="help.txt" />

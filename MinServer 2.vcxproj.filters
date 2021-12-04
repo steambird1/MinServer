@@ -17,6 +17,9 @@
       <UniqueIdentifier>{2cf69f18-3130-4854-8e9e-ab281137bd7b}</UniqueIdentifier>
       <Extensions>htm;html;js</Extensions>
     </Filter>
+    <Filter Include="Documents">
+      <UniqueIdentifier>{c89b2057-b5c1-44ac-999f-9c2f93646f59}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="framework.cpp">
@@ -49,6 +52,9 @@
     </None>
     <None Include="mspara.js">
       <Filter>Web files</Filter>
+    </None>
+    <None Include="README.md">
+      <Filter>Documents</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>
