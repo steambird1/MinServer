@@ -885,7 +885,7 @@ int main(int argc, char* argv[]) {
 			}
 			else if (path_pinfo.path[0] == "caller") {
 			string md = path_pinfo.exts["module"];
-				HINSTANCE h = LoadLibrary(sCurrDir(md).c_str());
+				HINSTANCE h = LoadLibrary(sCurrDir(decodeHTMLBytes(md).toString()).c_str());
 				// Maybe there will be libraries later.
 				d_func df = (d_func)GetProcAddress(h, "ServerMain");	// So uses as: const char* ServerMain(const char *receive)
 				if (df == NULL) {

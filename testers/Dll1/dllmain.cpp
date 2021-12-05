@@ -1,4 +1,5 @@
-﻿// dllmain.cpp : 定义 DLL 应用程序的入口点。
+﻿// This is a test DLL file for DLL function. Do not try running this.
+
 #define _CRT_SECURE_NO_WARNINGS
 #include "../../c_framework.h"
 #include <cstdio>
@@ -26,17 +27,17 @@ extern "C" {
 				//strcpy(cb, cbc);
 			}
 		}
-		/*
+		
 		cpost_info c = c_postres(r.content, cb, cl, 4, 2048);
-//		sprintf(qmp, "%d", cl);
+		printf("DLL Output: %d\n", c.data.len);
 		if (c.data.len >= 2) {
 			sprintf(stmp, sendup, strlen(c.data.param[1].content), c.data.param[1].content);
 		}
 		else {
 			sprintf(stmp, sendup, 4, "NONE");
-		}*/
-		sprintf(stmp, sendup, strlen(cb), cb);
-		printf("DLL: Outputting returning: \n%s\n", stmp);
+		}
+		/*sprintf(stmp, sendup, strlen(cb), cb);
+		printf("DLL: Outputting returning: \n%s\n", stmp);*/
 		return { (int)strlen(stmp), stmp };
 		//return sendup;
 	}

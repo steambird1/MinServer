@@ -4,7 +4,7 @@
 #include <windows.h>
 using namespace std;
 
-// This is DLL (C) Framework for MinServer external DLL.
+// This is DLL (C compile rules) Framework for MinServer external DLL.
 // Notice: Don't forgot to FREE MEMORY SPACE.
 
 #ifdef __cplusplus
@@ -26,7 +26,7 @@ extern "C" {
 	typedef int(*uidreq_request_func)(int);
 	typedef bool(*uidreq_vaild_func)(int);
 	typedef void(*uidreq_release_func)(int);
-	typedef bool(*uoperator_auth_func)(int, cc_str);	// To be implemented - auth as password TEXT given in cc_str
+	typedef bool(*uoperator_auth_func)(int, cc_str);
 	typedef bool(*foperator_release_func)(int);
 	typedef int(*foperator_open_func)(int, cc_str, cc_str);
 
@@ -151,35 +151,53 @@ extern "C" {
 			else if (ctypes[i] == ';' && bs == 0) bs = 1;
 			else if (ctypes[i] == '=' && bs == 1) bs = 2;
 		}
+		if (tmp[sl - 1] == '\r') tmp[sl - 1] = '\0';
 		//tmp[sl+1] = '\0';
 		return tmp;
+	}
+
+	bool c_bstrcmp(const char *wl, const char *bound) {
+		char *wp = new char[90], *bounp = new char[90], *wt, *bount;
+		strcpy(wp, wl);
+		strcpy(bounp, bound);
+		wt = wp; bount = bounp;
+		while (*wt == '-') wt++;
+		while (*bount == '-') bount++;
+		int res = (strcmp(wt, bount));
+		delete[] wp, bounp;
+		return res == 0;	// res == 0 -> OK
 	}
 	
 	// Gets how many succeed (Automaticly stopped if size > read_buffer or count > read_count..)
 	cpost_info c_postres(const char *content, const char *boundary, int content_length, int read_count, int read_buffer) {
+		// ********************************* Note: Resolver bug here... ********************************* 
+		// Allocation table information
+		static const int para_count = 16;
+		// End
+
 		cpost_info res;
 		//for (int i = 0; i < read_count; i++) {
 		res.data.len = 0;
 		res.data.param = (struct _single_cpost_info*)calloc(read_count, sizeof(struct _single_cpost_info));
 		for (int i = 0; i < read_count; i++) {
-			res.data.param[i].attr.param = (c_pair*)calloc(16, sizeof(c_pair));
-			for (int j = 0; j < 16; j++) {
-				res.data.param[i].attr.param[i].key = (char*)calloc(64, sizeof(char));
-				res.data.param[i].attr.param[i].value = (char*)calloc(128, sizeof(char));
+			res.data.param[i].attr.param = (c_pair*)calloc(para_count, sizeof(c_pair));
+			for (int j = 0; j < para_count; j++) {
+				res.data.param[i].attr.param[j].key = (char*)calloc(64, sizeof(char));
+				res.data.param[i].attr.param[j].value = (char*)calloc(128, sizeof(char));
 			}
 			res.data.param[i].content = (char*)calloc(read_buffer, sizeof(char));
 		}
 		//}
 		char ldata[1024] = {};
-		int lptr = 0, cptr = 0, cparam = 0, clptr = 0;
-		bool state = false, astate = false, errored = false;
+		int lptr = 0, cptr = -1, cparam = 0, clptr = 0;	// Start in 0
+		int state = -1, astate = false, errored = false;
 		for (int i = 0; i < content_length; i++) {
 			if (content[i] == '\n') {
 				if (lptr == 0 || (lptr == 1 && ldata[0] == '\r')) {
 					// Empty line, data start
 					state = false;
 				}
-				else if (strcmp(ldata, boundary) == 0) {
+				else if (c_bstrcmp(ldata, boundary) == 0) {
 					// Another boundary start
 					if (!errored) {
 						cptr++;
@@ -189,7 +207,6 @@ extern "C" {
 						break;
 					errored = false;
 					state = true;
-					memset(ldata, 0, sizeof(ldata));
 				}
 				else {
 					ldata[lptr - 2] = '\0';
@@ -201,9 +218,10 @@ extern "C" {
 					}
 				}
 				clptr = 0;
+				memset(ldata, 0, sizeof(ldata));
 				lptr = 0;
 			} else {
-				if (state) {
+				if (state == 1) {
 					// Args
 					if (content[i] == ':') {
 						i++;	// ' '
@@ -217,15 +235,16 @@ extern "C" {
 						res.data.param[cptr].attr.param[cparam].key[clptr++] = content[i];
 					}
 				}
-				else {
+				else if (state == 0) {
 					// Data
 					if (clptr >= read_buffer) {
 						errored = true;
 						continue;
 					}
 					res.data.param[cptr].content[clptr++] = content[i];
-					ldata[lptr++] = content[i];
+					
 				}
+				ldata[lptr++] = content[i];
 			}
 		}
 		return res;
