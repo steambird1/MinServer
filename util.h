@@ -134,6 +134,9 @@ public:
 		uid_to_token.erase(token_to_uid[token]);
 		token_to_uid.erase(token);
 	}
+	static int size() {
+		return token_to_uid.size();
+	}
 private:
 	static map<int, int> token_to_uid, uid_to_token;
 };
@@ -264,11 +267,12 @@ string sRemovingQuotes(string s) {
 // Uses for debug:
 // A support of none-stream
 
-#define MINSERVER_DEBUG 1
+#define MINSERVER_DEBUG 0
 #if MINSERVER_DEBUG
 #define cout_d cout
 #define endl_d endl
 #define MINSERVER_EXT_DEBUG 1
+int no_data_screen = 1;
 #else
 
 class null_stream {
@@ -285,6 +289,7 @@ null_stream& operator << (null_stream &origin, Ty other) {
 }
 #define cout_d n_stream
 #define endl_d nullptr
+int no_data_screen = 0;
 #endif
 
 #define CONN_DEFINED

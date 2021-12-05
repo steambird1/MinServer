@@ -3,6 +3,7 @@
 #include "md5.h"
 #include <iostream>
 #include <set>
+#include <psapi.h>
 //#include "c_framework.h"
 // For MSVC:
 #ifdef _MSC_VER
@@ -350,6 +351,49 @@ char buf4[4096], buf5[4096];
 
 int portz = 80;
 
+map<string, int> visit;
+
+struct vis_info {
+	string ip;
+	int vis;
+};
+
+bool operator < (vis_info x, vis_info y) {
+	if (x.vis == y.vis) return x.ip < y.ip;
+	return x.vis > y.vis;
+}
+
+void stat() {
+	system("cls");
+	cout << "Server Status" << endl << endl;
+
+	PROCESS_MEMORY_COUNTERS p;
+	GetProcessMemoryInfo(GetCurrentProcess(), &p, sizeof(p));
+	printf("Memory Usage: %.2lf MB\n\n", p.WorkingSetSize / 1024.00 / 1024.00);
+
+	int ut_use = uidctrl::size();
+	int ft_use = file_token.size();
+	printf("User token usage: %d (%.2lf %% free)\n\n", ut_use, 100.00 - double(ut_use) / 327.68);
+	printf("File token usage: %d (%.2lf %% free)\n\n", ft_use, 100.00 - double(ft_use) / 327.68);
+	
+
+	static set<vis_info> vp;
+	vp.clear();
+	int tot = 0;
+	for (auto &i : visit) {
+		vp.insert({ i.first, i.second });
+		tot += i.second;
+	}
+	printf("Frequency: \nTotal %d\n\n", tot);
+	int lat = 5;
+	for (auto &i : vp) {
+		if (lat <= 0) break;
+		printf("%15s		%4d (%.2lf %%)\n", i.ip.c_str(), i.vis, double(i.vis) / double(tot) * 100.0);
+		lat--;
+	}
+	printf("\n");
+}
+
 int main(int argc, char* argv[]) {
 	//cout << "Running in directory: " << sCurrDir("example") << endl;
 	const char *cbt = new char[60];
@@ -388,6 +432,9 @@ int main(int argc, char* argv[]) {
 		else if (it == "--default-join") {
 			default_join_g = atoi(argv[i + 1]);
 			i++;
+		}
+		else if (it == "--no-display") {
+			no_data_screen = 1;
 		}
 		else if (it == "--port") {
 			portz = atoi(argv[i + 1]);
@@ -486,12 +533,18 @@ int main(int argc, char* argv[]) {
 	cout << "* Listening started at port " << portz << " *" << endl;
 	bytes bs;
 	while (true) {
+		if (!no_data_screen) 
+		{
+			stat();
+			cout << endl << "* Listening at port " << portz << " *" << endl;
+		}
 		s.accepts();
 		if (!s.accept_vaild()) {
 			s.end_accept();
 			continue;
 		}
 		http_recv hinfo = s.receive();
+		visit[s.get_paddr()]++;
 		cout_d << "Receiver receives:" << endl_d << endl_d;
 		cout_d << s.get_prev().toString() << endl_d;
 		cout_d << "End" << endl_d;
@@ -895,11 +948,11 @@ int main(int argc, char* argv[]) {
 					sndinfo.code_info = "Bad Request";
 				}
 				else {
-					sdata s_prep;
-					s_prep.cal_lib = { uidctrl::request, uidctrl::vaild, uidctrl::uidof, uidctrl::release, c_user_auth, file_operator::release, c_file_open };
+					sdata *s_prep = new sdata;;
+					s_prep->cal_lib = { uidctrl::request, uidctrl::vaild, uidctrl::uidof, uidctrl::release, c_user_auth, file_operator::release, c_file_open };
 					const char *tc = s.get_prev().toCharArray();
 					send_info ds;
-					ds = df(tc, &s_prep);
+					ds = df(tc, s_prep);
 					bytes b;
 					b.add(ds.cdata, ds.len);
 					cout_d << "Trans back: " << endl_d;

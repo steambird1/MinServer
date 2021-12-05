@@ -371,6 +371,11 @@ void bytes::release()
 	 this->prev_recv.release();
  }
 
+ const char * ssocket::get_paddr()
+ {
+	 return inet_ntoa(this->acc.sin_addr);
+ }
+
  void ssocket::sock_init(int rcvsz)
  {
 	 this->prev_recv.clear();

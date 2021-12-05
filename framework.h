@@ -155,13 +155,14 @@ public:
 	void end();
 	bytes get_prev();
 	void release_prev();
+	const char* get_paddr();
 private:
 	void sock_init(int rcvsz = RCV_DEFAULT);
 	bytes raw_receive();		// It can keep receiving
 
 	bytes prev_recv;
 	SOCKET s,ace; // ace = Accepted socket
-	sockaddr acc; // acc = Accepted socket address
+	sockaddr_in acc; // acc = Accepted socket address
 	char *recv_buf;
 	int rcbsz, last_receive;
 	bool acc_errored,errored;

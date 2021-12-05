@@ -199,7 +199,7 @@ extern "C" {
 					clptr = 0;
 					state = false;
 				}
-				else if (c_bstrcmp(ldata, boundary) == 0) {
+				else if (lptr < 90 && (c_bstrcmp(ldata, boundary) == 0)) {
 					// Another boundary start
 					if (!errored) {
 						cptr++;
@@ -207,13 +207,14 @@ extern "C" {
 					}
 					if (cptr >= read_count)
 						break;
+
 					errored = false;
 					state = true;
 				}
 				else {
 					char lp = ldata[lptr - 2];
 					ldata[lptr - 2] = '\0';
-					if (c_bstrcmp(ldata, boundary) == 0) {
+					if (lptr < 90 && (c_bstrcmp(ldata, boundary) == 0)) {
 						break;
 					}
 					else {
