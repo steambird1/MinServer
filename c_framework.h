@@ -139,19 +139,27 @@ extern "C" {
 		//for (int i = 0; i < read_count; i++) {
 		res.data.param = (struct _single_post_info*)calloc(read_count, sizeof(struct _single_post_info));
 		for (int i = 0; i < read_count; i++) {
+			res.data.param[i].attr.param = (c_pair*)calloc(16, sizeof(c_pair));
+			for (int j = 0; j < 16; j++) {
+				res.data.param[i].attr.param[i].key = (char*)calloc(64, sizeof(char));
+				res.data.param[i].attr.param[i].value = (char*)calloc(128, sizeof(char));
+			}
 			res.data.param[i].content = (char*)calloc(read_buffer, sizeof(char));
 		}
 		//}
-		char ldata[1024] = {}, *ltmpdata = (char*)calloc(read_buffer, sizeof(char));
-		int lptr = 0;
-		bool state = false;
+		char ldata[1024] = {};
+		int lptr = 0, cptr = 0, cparam = 0, clptr = 0;
+		bool state = false, astate = false;
 		for (int i = 0; i < content_length; i++) {
 			if (content[i] == '\n') {
+				clptr = 0;
 				if (lptr == 0) {
 					// Empty line, data start
 					state = false;
 				}
 				else if (strcmp(ldata, boundary) == 0) {
+					// Another boundary start
+					cptr++;
 					state = true;
 					memset(ldata, 0, sizeof(ldata));
 				}
@@ -161,15 +169,30 @@ extern "C" {
 						break;
 					}
 					if (state) {
-						// Args
+						astate = false;
+					}
+				}
+			} else {
+				if (state) {
+					// Args
+					if (content[i] == ':') {
+						i++;	// ' '
+						clptr = 0;
+						astate = true;
+					}
+					else if (astate) {
+						res.data.param[cptr].attr.param[cparam].value[clptr++] = content[i];
 					}
 					else {
-						// Data
+						res.data.param[cptr].attr.param[cparam].key[clptr++] = content[i];
 					}
+				}
+				else {
+					// Data
+					res.data.param[cptr].content[clptr++] = content[i];
 				}
 			}
 		}
-		free(ltmpdata);
 		return res;
 	}
 
