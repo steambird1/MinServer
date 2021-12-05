@@ -6,7 +6,7 @@
 #include <vector>
 #include <map>
 #include <string>
-#include "c_framework.h"
+//#include "c_framework.h"
 using namespace std;
 
 BOOL FindFirstFileExists(LPCTSTR lpPath, DWORD dwFilter)
@@ -286,3 +286,36 @@ null_stream& operator << (null_stream &origin, Ty other) {
 #define cout_d n_stream
 #define endl_d nullptr
 #endif
+
+#define CONN_DEFINED
+typedef char *c_str;
+typedef const char *cc_str;
+
+typedef int(*uidreq_request_func)(int);
+typedef bool(*uidreq_vaild_func)(int);
+typedef void(*uidreq_release_func)(int);
+typedef bool(*uoperator_auth_func)(int, cc_str);
+typedef bool(*foperator_release_func)(int);
+typedef int(*foperator_open_func)(int, cc_str, cc_str);
+
+typedef struct _callers {
+	uidreq_request_func uidc_request;
+	uidreq_vaild_func uidc_vaild;
+	uidreq_request_func uidc_uidof;
+	uidreq_release_func uidc_rel;
+	uoperator_auth_func	uop_auth;
+	foperator_release_func fop_rel;
+	foperator_open_func fop_open;
+} callers;
+
+typedef struct _sdata {
+	callers cal_lib;
+} sdata;
+
+typedef struct _send_info {
+	struct {
+		int len;
+		cc_str cdata;
+	};
+} send_info;
+typedef send_info(*d_func)(cc_str, sdata*);

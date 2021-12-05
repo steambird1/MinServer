@@ -3,7 +3,7 @@
 #include "md5.h"
 #include <iostream>
 #include <set>
-#include "c_framework.h"
+//#include "c_framework.h"
 // For MSVC:
 #ifdef _MSC_VER
 #include <utility>
@@ -353,7 +353,7 @@ int portz = 80;
 int main(int argc, char* argv[]) {
 	//cout << "Running in directory: " << sCurrDir("example") << endl;
 	const char *cbt = new char[60];
-	cbt = c_boundary("text/html; boundary=------BoundaryInformationDataHereAAABBBCCCDDDEEEFFFGGG");
+//	cbt = c_boundary("text/html; boundary=------BoundaryInformationDataHereAAABBBCCCDDDEEEFFFGGG");
 	cout_d << "C-Boundary tester:" << cbt << endl_d;
 	for (int i = 1; i < argc; i++) {
 		string it = argv[i];

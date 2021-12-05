@@ -2,17 +2,16 @@
 #include <cstdio>
 #include <cstring>
 #include <windows.h>
+#include <yvals.h>
 using namespace std;
 
 // This is DLL (C compile rules) Framework for MinServer external DLL.
 // Notice: Don't forgot to FREE MEMORY SPACE.
 
-#ifdef __cplusplus
 extern "C" {
-#endif
 
 #if ! __BOOL_DEFINED
-	typedef signed int bool;
+	typedef int bool;
 #define true 1
 #define false 0
 #endif
@@ -20,6 +19,8 @@ extern "C" {
 	// Declaration
 	typedef struct _sdata sdata;
 
+#ifndef _CONN_DEFINED
+#define _CONN_DEFINED
 	typedef char *c_str;
 	typedef const char *cc_str;
 
@@ -44,6 +45,13 @@ extern "C" {
 		callers cal_lib;
 	} sdata;
 
+	typedef struct _send_info {
+		int len;
+		cc_str cdata;
+	} send_info;
+	typedef send_info(*d_func)(cc_str, sdata*);
+#endif
+
 	typedef struct _c_pair {
 		c_str key, value;
 	} c_pair;
@@ -62,6 +70,7 @@ extern "C" {
 			int len;
 			c_pair *param;
 		} attr;
+		int cs_len;
 		c_str content;
 	};
 
@@ -71,14 +80,6 @@ extern "C" {
 			struct _single_cpost_info *param;
 		} data;
 	} cpost_info;
-
-	typedef struct _send_info {
-		struct {
-			int len;
-			cc_str cdata;
-		};
-	} send_info;
-	typedef send_info(*d_func)(cc_str, sdata*);
 
 	recv_info c_resolve(const char *req) {
 		char buf[64];
@@ -143,7 +144,7 @@ extern "C" {
 	const char* c_boundary(const char *ctypes) {
 		int sl = strlen(ctypes);
 		int bs = 0, pt = 0;
-		char *tmp = (char*)calloc(60,sizeof(char));	// Boundary in usually 60
+		char *tmp = (char*)calloc(60, sizeof(char));	// Boundary in usually 60
 		for (int i = 0; i < sl; i++) {
 			if (bs == 2) {
 				tmp[pt++] = ctypes[i];
@@ -165,9 +166,9 @@ extern "C" {
 		while (*bount == '-') bount++;
 		int res = (strcmp(wt, bount));
 		delete[] wp, bounp;
-		return res == 0;	// res == 0 -> OK
+		return res;	// res == 0 -> OK
 	}
-	
+
 	// Gets how many succeed (Automaticly stopped if size > read_buffer or count > read_count..)
 	cpost_info c_postres(const char *content, const char *boundary, int content_length, int read_count, int read_buffer) {
 		// ********************************* Note: Resolver bug here... ********************************* 
@@ -195,6 +196,7 @@ extern "C" {
 			if (content[i] == '\n') {
 				if (lptr == 0 || (lptr == 1 && ldata[0] == '\r')) {
 					// Empty line, data start
+					clptr = 0;
 					state = false;
 				}
 				else if (c_bstrcmp(ldata, boundary) == 0) {
@@ -209,18 +211,38 @@ extern "C" {
 					state = true;
 				}
 				else {
+					char lp = ldata[lptr - 2];
 					ldata[lptr - 2] = '\0';
-					if (strcmp(ldata, boundary) == 0) {
+					if (c_bstrcmp(ldata, boundary) == 0) {
 						break;
 					}
+					else {
+						ldata[lptr - 2] = lp;
+					}
 					if (state) {
+						cparam++;
+						res.data.param[cptr].attr.len++;
+						clptr = 0;
 						astate = false;
 					}
+					else if (state == 0) {
+						// Data
+						if (clptr >= read_buffer) {
+							errored = true;
+							continue;
+						}
+						res.data.param[cptr].cs_len = lptr;
+						for (int i = 0; i <= lptr; i++)
+							res.data.param[cptr].content[clptr++] = ldata[i];
+
+					}
 				}
-				clptr = 0;
+
 				memset(ldata, 0, sizeof(ldata));
 				lptr = 0;
-			} else {
+			}
+			else {
+				ldata[lptr++] = content[i];
 				if (state == 1) {
 					// Args
 					if (content[i] == ':') {
@@ -235,21 +257,11 @@ extern "C" {
 						res.data.param[cptr].attr.param[cparam].key[clptr++] = content[i];
 					}
 				}
-				else if (state == 0) {
-					// Data
-					if (clptr >= read_buffer) {
-						errored = true;
-						continue;
-					}
-					res.data.param[cptr].content[clptr++] = content[i];
-					
-				}
-				ldata[lptr++] = content[i];
 			}
+			
 		}
 		return res;
-	}
 
-#ifdef __cplusplus
+	}
+	
 }
-#endif 

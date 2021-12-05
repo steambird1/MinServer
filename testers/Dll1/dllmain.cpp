@@ -4,8 +4,6 @@
 #include "../../c_framework.h"
 #include <cstdio>
 #include <cstring>
-#include <string>
-
 using namespace std;
 
 #ifdef __cplusplus
