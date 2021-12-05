@@ -3,12 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.28307.1525
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MinServer 2", "MinServer 2.vcxproj", "{25858C5E-B7B0-418D-B736-63E26C1AC47D}"
-	ProjectSection(ProjectDependencies) = postProject
-		{36A233BC-CD27-44AA-9A3D-BDF926C6A30E} = {36A233BC-CD27-44AA-9A3D-BDF926C6A30E}
-	EndProjectSection
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Dll1", "testers\Dll1\Dll1.vcxproj", "{36A233BC-CD27-44AA-9A3D-BDF926C6A30E}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Dll1", "Dll1.vcxproj", "{36A233BC-CD27-44AA-9A3D-BDF926C6A30E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -18,14 +13,6 @@ Global
 		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{25858C5E-B7B0-418D-B736-63E26C1AC47D}.Debug|x64.ActiveCfg = Debug|x64
-		{25858C5E-B7B0-418D-B736-63E26C1AC47D}.Debug|x64.Build.0 = Debug|x64
-		{25858C5E-B7B0-418D-B736-63E26C1AC47D}.Debug|x86.ActiveCfg = Debug|Win32
-		{25858C5E-B7B0-418D-B736-63E26C1AC47D}.Debug|x86.Build.0 = Debug|Win32
-		{25858C5E-B7B0-418D-B736-63E26C1AC47D}.Release|x64.ActiveCfg = Release|x64
-		{25858C5E-B7B0-418D-B736-63E26C1AC47D}.Release|x64.Build.0 = Release|x64
-		{25858C5E-B7B0-418D-B736-63E26C1AC47D}.Release|x86.ActiveCfg = Release|Win32
-		{25858C5E-B7B0-418D-B736-63E26C1AC47D}.Release|x86.Build.0 = Release|Win32
 		{36A233BC-CD27-44AA-9A3D-BDF926C6A30E}.Debug|x64.ActiveCfg = Debug|x64
 		{36A233BC-CD27-44AA-9A3D-BDF926C6A30E}.Debug|x64.Build.0 = Debug|x64
 		{36A233BC-CD27-44AA-9A3D-BDF926C6A30E}.Debug|x86.ActiveCfg = Debug|Win32
@@ -39,6 +26,6 @@ Global
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {81CF7BB1-03B5-4957-A8A0-4624BBB5E8FE}
+		SolutionGuid = {804B34F8-3667-4222-8BE5-75A15B2AB79C}
 	EndGlobalSection
 EndGlobal

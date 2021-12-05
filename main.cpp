@@ -352,6 +352,9 @@ int portz = 80;
 
 int main(int argc, char* argv[]) {
 	//cout << "Running in directory: " << sCurrDir("example") << endl;
+	const char *cbt = new char[60];
+	cbt = c_boundary("text/html; boundary=------BoundaryInformationDataHereAAABBBCCCDDDEEEFFFGGG");
+	cout_d << "C-Boundary tester:" << cbt << endl_d;
 	for (int i = 1; i < argc; i++) {
 		string it = argv[i];
 		if (it == "--default-page") {
@@ -895,8 +898,16 @@ int main(int argc, char* argv[]) {
 					sdata s_prep;
 					s_prep.cal_lib = { uidctrl::request, uidctrl::vaild, uidctrl::uidof, uidctrl::release, c_user_auth, file_operator::release, c_file_open };
 					const char *tc = s.get_prev().toCharArray();
-					s.sends(df(tc, &s_prep));
+					send_info ds;
+					ds = df(tc, &s_prep);
+					bytes b;
+					b.add(ds.cdata, ds.len);
+					cout_d << "Trans back: " << endl_d;
+					cout_d << b.toCharArray() << endl_d;
+					cout_d << "End" << endl_d;
+					s.sends(b);
 					delete[] tc;
+					b.release();
 					goto after_sentup;
 				}
 }
@@ -1075,8 +1086,8 @@ int main(int argc, char* argv[]) {
 		*/
 		// Leakage disappears, but I don't know why.
 		s.sends(bs);
-		after_sentup: bs.release();
-		s.end_accept();
+		bs.release();
+	 after_sentup: s.end_accept();
 		s.release_prev();
 	}
 

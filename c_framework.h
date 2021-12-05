@@ -22,7 +22,6 @@ extern "C" {
 
 	typedef char *c_str;
 	typedef const char *cc_str;
-	typedef cc_str(*d_func)(cc_str, sdata*);
 
 	typedef int(*uidreq_request_func)(int);
 	typedef bool(*uidreq_vaild_func)(int);
@@ -58,7 +57,7 @@ extern "C" {
 		c_str content;
 	} recv_info;
 
-	struct _single_post_info {
+	struct _single_cpost_info {
 		struct {
 			int len;
 			c_pair *param;
@@ -66,12 +65,20 @@ extern "C" {
 		c_str content;
 	};
 
-	typedef struct _post_info {
+	typedef struct _cpost_info {
 		struct {
 			int len;
-			struct _single_post_info *param;
+			struct _single_cpost_info *param;
 		} data;
-	} post_info;
+	} cpost_info;
+
+	typedef struct _send_info {
+		struct {
+			int len;
+			cc_str cdata;
+		};
+	} send_info;
+	typedef send_info(*d_func)(cc_str, sdata*);
 
 	recv_info c_resolve(const char *req) {
 		char buf[64];
@@ -132,12 +139,28 @@ extern "C" {
 		for (int i = 0; i < cont_len; i++) res.content[i] = req[r_ptr + i];
 		return res;
 	}
+
+	const char* c_boundary(const char *ctypes) {
+		int sl = strlen(ctypes);
+		int bs = 0, pt = 0;
+		char *tmp = (char*)calloc(60,sizeof(char));	// Boundary in usually 60
+		for (int i = 0; i < sl; i++) {
+			if (bs == 2) {
+				tmp[pt++] = ctypes[i];
+			}
+			else if (ctypes[i] == ';' && bs == 0) bs = 1;
+			else if (ctypes[i] == '=' && bs == 1) bs = 2;
+		}
+		//tmp[sl+1] = '\0';
+		return tmp;
+	}
 	
 	// Gets how many succeed (Automaticly stopped if size > read_buffer or count > read_count..)
-	post_info c_postres(const char *content, const char *boundary, int content_length, int read_count, int read_buffer) {
-		post_info res;
+	cpost_info c_postres(const char *content, const char *boundary, int content_length, int read_count, int read_buffer) {
+		cpost_info res;
 		//for (int i = 0; i < read_count; i++) {
-		res.data.param = (struct _single_post_info*)calloc(read_count, sizeof(struct _single_post_info));
+		res.data.len = 0;
+		res.data.param = (struct _single_cpost_info*)calloc(read_count, sizeof(struct _single_cpost_info));
 		for (int i = 0; i < read_count; i++) {
 			res.data.param[i].attr.param = (c_pair*)calloc(16, sizeof(c_pair));
 			for (int j = 0; j < 16; j++) {
@@ -149,17 +172,22 @@ extern "C" {
 		//}
 		char ldata[1024] = {};
 		int lptr = 0, cptr = 0, cparam = 0, clptr = 0;
-		bool state = false, astate = false;
+		bool state = false, astate = false, errored = false;
 		for (int i = 0; i < content_length; i++) {
 			if (content[i] == '\n') {
-				clptr = 0;
-				if (lptr == 0) {
+				if (lptr == 0 || (lptr == 1 && ldata[0] == '\r')) {
 					// Empty line, data start
 					state = false;
 				}
 				else if (strcmp(ldata, boundary) == 0) {
 					// Another boundary start
-					cptr++;
+					if (!errored) {
+						cptr++;
+						res.data.len++;
+					}
+					if (cptr >= read_count)
+						break;
+					errored = false;
 					state = true;
 					memset(ldata, 0, sizeof(ldata));
 				}
@@ -172,6 +200,8 @@ extern "C" {
 						astate = false;
 					}
 				}
+				clptr = 0;
+				lptr = 0;
 			} else {
 				if (state) {
 					// Args
@@ -189,7 +219,12 @@ extern "C" {
 				}
 				else {
 					// Data
+					if (clptr >= read_buffer) {
+						errored = true;
+						continue;
+					}
 					res.data.param[cptr].content[clptr++] = content[i];
+					ldata[lptr++] = content[i];
 				}
 			}
 		}

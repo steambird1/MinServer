@@ -236,7 +236,7 @@ string sRemovingQuotes(string s) {
 // Uses for debug:
 // A support of none-stream
 
-#define MINSERVER_DEBUG 0
+#define MINSERVER_DEBUG 1
 #if MINSERVER_DEBUG
 #define cout_d cout
 #define endl_d endl

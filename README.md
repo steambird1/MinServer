@@ -11,5 +11,6 @@ So that's it :)
 
 ## Install
 You just need to extract files in latest release and just run `MinServer 2.exe` or compile it by yourself using Visual Studio 2017 or newer.
+(Note: There may be some test projects like 'Tester DLL'. Don't try running it.)
 
 There are some help in `help.txt`. You can also read them by running `MinServer 2.exe --help`.
