@@ -65,9 +65,9 @@ public:
 	string toString();							// Please notices that string
 												// Will search '\0' and ignore informations after it automaticly.
 	size_t length();
-	bytes operator += (string v);
-	bytes operator += (bytes b);
-	bytes operator += (char b);
+	void operator += (string v);
+	void operator += (bytes b);
+	void operator += (char b);
 	char& operator [] (size_t pos);
 private:
 	void realloc(size_t sz);

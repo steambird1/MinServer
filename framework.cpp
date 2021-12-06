@@ -108,23 +108,23 @@ void bytes::release()
 	return this->len;
 }
 
- bytes bytes::operator+=(string v)
+ void bytes::operator+=(string v)
 {
 	add(v.c_str(), v.length());
-	return *this;
+	//return *this;
 }
 
- bytes bytes::operator+=(bytes b)
+ void bytes::operator+=(bytes b)
 {
 	add(b.byte_space, b.len);
-	return *this;
+	//return *this;
 }
 
- bytes bytes::operator+=(char b)
+ void bytes::operator+=(char b)
 {
 	const char c[1] = { b };
 	add(c, 1);
-	return *this;
+	//return *this;
 }
 
  char & bytes::operator[](size_t pos)
@@ -140,9 +140,10 @@ void bytes::release()
 	if (this->len) {
 		memcpy(bs_old, this->byte_space, sizeof(char)*this->len);
 	}
-	delete[] this->byte_space;		// Release old pointer, after copied
+	//delete[] this->byte_space;		// Release old pointer, after copied
+	release();
 	this->byte_space = new char[sz];
-	memset(this->byte_space, 0, sizeof(char)*sz);
+	memset(this->byte_space, 0, sizeof(char)*sz);	// A waste of memory ???
 	if (this->len) {
 		memcpy(byte_space, bs_old, sizeof(char)*this->len);
 	}
@@ -152,20 +153,22 @@ void bytes::release()
 
  bytes operator+(bytes a, string v)
 {
-	bytes w = a;
-	return w += v;
+	 a.add(v.c_str(), v.length());
+	 return a;
+	//return w += v;
 }
 
  bytes operator+(bytes a, bytes b)
 {
-	bytes w = a;
-	return w += b;
+	 a.add(b.byte_space, b.len);
+	 return a;
 }
 
  bytes operator+(bytes a, char b)
 {
-	bytes w = a;
-	return w += b;
+	 const char c[1] = { b };
+	 a.add(c, 1);
+	 return a;
 }
 
  bytes operator+(bytes a, const char * b)
@@ -345,8 +348,9 @@ void bytes::release()
  bool ssocket::sends(bytes data)
  {
 	 const char* dc = data.toCharArray();
-	 return send(this->ace,dc, data.length(), 0) != SOCKET_ERROR;
+	 bool t = (send(this->ace,dc, data.length(), 0) != SOCKET_ERROR);
 	 delete[] dc;
+	 return t;
  }
 
  void ssocket::end_accept()
@@ -644,6 +648,7 @@ void bytes::release()
 	 fread(c, sizeof(char), len, hnd);
 	 this->content.clear();
 	 this->content.add(c, len);
+	 delete[] c;
  }
 
  bytes http_send::toSender(bool autolen)

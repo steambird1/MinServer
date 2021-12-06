@@ -1142,6 +1142,7 @@ int main(int argc, char* argv[]) {
 		bs.release();
 	 after_sentup: s.end_accept();
 		s.release_prev();
+		sndinfo.content.release();
 	}
 
 	WSACleanup();
