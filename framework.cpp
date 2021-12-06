@@ -140,8 +140,8 @@ void bytes::release()
 	if (this->len) {
 		memcpy(bs_old, this->byte_space, sizeof(char)*this->len);
 	}
-	//delete[] this->byte_space;		// Release old pointer, after copied
-	release();
+	delete[] this->byte_space;		// Release old pointer, after copied
+	//release();
 	this->byte_space = new char[sz];
 	memset(this->byte_space, 0, sizeof(char)*sz);	// A waste of memory ???
 	if (this->len) {
@@ -655,8 +655,11 @@ void bytes::release()
  {
 	 bytes b = proto_ver + " " + to_string(codeid) + " " + code_info + "\n";
 	 if (autolen) attr["Content-Length"] = to_string(this->content.length());
-	 for (auto i = attr.begin(); i != attr.end(); i++)
-		 b += (i->first + ": " + i->second) + "\n";
+//	 for (auto i = attr.begin(); i != attr.end(); i++)
+//		 b += (i->first + ": " + i->second) + "\n";
+	 for (auto &i : attr) {
+		 b += (i.first + ": " + i.second + "\n");
+	 }
 	 b += '\n';
 	 b += content;
 	 return b;
