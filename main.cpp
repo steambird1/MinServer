@@ -397,8 +397,9 @@ void stat() {
 int main(int argc, char* argv[]) {
 	//cout << "Running in directory: " << sCurrDir("example") << endl;
 	const char *cbt = new char[60];
+	int tbuf = RCV_DEFAULT;
 //	cbt = c_boundary("text/html; boundary=------BoundaryInformationDataHereAAABBBCCCDDDEEEFFFGGG");
-	cout_d << "C-Boundary tester:" << cbt << endl_d;
+//	cout_d << "C-Boundary tester:" << cbt << endl_d;
 	for (int i = 1; i < argc; i++) {
 		string it = argv[i];
 		if (it == "--default-page") {
@@ -407,6 +408,10 @@ int main(int argc, char* argv[]) {
 		}
 		else if (it == "--default-ns") {
 			not_supported = readAll(argv[i + 1]);
+			i++;
+		}
+		else if (it == "--default-na") {
+			no_perm = readAll(argv[i + 1]);
 			i++;
 		}
 		else if (it == "--default-ok") {
@@ -433,11 +438,19 @@ int main(int argc, char* argv[]) {
 			default_join_g = atoi(argv[i + 1]);
 			i++;
 		}
+		else if (it == "--root-file") {
+			defiles.push_back(argv[i + 1]);
+			i++;
+		}
 		else if (it == "--no-display") {
 			no_data_screen = 1;
 		}
 		else if (it == "--port") {
 			portz = atoi(argv[i + 1]);
+			i++;
+		}
+		else if (it == "--buffer") {
+			tbuf = atoi(argv[i + 1]);
 			i++;
 		}
 		else if (it == "--user-group") {
@@ -525,7 +538,7 @@ int main(int argc, char* argv[]) {
 		fclose_m(f);
 	}
 	*/
-	ssocket s = ssocket(portz);
+	ssocket s = ssocket(portz, tbuf);
 	if (!s.vaild()) {
 		cout << "Can't bind or listen!" << endl;
 		exit(1);
@@ -544,7 +557,7 @@ int main(int argc, char* argv[]) {
 			continue;
 		}
 		http_recv hinfo = s.receive();
-		visit[s.get_paddr()]++;
+		if (!no_data_screen) visit[s.get_paddr()]++;
 		cout_d << "Receiver receives:" << endl_d << endl_d;
 		cout_d << s.get_prev().toString() << endl_d;
 		cout_d << "End" << endl_d;

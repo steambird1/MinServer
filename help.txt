@@ -5,11 +5,16 @@ Run MinServer without executable options to launch server.
 Options are:
 	--default-page		Set default display page (Show on 404).
 	--default-ns		Set not-implemented page (Show on 500).
+	--default-na		Set default Permission Denied page (Show on 403).
 	--default-ok		Set default OK page (Show on 200, especially /upload).
 	--perm-table		Set where permission table is (Default: $permission.txt).
 	--users-table		Set where user table is (Default: $users.txt).
 	--public-table		Set where published-file table is (Can be visited directly or as a 403, Default: $public.txt).
 	--groups-table		Set where group-file table is (Default: $groups.txt).
+	--port				Set the port that server will listen.
+	--buffer			Set the buffer size for basic information (header).
+	--no-display		Set that server will not refresh information on console.
+	--root-file			Add file that will try to be resolved when giving a directory (Existing: /index.html, /index.htm).
 
 Executable options are:
 	--user-operate		User operations.

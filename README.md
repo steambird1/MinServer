@@ -11,6 +11,20 @@ So that's it :)
 
 ## Install
 You just need to extract files in latest release and just run `MinServer 2.exe` or compile it by yourself using Visual Studio 2017 or newer.
-(Note: There may be some test projects like 'Tester DLL'. Don't try running it.)
+(Note: There may be some test projects like 'Tester DLL'. You don't need to use it but you can test your server by them.)
 
 There are some help in `help.txt`. You can also read them by running `MinServer 2.exe --help`.
+
+## Use
+### Basics Use
+You just need to run it. it'll show an information page and it means it's running.
+Also, before any setting, you can try visiting `localhost` and you'll got 403 message if it's running normally.
+
+To allow visitors you need to edit `$public.txt` or another file you specified in command line.
+Visitors can only visit **paths** you specified in the file (and please notices that `/` is different from `/index.html` althrough it can mean default file of a directory).
+
+**Notice: There will be a 404 if file allowed to visit but not exist.**
+
+After adding filenames you can try visiting your page again, and you'll see your own page.
+
+*(To be implemented ...)*
