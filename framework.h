@@ -69,6 +69,8 @@ public:
 	void operator += (bytes b);
 	void operator += (char b);
 	char& operator [] (size_t pos);
+	// Fuck optimize
+	//~bytes() = delete;
 private:
 	void realloc(size_t sz);
 	char *byte_space;

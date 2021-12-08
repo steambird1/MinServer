@@ -403,15 +403,15 @@ int main(int argc, char* argv[]) {
 	for (int i = 1; i < argc; i++) {
 		string it = argv[i];
 		if (it == "--default-page") {
-			not_found = readAll(argv[i + 1]);
+			not_found_c = readAll(argv[i + 1]);
 			i++;
 		}
 		else if (it == "--default-ns") {
-			not_supported = readAll(argv[i + 1]);
+			not_supported_c = readAll(argv[i + 1]);
 			i++;
 		}
 		else if (it == "--default-na") {
-			no_perm = readAll(argv[i + 1]);
+			no_perm_c = readAll(argv[i + 1]);
 			i++;
 		}
 		else if (it == "--default-ok") {
@@ -526,6 +526,9 @@ int main(int argc, char* argv[]) {
 		return 0;
 		}
 	}
+	const bytes not_found = not_found_c;
+	const bytes not_supported = not_supported_c;
+	const bytes no_perm = no_perm_d;
 	/*
 	FILE *f = fopen(public_file_path.c_str(), "r");
 	if (f != NULL) {
@@ -1150,12 +1153,12 @@ int main(int argc, char* argv[]) {
 		fclose_m(fx);
 		// End
 		*/
-		// Leakage disappears, but I don't know why.
+		// Leakage occurs once again
 		s.sends(bs);
 		bs.release();
 	 after_sentup: s.end_accept();
 		s.release_prev();
-		sndinfo.content.release();
+//		sndinfo.content.release();	// Fuck optimize
 	}
 
 	WSACleanup();

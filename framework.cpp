@@ -8,19 +8,21 @@
  bytes::bytes(string b)
  {
 	 clear();
-	 (*this) += b;
+	 //(*this) += b;
+	 add(b.c_str(), b.length());
  }
 
  bytes::bytes(const char * b)
  {
 	 clear();
-	 (*this) += string(b);
+	 add(b, strlen(b));
  }
 
  bytes::bytes(char b)
  {
 	 clear();
-	 (*this) += b;
+	 const char t[1] = { b };
+	 add(t, 1);
  }
 
  bytes::bytes(const bytes & other)
@@ -651,6 +653,8 @@ void bytes::release()
 	 delete[] c;
  }
 
+ // ???
+//#pragma optimize("", off)
  bytes http_send::toSender(bool autolen)
  {
 	 bytes b = proto_ver + " " + to_string(codeid) + " " + code_info + "\n";
@@ -664,3 +668,4 @@ void bytes::release()
 	 b += content;
 	 return b;
  }
+//#pragma optimize("", on)
