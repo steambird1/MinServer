@@ -83,11 +83,21 @@ string findType(string fn) {
 	return ctypes[ext];
 }
 
-int random(void) {
-	static int seed = time(NULL);
-	srand(seed);
-	seed = rand();
-	return seed;
+int random_s(void) {
+	static bool firstrun = true;
+	if (firstrun) {
+		srand(time(NULL));
+		firstrun = false;
+	}
+	return rand();
+}
+
+int random(int bitm = 16) {
+	int n = 0;
+	for (int i = 0; i <= bitm; i++) {
+		if (random_s() % 2) n |= (1 << i);
+	}
+	return n;
 }
 
 string makeTemp(void) {
@@ -270,13 +280,18 @@ string sRemovingQuotes(string s) {
 // A support of none-stream
 
 #define MINSERVER_DEBUG 0
-#if MINSERVER_DEBUG
+#if MINSERVER_DEBUG == 1
 #define cout_d cout
 #define endl_d endl
 #define MINSERVER_EXT_DEBUG 1
 int no_data_screen = 1;
 #else
-
+#if MINSERVER_DEBUG == 2
+// To make sure there is no memory leak or cause c0000374
+#define heap_test() do {char *c = new char[2]; delete[] c; } while (false)
+#else
+#define heap_test() __noop
+#endif
 class null_stream {
 public:
 	null_stream() {

@@ -373,9 +373,19 @@ void stat() {
 
 	int ut_use = uidctrl::size();
 	int ft_use = file_token.size();
-	printf("User token usage: %d (%.2lf %% free)\n\n", ut_use, 100.00 - double(ut_use) / 327.68);
-	printf("File token usage: %d (%.2lf %% free)\n\n", ft_use, 100.00 - double(ft_use) / 327.68);
+
+	double ut_free = 100.0 - (ut_use / 2.54);
+	double ft_free = 100.0 - (ft_use / 2.54);
+
+	if (ut_free < 0.0) ut_free = 0.00;
+	if (ft_free < 0.0) ft_free = 0.00;
+
+	printf("User token usage: %d (%.2lf %% Free)\n\n", ut_use, ut_free);
+	printf("File token usage: %d (%.2lf %% Free)\n\n", ft_use, ft_free);
 	
+	if (ut_free == 0.00 || ft_free == 0.00) {
+		printf("*** Server downgraded ***\n\n");
+	}
 
 	static set<vis_info> vp;
 	vp.clear();
@@ -995,6 +1005,7 @@ int main(int argc, char* argv[]) {
 			}
 			bool flag2 = false;
 			FILE *f = fopen(public_file_path.c_str(), "r");
+			heap_test();
 			if (f != NULL) {
 				while (!feof(f)) {
 					// buf uses begin
