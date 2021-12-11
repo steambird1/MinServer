@@ -205,37 +205,11 @@ string dec2hexw(int n) {
 	return tmp;
 }
 
-int hex2dec(string s) {
-	int t = 1, u = 0;
-	while (s.length()) {
-		char c = s[s.length() - 1];
-		s.pop_back();
-		if (c >= 'a' && c <= 'z') c = toupper(c);
-		if (c >= 'A' && c <= 'F') u += (10 + (c - 'A')) * t;
-		else u += (c - '0') * t;
-		t *= 16;
-	}
-	return u;
-}
-
 inline int permMatch(int req, int cur) {
 	return (req & cur) == req;
 }
 
-bytes decodeHTMLBytes(string s) {
-	bytes b;
-	for (int it = 0; it < s.length(); it++) {
-		char &i = s[it];
-		if (i == '%') {
-			b += char(hex2dec(s.substr(it + 1, 2)));
-			it += 2;
-		}
-		else {
-			b += i;
-		}
-	}
-	return b;
-}
+#define decodeHTMLBytes resolveHTTPSymbols
 
 // encode. e.g. '0' -> '\x30'.
 string encodeBytes(bytes b) {

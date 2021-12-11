@@ -134,6 +134,11 @@ void bytes::release()
 	 return this->byte_space[pos];
  }
 
+ bytes::operator string()
+ {
+	 return toString();
+ }
+
  void bytes::realloc(size_t sz)
 {
 //	if (sz < this->len)
@@ -209,6 +214,22 @@ void bytes::release()
 	 return ws;
  }
 
+ bytes resolveHTTPSymbols(string s)
+ {
+	 bytes b;
+	 for (int it = 0; it < s.length(); it++) {
+		 char &i = s[it];
+		 if (i == '%') {
+			 b += char(hex2dec(s.substr(it + 1, 2)));
+			 it += 2;
+		 }
+		 else {
+			 b += i;
+		 }
+	 }
+	 return b;
+ }
+
  ssocket::ssocket()
  {
 	 sock_init();
@@ -282,7 +303,7 @@ void bytes::release()
 		 return http_recv();
 	 h.proto_ver = firstinf[2];
 	 h.process = firstinf[0];
-	 h.path = firstinf[1];
+	 h.path = resolveHTTPSymbols(firstinf[1]);
 	 vector<string>::iterator i;
 	 size_t pos = lf[0].length();
 	 while (b[pos] == '\r' || b[pos] == '\n') pos++;
@@ -418,8 +439,9 @@ void bytes::release()
 	 int mode = 0; // 'true' to after '?'; '2' to get values
 	 vector<string> v;
 	 map<string, string> r;
-	 path.erase(path.begin()); // beginning '/'
-	 for (auto i = path.begin(); i != path.end(); i++) {
+	 string wpath = this->path.toString();
+	 wpath.erase(wpath.begin()); // beginning '/'
+	 for (auto i = wpath.begin(); i != wpath.end(); i++) {
 		 switch (*i) {
 		 case '?':
 			 if (!mode && tmp.length()) {
@@ -472,7 +494,7 @@ void bytes::release()
 			 v.push_back(tmp);
 		 }
 	 }
-	 path.insert(path.begin(), '/'); // add back
+	 wpath.insert(wpath.begin(), '/'); // add back, It's not necessary
 	 return { v, r };
  }
 
@@ -669,3 +691,16 @@ void bytes::release()
 	 return b;
  }
 //#pragma optimize("", on)
+
+ int hex2dec(string s) {
+	 int t = 1, u = 0;
+	 while (s.length()) {
+		 char c = s[s.length() - 1];
+		 s.pop_back();
+		 if (c >= 'a' && c <= 'z') c = toupper(c);
+		 if (c >= 'A' && c <= 'F') u += (10 + (c - 'A')) * t;
+		 else u += (c - '0') * t;
+		 t *= 16;
+	 }
+	 return u;
+ }

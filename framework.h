@@ -69,6 +69,7 @@ public:
 	void operator += (bytes b);
 	void operator += (char b);
 	char& operator [] (size_t pos);
+	operator string();
 	// Fuck optimize
 	//~bytes() = delete;
 private:
@@ -116,7 +117,7 @@ struct content_info {
 struct http_recv {
 	string proto_ver;			// 1.0 or 1.1
 	string process;				// methods, e.g. GET, POST, PUT
-	string path;				// e.g. "/", "/index.html"
+	bytes path;				// e.g. "/", "/index.html"
 	map<string, string> attr;	// Attributes
 	bytes content;				// Message body
 
@@ -169,3 +170,10 @@ private:
 	int rcbsz, last_receive;
 	bool acc_errored,errored;
 };
+
+// Tools
+
+// Hex numbers -> Dec numbers
+int hex2dec(string hex);
+// Resolve HTTP marks (e.g. %20 -> ' ').
+bytes resolveHTTPSymbols(string s);
