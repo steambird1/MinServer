@@ -1075,7 +1075,7 @@ int main(int argc, char* argv[]) {
 									string s = readAll("mspara.js").toString();
 									int t = s.length() - 4;			// removing two '%s'
 									// Prepare URL Args
-									string ua = "", pa = "[", ba = "";
+									string ua = "", pa = "[", ba = "", ha = "";
 									for (auto &i : path_pinfo.exts) {
 										ua += "{key:\"" + i.first + "\",value:\"" + i.second + "\"},\n";
 									}
@@ -1103,7 +1103,15 @@ int main(int argc, char* argv[]) {
 									if (pa.length()) pa += "]";	// As not removed all of things
 									t += pa.length();
 
-									//t += ba.length();
+									// Prepare HEAD-data args (sometimes it'll be useful)
+									for (auto &i : hinfo.attr) {
+										ha += "{key:\"" + encodeBytes(i.first) + "\",value:\"" + encodeBytes(i.second) + "\"},\n";
+									}
+									if (ha.length()) {
+										ha.pop_back();	// ','
+									}
+
+									t += ha.length();
 
 									t += hinfo.process.length();
 									t += hinfo.proto_ver.length();
@@ -1115,7 +1123,7 @@ int main(int argc, char* argv[]) {
 									cout_d << "Allocated length for buf: " << t + 20 << endl_d;
 									char *buf = new char[t + 20];	// Also added ua/pa spaces
 									//      Buffer|Template|Args -->
-									sprintf(buf, s.c_str(), hinfo.process.c_str(), hinfo.proto_ver.c_str(), ua.c_str(), pa.c_str());	// Fails here, but why?
+									sprintf(buf, s.c_str(), hinfo.process.c_str(), hinfo.proto_ver.c_str(), ha.c_str(), ua.c_str(), pa.c_str());	// Fails here, but why?
 									//cout << "Builtin scripts: " << endl << buf << endl << "== END ==" << endl;
 									fprintf(fr, "// Args\n%s\n", buf);
 									// End

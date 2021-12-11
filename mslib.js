@@ -153,3 +153,13 @@ function mslib() {
     }
 
 }
+
+// Some tools useful
+// Input: MinServer key-value object (like pageinfo.head_args)
+function toJSDictionary(mins_dict_obj) {
+    var res = new Array();
+    for (var i = 0; i < mins_dict_obj.length; i++) {
+        res[mins_dict_obj[i].key] = mins_dict_obj[i].value;
+    }
+    return res;
+}
