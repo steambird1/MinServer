@@ -841,6 +841,7 @@ int main(int argc, char* argv[]) {
 					}
 					else {
 						chto = user_operator::allocnew();
+						sndinfo.content = to_string(chto);
 					}
 					
 					string upasswd = path_pinfo.exts["passwd"];				// Changing to
@@ -856,6 +857,7 @@ int main(int argc, char* argv[]) {
 						if (uidctrl::uidof(otoken) != chto) {
 							sndinfo.codeid = 403;
 							sndinfo.code_info = "Forbidden";
+							sndinfo.content.clear();					// Do not send new ID
 						}
 						else {
 							user_operator::moduser(chto, upasswd);

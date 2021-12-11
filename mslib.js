@@ -147,6 +147,9 @@ function mslib() {
         if (this.xhobject.status != 200) {
             throw new msexception("User exists and requires login", 2);
         }
+        if (ider == null) {
+            return this.xhobject.responseText;
+        }
     }
 
 }
