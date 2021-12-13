@@ -26,6 +26,13 @@ string public_file_path = "$public.txt";
 string group_path = "$groups.txt";
 int default_join_g = -1;
 
+// Allocate ONCE
+char buf4[4096], buf5[4096];
+
+int portz = 80;
+
+map<string, int> visit;
+
 // Uses for MinServer file opener for permission verify
 class file_structure {
 public:
@@ -402,13 +409,6 @@ extern "C" {
 	}
 }
 
-// Allocate ONCE
-char buf4[4096], buf5[4096];
-
-int portz = 80;
-
-map<string, int> visit;
-
 struct vis_info {
 	string ip;
 	int vis;
@@ -658,6 +658,7 @@ int main(int argc, char* argv[]) {
 					fclose_m(i.second);
 				}
 				file_token.clear();
+				downgraded = false;
 				al_cause = true;
 			}
 			else {
