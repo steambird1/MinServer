@@ -344,6 +344,62 @@ extern "C" {
 	int c_file_open(int uid, cc_str filename, cc_str method) {
 		return file_operator::open(uid, filename, method);
 	}
+	double c_memory_usage(void) {
+		PROCESS_MEMORY_COUNTERS p;
+		GetProcessMemoryInfo(GetCurrentProcess(), &p, sizeof(p));
+		return p.WorkingSetSize / 1024.0 / 1024.0;
+	}
+	double c_utoken_usage(void) {
+		int ut_use = uidctrl::size();
+		//int ft_use = file_token.size();
+
+		double ut_free = 100.0 - (ut_use / 2.54);
+		//double ft_free = 100.0 - (ft_use / 2.54);
+		return ut_free;
+	}
+	double c_ftoken_usage(void) {
+		//int ut_use = uidctrl::size();
+		int ft_use = file_token.size();
+
+		//double ut_free = 100.0 - (ut_use / 2.54);
+		double ft_free = 100.0 - (ft_use / 2.54);
+		return ft_free;
+	}
+	ip_info c_ip_health(void) {
+		ip_info res;
+		res.data = (struct _single_ip_info*)calloc(visit.size() + 1, sizeof(struct _single_ip_info));
+		res.len = visit.size();
+		int it = 0;
+		for (auto &i : visit) {
+			res.data[it].ip_addr = i.first.c_str();
+			res.data[it].ip_vis = i.second;
+		}
+		return res;
+	}
+	bool c_ug_query(int uid, int gid) {
+		return user_groups::query(uid).count(gid);
+	}
+	bool c_uo_exists(int uid) {
+		return user_operator::quser(uid).length();
+	}
+	void c_uo_mod(int uid, const char *pwd) {
+		if (c_uo_exists(uid)) {
+			// Exists
+			user_operator::moduser(uid, pwd);
+		}
+		else {
+			user_operator::adduser(uid, pwd);
+		}
+	}
+	void c_uo_chperm(const char *filename, int touid, int toper) {
+		if (toper == -1) {
+			// Changing ownership
+			user_operator::chown(filename, touid);
+		}
+		else {
+			user_operator::chperm(filename, touid, toper);
+		}
+	}
 }
 
 // Allocate ONCE
@@ -367,15 +423,13 @@ void stat() {
 	system("cls");
 	cout << "Server Status" << endl << endl;
 
-	PROCESS_MEMORY_COUNTERS p;
-	GetProcessMemoryInfo(GetCurrentProcess(), &p, sizeof(p));
-	printf("Memory Usage: %.2lf MB\n\n", p.WorkingSetSize / 1024.00 / 1024.00);
+	printf("Memory Usage: %.2lf MB\n\n", c_memory_usage());
 
 	int ut_use = uidctrl::size();
 	int ft_use = file_token.size();
 
-	double ut_free = 100.0 - (ut_use / 2.54);
-	double ft_free = 100.0 - (ft_use / 2.54);
+	double ut_free = c_utoken_usage();
+	double ft_free = c_ftoken_usage();
 
 	if (ut_free < 0.0) ut_free = 0.00;
 	if (ft_free < 0.0) ft_free = 0.00;
@@ -558,19 +612,21 @@ int main(int argc, char* argv[]) {
 	}
 	cout << "* Listening started at port " << portz << " *" << endl;
 	bytes bs;
+	bool downgraded = false;
 	while (true) {
 		if (!no_data_screen) 
 		{
 			stat();
 			cout << endl << "* Listening at port " << portz << " *" << endl;
 		}
+		if (c_ftoken_usage() <= 0.0 || c_utoken_usage() <= 0.0) downgraded = true;
 		s.accepts();
 		if (!s.accept_vaild()) {
 			s.end_accept();
 			continue;
 		}
 		http_recv hinfo = s.receive();
-		if (!no_data_screen) visit[s.get_paddr()]++;
+		visit[s.get_paddr()]++;	// Now suite with DLLs
 		cout_d << "Receiver receives:" << endl_d << endl_d;
 		cout_d << s.get_prev().toString() << endl_d;
 		cout_d << "End" << endl_d;
@@ -588,6 +644,14 @@ int main(int argc, char* argv[]) {
 		bool flag;
 
 		set<string> operations = { "file_operate", "auth_workspace", "uploader", "caller" };
+
+		if (downgraded) {
+			sndinfo.codeid = 500;
+			sndinfo.code_info = "Internal Server Error";
+			sndinfo.proto_ver = hinfo.proto_ver;
+			goto sendup;
+		}
+
 		if (path_pinfo.path.size() == 1 && operations.count(path_pinfo.path[0])) {
 			if (path_pinfo.path[0] == "file_operate") {
 				// It's not necessary to change to command format. Why not directly fopen()?
@@ -976,8 +1040,9 @@ int main(int argc, char* argv[]) {
 					sndinfo.code_info = "Bad Request";
 				}
 				else {
-					sdata *s_prep = new sdata;;
-					s_prep->cal_lib = { uidctrl::request, uidctrl::vaild, uidctrl::uidof, uidctrl::release, c_user_auth, file_operator::release, c_file_open };
+					sdata *s_prep = new sdata;
+					// To be updated:
+					s_prep->cal_lib = { uidctrl::request, uidctrl::vaild, uidctrl::uidof, uidctrl::release, c_user_auth, file_operator::release, c_file_open, c_memory_usage, c_utoken_usage, c_ftoken_usage, c_ip_health, user_groups::insert, user_groups::remove };
 					const char *tc = s.get_prev().toCharArray();
 					send_info ds;
 					ds = df(tc, s_prep);

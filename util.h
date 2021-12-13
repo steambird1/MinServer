@@ -293,6 +293,25 @@ typedef void(*uidreq_release_func)(int);
 typedef bool(*uoperator_auth_func)(int, cc_str);
 typedef bool(*foperator_release_func)(int);
 typedef int(*foperator_open_func)(int, cc_str, cc_str);
+// New updates:
+
+typedef struct _single_ip_info {
+	cc_str ip_addr;
+	int ip_vis;
+} single_ip_info;
+
+typedef struct _ip_info {
+	int len;
+	single_ip_info *data;
+} ip_info;
+
+typedef double(*health_func)(void);
+typedef ip_info(*ip_health_func)(void);
+typedef void(*ugroup_insert_func)(int, int);	// uid -- group
+typedef bool(*ugroup_query_func)(int, int);
+typedef void(*uoperator_mod_func)(int, cc_str);
+typedef void(*uoperator_chg_perm)(cc_str, int, int);
+typedef bool(*uoperator_exists_func)(int);			// Is specified UID exists?
 
 typedef struct _callers {
 	uidreq_request_func uidc_request;
@@ -302,6 +321,17 @@ typedef struct _callers {
 	uoperator_auth_func	uop_auth;
 	foperator_release_func fop_rel;
 	foperator_open_func fop_open;
+	// New updates:
+	health_func mem_usage;			// Unit: MB
+	health_func utoken_usage;		// 0.0 - 1.0
+	health_func ftoken_usage;		// 0.0 - 1.0
+	ip_health_func iphealth_info;
+	ugroup_insert_func ug_insert;
+	ugroup_insert_func ug_remove;
+	ugroup_query_func ug_query;		// Is it in specified group?
+	uoperator_mod_func uop_mod;		// Automaticly decides
+	uoperator_chg_perm uop_chp;		// Automaticly changing to '-1' means changing owner
+	uoperator_exists_func uop_exists;
 } callers;
 
 typedef struct _sdata {
