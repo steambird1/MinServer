@@ -353,15 +353,15 @@ extern "C" {
 		int ut_use = uidctrl::size();
 		//int ft_use = file_token.size();
 
-		double ut_free = 100.0 - (ut_use / 2.54);
-		//double ft_free = 100.0 - (ft_use / 2.54);
+		// It's in maxinum of rand().
+		double ut_free = 100.0 - (ut_use / (double(1<<16) - 1.0));
+		//double ft_free = 100.0 - (ft_use / 2.5
 		return ut_free;
 	}
 	double c_ftoken_usage(void) {
 		//int ut_use = uidctrl::size();
 		int ft_use = file_token.size();
-
-		//double ut_free = 100.0 - (ut_use / 2.54);
+		// It's in maxinum of fopen().
 		double ft_free = 100.0 - (ft_use / 2.54);
 		return ft_free;
 	}
@@ -458,6 +458,8 @@ void stat() {
 	printf("\n");
 }
 
+bool auto_release = true;
+
 int main(int argc, char* argv[]) {
 	//cout << "Running in directory: " << sCurrDir("example") << endl;
 	const char *cbt = new char[60];
@@ -508,6 +510,9 @@ int main(int argc, char* argv[]) {
 		}
 		else if (it == "--no-display") {
 			no_data_screen = 1;
+		}
+		else if (it == "--no-auto-release") {
+			auto_release = false;
 		}
 		else if (it == "--port") {
 			portz = atoi(argv[i + 1]);
@@ -612,13 +617,14 @@ int main(int argc, char* argv[]) {
 	}
 	cout << "* Listening started at port " << portz << " *" << endl;
 	bytes bs;
-	bool downgraded = false;
+	bool downgraded = false, al_cause = false;
 	while (true) {
 		if (!no_data_screen) 
 		{
 			stat();
 			cout << endl << "* Listening at port " << portz << " *" << endl;
 		}
+		if (al_cause) cout << endl << "* Auto-release runned" << endl;
 		if (c_ftoken_usage() <= 0.0 || c_utoken_usage() <= 0.0) downgraded = true;
 		s.accepts();
 		if (!s.accept_vaild()) {
@@ -646,10 +652,21 @@ int main(int argc, char* argv[]) {
 		set<string> operations = { "file_operate", "auth_workspace", "uploader", "caller" };
 
 		if (downgraded) {
-			sndinfo.codeid = 500;
-			sndinfo.code_info = "Internal Server Error";
-			sndinfo.proto_ver = hinfo.proto_ver;
-			goto sendup;
+			// A server downgrade is because the limit of fopen().
+			if (auto_release) {
+				for (auto &i : file_token) {
+					fclose_m(i.second);
+				}
+				file_token.clear();
+				al_cause = true;
+			}
+			else {
+				sndinfo.codeid = 500;
+				sndinfo.code_info = "Internal Server Error";
+				sndinfo.proto_ver = hinfo.proto_ver;
+				goto sendup;
+			}
+			
 		}
 
 		if (path_pinfo.path.size() == 1 && operations.count(path_pinfo.path[0])) {

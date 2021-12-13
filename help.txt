@@ -15,6 +15,7 @@ Options are:
 	--buffer			Set the buffer size for basic information (header).
 	--no-display		Set that server will not refresh information on console.
 	--root-file			Add file that will try to be resolved when giving a directory (Existing: /index.html, /index.htm).
+	--no-auto-release	Set that server will not release file tokens when downgraded because of file token. [Not suggested, may causes server down]
 
 Executable options are:
 	--user-operate		User operations.
