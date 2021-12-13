@@ -21,10 +21,15 @@ You just need to run it. it'll show an information page and it means it's runnin
 Also, before any setting, you can try visiting `localhost` and you'll got 403 message if it's running normally.
 
 To allow visitors you need to edit `$public.txt` or another file you specified in command line.
-Visitors can only visit **paths** you specified in the file (and please notices that `/` is different from `/index.html` althrough it can mean default file of a directory).
+Visitors can only visit **paths** you specified in the file (and please notices that `/` is different from `/index.html` although it can mean default file of a directory).
 
 **Notice: There will be a 404 if file allowed to visit but not exist.**
 
 After adding filenames you can try visiting your page again, and you'll see your own page.
 
-*(To be implemented ...)*
+### Advanced Use
+MinServer is able to do file operation, user authorize in JavaScript and DLL extension in "C++ in `extern C`". To learn more about them, see Wiki (*Maybe implementing*).
+
+## How to help with me (us ?)
+Just add Issues and Pull Requests.
+Also, please give me a star if you like it :)
