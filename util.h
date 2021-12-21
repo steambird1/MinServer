@@ -70,7 +70,7 @@ string getExt(string cwtemp) {
 }
 
 // Default ones
-vector<string> defiles = { "", "\\index.html","\\index.htm" };
+vector<string> defiles = { "", "index.html","index.htm" };
 map<string, string> ctypes = { {".apk", "application/vnd.android"},  {".html","text/html"}, {".htm", "text/html"}, {".ico","image/ico"}, {".jpg", "image/jpg"}, {".jpeg", "image/jpeg"}, {".png", "image/apng"}, {".txt","text/plain"}, {".css", "text/css"}, {".js", "application/x-javascript"}, {".mp3", "audio/mpeg"}, {".wav", "audio/wav"}, {".mp4", "video/mpeg"} };
 
 
@@ -259,6 +259,7 @@ string sRemovingQuotes(string s) {
 #define endl_d endl
 #define MINSERVER_EXT_DEBUG 1
 int no_data_screen = 1;
+#define heap_test() do {char *c = new char[2]; delete[] c; } while (false)
 #else
 #if MINSERVER_DEBUG == 2
 // To make sure there is no memory leak or cause c0000374
@@ -321,7 +322,6 @@ typedef struct _callers {
 	uoperator_auth_func	uop_auth;
 	foperator_release_func fop_rel;
 	foperator_open_func fop_open;
-	// New updates:
 	health_func mem_usage;			// Unit: MB
 	health_func utoken_usage;		// 0.0 - 1.0
 	health_func ftoken_usage;		// 0.0 - 1.0
@@ -332,11 +332,16 @@ typedef struct _callers {
 	uoperator_mod_func uop_mod;		// Automaticly decides
 	uoperator_chg_perm uop_chp;		// Automaticly changing to '-1' means changing owner
 	uoperator_exists_func uop_exists;
+	// New updates:
+	cc_str e403, e404, e501;	// IDs
+	struct {
+		cc_str ok, redirect;
+	} e200;
 } callers;
 
 typedef struct _sdata {
 	callers cal_lib;
-} sdata;
+} sdata, asdata;
 
 typedef struct _send_info {
 	struct {
@@ -345,3 +350,4 @@ typedef struct _send_info {
 	};
 } send_info;
 typedef send_info(*d_func)(cc_str, sdata*);
+typedef send_info(*as_func)(cc_str, cc_str, asdata*);	// Assiocated caller. asdata* currently NULL.

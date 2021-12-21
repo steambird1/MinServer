@@ -1,14 +1,19 @@
 #pragma once
-#include <cstdio>
-#include <cstring>
-#include <windows.h>
-#include <yvals.h>
-using namespace std;
 
 // This is DLL (C compile rules) Framework for MinServer external DLL.
 // Notice: Don't forgot to FREE MEMORY SPACE.
 
 extern "C" {
+
+#ifndef _CRT_SECURE_NO_WARNINGS
+#define _CRT_SECURE_NO_WARNINGS
+#endif
+
+#include <cstdio>
+#include <cstring>
+#include <windows.h>
+#include <yvals.h>
+	using namespace std;
 
 #if ! __BOOL_DEFINED
 	typedef int bool;
@@ -58,7 +63,6 @@ extern "C" {
 		uoperator_auth_func	uop_auth;
 		foperator_release_func fop_rel;
 		foperator_open_func fop_open;
-		// New updates:
 		health_func mem_usage;			// Unit: MB
 		health_func utoken_usage;		// 0.0 - 1.0
 		health_func ftoken_usage;		// 0.0 - 1.0
@@ -69,17 +73,20 @@ extern "C" {
 		uoperator_mod_func uop_mod;		// Automaticly decides
 		uoperator_chg_perm uop_chp;		// Automaticly changing to '-1' means changing owner
 		uoperator_exists_func uop_exists;
+		// New updates:
+		cc_str e403, e404, e501, e200_ok, e200_redirect;	// IDs
 	} callers;
 
 	typedef struct _sdata {
 		callers cal_lib;
-	} sdata;
+	} sdata, asdata;
 
 	typedef struct _send_info {
 		int len;
 		cc_str cdata;
 	} send_info;
 	typedef send_info(*d_func)(cc_str, sdata*);
+	typedef send_info(*as_func)(cc_str, cc_str, asdata*);	// Assiocated caller. asdata* currently NULL. another one is file content
 #endif
 
 	typedef struct _c_pair {
@@ -201,8 +208,6 @@ extern "C" {
 
 	// Gets how many succeed (Automaticly stopped if size > read_buffer or count > read_count..)
 	cpost_info c_postres(const char *content, const char *boundary, int content_length, int read_count, int read_buffer) {
-		// ********************************* Note: Resolver bug here... ********************************* 
-		// Allocation table information
 		static const int para_count = 16;
 		// End
 

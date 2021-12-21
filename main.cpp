@@ -24,6 +24,7 @@ string perm_data_path = "$permission.txt";
 string user_data_path = "$users.txt";
 string public_file_path = "$public.txt";
 string group_path = "$groups.txt";
+string assiocate_path = "$assiocate.txt";
 int default_join_g = -1;
 
 // Allocate ONCE
@@ -419,9 +420,12 @@ bool operator < (vis_info x, vis_info y) {
 	return x.vis > y.vis;
 }
 
+int aldr = 0;	// Count of assiocation loaded
+
 void stat() {
 	system("cls");
-	cout << "Server Status" << endl << endl;
+	cout << "Server Status" << endl;
+	printf("Assiocations loaded: %d\n\n", aldr);
 
 	printf("Memory Usage: %.2lf MB\n\n", c_memory_usage());
 
@@ -460,12 +464,15 @@ void stat() {
 
 bool auto_release = true;
 
+map<string, as_func> acaller;
+
 int main(int argc, char* argv[]) {
 	//cout << "Running in directory: " << sCurrDir("example") << endl;
 	const char *cbt = new char[60];
 	int tbuf = RCV_DEFAULT;
 //	cbt = c_boundary("text/html; boundary=------BoundaryInformationDataHereAAABBBCCCDDDEEEFFFGGG");
 //	cout_d << "C-Boundary tester:" << cbt << endl_d;
+	
 	for (int i = 1; i < argc; i++) {
 		string it = argv[i];
 		if (it == "--default-page") {
@@ -502,6 +509,10 @@ int main(int argc, char* argv[]) {
 		}
 		else if (it == "--default-join") {
 			default_join_g = atoi(argv[i + 1]);
+			i++;
+		}
+		else if (it == "--assiocate-table") {
+			assiocate_path = argv[i + 1];
 			i++;
 		}
 		else if (it == "--root-file") {
@@ -597,7 +608,13 @@ int main(int argc, char* argv[]) {
 	}
 	const bytes not_found = not_found_c;
 	const bytes not_supported = not_supported_c;
-	const bytes no_perm = no_perm_d;
+	const bytes no_perm = no_perm_c;
+	// Also got something as C
+	cc_str ec403 = no_perm_c.toCharArray();
+	cc_str ec404 = not_found_c.toCharArray();
+	cc_str ec501 = not_supported_c.toCharArray();
+	cc_str ec200_ok = ok.c_str();
+	cc_str ec200_redirect = redirect.c_str();
 	/*
 	FILE *f = fopen(public_file_path.c_str(), "r");
 	if (f != NULL) {
@@ -614,6 +631,33 @@ int main(int argc, char* argv[]) {
 	if (!s.vaild()) {
 		cout << "Can't bind or listen!" << endl;
 		exit(1);
+	}
+	cout << "Loading assiocation..." << endl;
+	bool failure = false;
+	FILE *fa = fopen(assiocate_path.c_str(), "r");
+	if (fa != NULL) {
+		while (!feof(fa)) {
+			// buf, buf2 uses begin
+			fscanf(fa, "%s%s", buf, buf2);	// DLLPath Extension
+			HINSTANCE h = LoadLibrary(buf);
+			if (h == NULL) {
+				FreeLibrary(h);
+				cout << "Unable to assiocate: " << buf2 << " for " << buf << endl;
+				failure = true;
+			}
+			else {
+				as_func df = (as_func)GetProcAddress(h, "AssiocateMain");
+				acaller[buf2] = df;
+				aldr++;
+				// Seemed to be not able to free
+			}
+			// buf, buf2 uses end
+		}
+		fclose(fa);
+	}
+	
+	if (failure) {
+		system("pause");	// Press any key to continue . . .
 	}
 	cout << "* Listening started at port " << portz << " *" << endl;
 	bytes bs;
@@ -1049,7 +1093,6 @@ int main(int argc, char* argv[]) {
 			else if (path_pinfo.path[0] == "caller") {
 			string md = path_pinfo.exts["module"];
 				HINSTANCE h = LoadLibrary(sCurrDir(decodeHTMLBytes(md).toString()).c_str());
-				// Maybe there will be libraries later.
 				d_func df = (d_func)GetProcAddress(h, "ServerMain");	// So uses as: const char* ServerMain(const char *receive)
 				if (df == NULL) {
 					FreeLibrary(h);
@@ -1060,7 +1103,7 @@ int main(int argc, char* argv[]) {
 				else {
 					sdata *s_prep = new sdata;
 					// To be updated:
-					s_prep->cal_lib = { uidctrl::request, uidctrl::vaild, uidctrl::uidof, uidctrl::release, c_user_auth, file_operator::release, c_file_open, c_memory_usage, c_utoken_usage, c_ftoken_usage, c_ip_health, user_groups::insert, user_groups::remove, c_ug_query, c_uo_mod, c_uo_chperm, c_uo_exists };
+					s_prep->cal_lib = { uidctrl::request, uidctrl::vaild, uidctrl::uidof, uidctrl::release, c_user_auth, file_operator::release, c_file_open, c_memory_usage, c_utoken_usage, c_ftoken_usage, c_ip_health, user_groups::insert, user_groups::remove, c_ug_query, c_uo_mod, c_uo_chperm, c_uo_exists, ec403, ec404, ec501, ec200_ok, ec200_redirect };
 					const char *tc = s.get_prev().toCharArray();
 					send_info ds;
 					ds = df(tc, s_prep);
@@ -1118,6 +1161,11 @@ int main(int argc, char* argv[]) {
 						flag = true;
 						break;
 					}
+					rpath = wpath + '\\' + i;
+					if (fileExists(rpath)) {
+						flag = true;
+						break;
+					}
 				}
 				cout_d << "Finally path: " << rpath << endl_d;
 				if (!flag) {
@@ -1130,6 +1178,7 @@ int main(int argc, char* argv[]) {
 
 					cout_d << "Sending type: " << sndinfo.attr["Content-Type"] << endl_d;
 
+					// You can see this as a bulitin text/html assiocation
 					if (sndinfo.attr["Content-Type"] == "text/html") {
 						// Insert script
 						cout_d << "Inserting script ..." << endl_d;
@@ -1234,10 +1283,26 @@ int main(int argc, char* argv[]) {
 						fclose_m(fr);
 					}
 					else {
+						// First of all scan for existing assiocation
+						string ex = getExt(rpath);	// Get extension, surely contains '.'.
+						if (acaller.count(ex)) {
+							asdata *s_prep = new asdata;
+							// To be updated:
+							s_prep->cal_lib = { uidctrl::request, uidctrl::vaild, uidctrl::uidof, uidctrl::release, c_user_auth, file_operator::release, c_file_open, c_memory_usage, c_utoken_usage, c_ftoken_usage, c_ip_health, user_groups::insert, user_groups::remove, c_ug_query, c_uo_mod, c_uo_chperm, c_uo_exists, ec403, ec404, ec501, ec200_ok, ec200_redirect };
+							sndinfo.content.clear();
+							cc_str stc = s.get_prev().toCharArray();
+							send_info sc = acaller[ex](stc, rpath.c_str(), s_prep);
+							delete[] stc;	// Memory cause
+							sndinfo.content.add(sc.cdata, sc.len);
+						}
+						else {
+							FILE *f = fopen(rpath.c_str(), "rb");
+							sndinfo.loadContent(f);
+							fclose_m(f);
+						}
+						// End
 						// Send directly
-						FILE *f = fopen(rpath.c_str(), "rb");
-						sndinfo.loadContent(f);
-						fclose_m(f);
+						
 					}
 				}
 			}
