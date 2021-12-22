@@ -1108,12 +1108,12 @@ int main(int argc, char* argv[]) {
 					send_info ds;
 					ds = df(tc, s_prep);
 					bytes b;
-					b.add(ds.cdata, ds.len);
+					b.add(ds.cdata, ds.len);	// Leaks somewhere. Probably here.
 					cout_d << "Trans back: " << endl_d;
 					cout_d << b.toCharArray() << endl_d;
 					cout_d << "End" << endl_d;
 					s.sends(b);
-					delete[] tc;
+					//delete[] tc;
 					b.release();
 					goto after_sentup;
 				}
