@@ -93,8 +93,9 @@ void bytes::release()
 	//return this->byte_space;
 	 if (this->len <= 0)
 		 return "";
-	 char *memspec = new char[this->len + 1];
-	 memset(memspec, 0, sizeof(char)*this->len + sizeof(char));
+	 char *memspec = new char[this->len + 2];
+	 memset(memspec, 0, sizeof(char)*this->len);
+	 memspec[this->len] = char(0);
 	 memcpy(memspec, this->byte_space, sizeof(char)*this->len);
 	 return memspec;
 }
@@ -142,8 +143,8 @@ void bytes::release()
 
  void bytes::realloc(size_t sz)
 {
-//	if (sz < this->len)
-//		return;
+	if (sz < this->len)
+		return;
 	char *bs_old = nullptr;
 	if (this->len) {
 		bs_old = new char[this->len + 1];
@@ -151,12 +152,13 @@ void bytes::release()
 		delete[] this->byte_space;		// Release old pointer, after copied
 	}
 	//release();
-	this->byte_space = new char[sz+1];
+	this->byte_space = new char[sz+2];
 	memset(this->byte_space, 0, sizeof(char)*sz);	// A waste of memory ???
 	if (this->len) {
 		memcpy(byte_space, bs_old, sizeof(char)*this->len);
 		delete[] bs_old;
 	}
+	this->byte_space[sz] = char(0);
 	this->len = sz;
 }
 
