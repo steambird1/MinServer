@@ -2,6 +2,7 @@
 
 #define _CRT_SECURE_NO_WARNINGS
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
+#define CRTDBG_MAP_ALLOC
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -10,6 +11,7 @@
 #include <map>
 #include <WinSock2.h>
 #include <Windows.h>
+#include <crtdbg.h>
 using namespace std;
 
 #pragma comment(lib, "ws2_32.lib")
@@ -26,11 +28,17 @@ using namespace std;
 // Not include BUG (NOT FEATURE) FIXES.
 #define SEABIRD_NET_STRUCTURE_VER 2
 
-#define SEABIRD_NET_DEBUG 0
+#define SEABIRD_NET_DEBUG 1
 #if SEABIRD_NET_DEBUG
 #define SEABIRD_NET_DEBUG_PRINT(...) printf(__VA_ARGS__)
+#ifndef vs_heap_test
+#define vs_heap_test() _CrtDumpMemoryLeaks
+#endif
 #else
 #define SEABIRD_NET_DEBUG_PRINT(...) __noop
+#ifndef vs_heap_test
+#define vs_heap_test() __noop
+#endif
 #endif
 #define printf_d(...) SEABIRD_NET_DEBUG_PRINT(__VA_ARGS__)
 

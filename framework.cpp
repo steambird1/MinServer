@@ -1,4 +1,5 @@
 #include "framework.h"
+#include <crtdbg.h>
 
  bytes::bytes()
 {
@@ -143,18 +144,19 @@ void bytes::release()
 {
 //	if (sz < this->len)
 //		return;
-	char *bs_old = new char[this->len + 1];
+	char *bs_old = nullptr;
 	if (this->len) {
+		bs_old = new char[this->len + 1];
 		memcpy(bs_old, this->byte_space, sizeof(char)*this->len);
+		delete[] this->byte_space;		// Release old pointer, after copied
 	}
-	delete[] this->byte_space;		// Release old pointer, after copied
 	//release();
-	this->byte_space = new char[sz];
+	this->byte_space = new char[sz+1];
 	memset(this->byte_space, 0, sizeof(char)*sz);	// A waste of memory ???
 	if (this->len) {
 		memcpy(byte_space, bs_old, sizeof(char)*this->len);
+		delete[] bs_old;
 	}
-	if (bs_old != nullptr) delete[] bs_old;
 	this->len = sz;
 }
 
@@ -372,7 +374,7 @@ void bytes::release()
  {
 	 const char* dc = data.toCharArray();
 	 bool t = (send(this->ace,dc, data.length(), 0) != SOCKET_ERROR);
-	 delete[] dc;
+	 delete[] dc; //?
 	 return t;
  }
 

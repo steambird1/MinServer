@@ -662,7 +662,9 @@ int main(int argc, char* argv[]) {
 	cout << "* Listening started at port " << portz << " *" << endl;
 	bytes bs;
 	bool downgraded = false, al_cause = false;
+	volatile char leak_detector[] = { "TESTtestTESTtestTESTtestTESTtestTESTtest" };
 	while (true) {
+
 		if (!no_data_screen) 
 		{
 			stat();
@@ -1101,12 +1103,13 @@ int main(int argc, char* argv[]) {
 					sndinfo.code_info = "Bad Request";
 				}
 				else {
-					sdata *s_prep = new sdata;
+					//sdata *s_prep = new sdata;
+					sdata s_prep;
 					// To be updated:
-					s_prep->cal_lib = { uidctrl::request, uidctrl::vaild, uidctrl::uidof, uidctrl::release, c_user_auth, file_operator::release, c_file_open, c_memory_usage, c_utoken_usage, c_ftoken_usage, c_ip_health, user_groups::insert, user_groups::remove, c_ug_query, c_uo_mod, c_uo_chperm, c_uo_exists, ec403, ec404, ec501, ec200_ok, ec200_redirect };
+					s_prep.cal_lib = { uidctrl::request, uidctrl::vaild, uidctrl::uidof, uidctrl::release, c_user_auth, file_operator::release, c_file_open, c_memory_usage, c_utoken_usage, c_ftoken_usage, c_ip_health, user_groups::insert, user_groups::remove, c_ug_query, c_uo_mod, c_uo_chperm, c_uo_exists, ec403, ec404, ec501, ec200_ok, ec200_redirect };
 					const char *tc = s.get_prev().toCharArray();
 					send_info ds;
-					ds = df(tc, s_prep);
+					ds = df(tc, &s_prep);
 					bytes b;
 					b.add(ds.cdata, ds.len);	// Leaks somewhere. Probably here.
 					cout_d << "Trans back: " << endl_d;
@@ -1187,7 +1190,7 @@ int main(int argc, char* argv[]) {
 						//CopyFile(rpath.c_str(), dest.c_str(), FALSE);
 						// Simply resolve <head> or <body>.
 						string qu = "";
-						bool mode1 = false;
+						bool mode1 = false, mode2 = false;
 						FILE *f = fopen(rpath.c_str(), "r"), *fr = fopen(dest.c_str(), "w");
 						while (true) {
 							char c = fgetc(f);
@@ -1199,8 +1202,9 @@ int main(int argc, char* argv[]) {
 							else if (c == '>') {
 								cout_d << "Label got: " << c << endl_d;
 								mode1 = false;
-								if (sToLower(qu) == "head" || sToLower(qu) == "body") {
+								if ((sToLower(qu) == "head" || sToLower(qu) == "body") && (!mode2)) {
 									// Insert script, now!
+									mode2 = true;
 									fprintf(fr, "><script>\n");
 
 									// 1. Parameters & Post informations
@@ -1286,14 +1290,20 @@ int main(int argc, char* argv[]) {
 						// First of all scan for existing assiocation
 						string ex = getExt(rpath);	// Get extension, surely contains '.'.
 						if (acaller.count(ex)) {
-							asdata *s_prep = new asdata;
+							asdata *s_prep = new asdata;	// Memory leak before here
 							// To be updated:
 							s_prep->cal_lib = { uidctrl::request, uidctrl::vaild, uidctrl::uidof, uidctrl::release, c_user_auth, file_operator::release, c_file_open, c_memory_usage, c_utoken_usage, c_ftoken_usage, c_ip_health, user_groups::insert, user_groups::remove, c_ug_query, c_uo_mod, c_uo_chperm, c_uo_exists, ec403, ec404, ec501, ec200_ok, ec200_redirect };
-							sndinfo.content.clear();
 							cc_str stc = s.get_prev().toCharArray();
-							send_info sc = acaller[ex](stc, rpath.c_str(), s_prep);
-							delete[] stc;	// Memory cause
-							sndinfo.content.add(sc.cdata, sc.len);
+							send_info sc;
+							sc = acaller[ex](stc, rpath.c_str(), s_prep);
+							//delete s_prep;
+							//delete[] stc;
+							//sndinfo.content.add(sc.cdata, sc.len);
+							bytes b;
+							b.add(sc.cdata, sc.len);
+							s.sends(b);
+							b.release();
+							goto after_sentup;
 						}
 						else {
 							FILE *f = fopen(rpath.c_str(), "rb");
