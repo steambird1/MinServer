@@ -342,9 +342,19 @@ typedef struct _callers {
 	} e200;
 } callers;
 
-typedef struct _sdata {
-	callers cal_lib;
-} sdata, asdata;
+
+typedef void*(*mem_alloc)(size_t);
+	typedef void(*mem_free)(void);
+	
+	typedef struct _mem_callers {
+		mem_alloc m_alloc;
+		mem_free m_free;
+	} mem_callers;
+
+	typedef struct _sdata {
+		callers cal_lib;
+		mem_callers mc_lib;
+	} sdata, asdata;
 
 typedef struct _send_info {
 	struct {
