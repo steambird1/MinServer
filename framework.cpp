@@ -61,6 +61,7 @@ void bytes::release()
 
  void bytes::erase(size_t pos, size_t count)
  {
+	 printf("Erase called");	// debugger !!
 	 for (size_t i = pos; i < this->length(); i++) {
 		 size_t target = pos + count;
 		 this->byte_space[i] = byte_space[target];

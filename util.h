@@ -287,6 +287,25 @@ null_stream& operator << (null_stream &origin, Ty other) {
 int no_data_screen = 0;
 #endif
 
+/*
+#define delete __delete_helper <<
+
+#pragma push_macro("delete")
+#undef delete
+
+class __delete {
+	__delete() {
+
+	}
+} __delete_helper;
+
+void operator << (__delete dobj, void *block) {
+	delete block;
+}
+
+#pragma pop_macro("delete")
+*/
+
 #define CONN_DEFINED
 typedef char *c_str;
 typedef const char *cc_str;
