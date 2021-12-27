@@ -68,6 +68,17 @@ private:
 	bool read_ok, write_ok;
 };
 
+// Preparing for DLL manager.
+class memory_manager {
+public:
+	static void* allocate(size_t size) {
+		return (void*) new char[size];
+	}
+	static void release(void *ptr) {
+		delete[] ptr;
+	}
+};
+
 map<int, file_structure> file_token;
 
 int findToken() {
