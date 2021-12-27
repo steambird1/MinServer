@@ -76,9 +76,18 @@ extern "C" {
 		// New updates:
 		cc_str e403, e404, e501, e200_ok, e200_redirect;	// IDs
 	} callers;
+	
+	typedef void*(*mem_alloc)(size_t);
+	typedef void(*mem_free)(void);
+	
+	typedef struct _mem_callers {
+		mem_alloc m_alloc;
+		mem_free m_free;
+	} mem_callers;
 
 	typedef struct _sdata {
 		callers cal_lib;
+		mem_callers mc_lib;
 	} sdata, asdata;
 
 	typedef struct _send_info {
