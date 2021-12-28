@@ -16,7 +16,8 @@ extern "C" __declspec(dllexport) send_info AssiocateMain(cc_str receive, cc_str 
 	//char *et = (char*)mmalloc(2500 * sizeof(char));
 	//fprintf(et, "Requested DLL can't be runned");
 	static const char sendup[] = { "HTTP/1.1 200 OK\nContent-Type: text/plain\nContent-Length: %d\n\n%s" };
-	char tmp[3000] = { 0 };
+	//char tmp[3000] = { 0 };
+	char *tmp;
 	if (df == NULL) {
 		//sprintf(tmp, sendup, strlen(error), error);
 		size_t t = strlen(et);
@@ -24,6 +25,7 @@ extern "C" __declspec(dllexport) send_info AssiocateMain(cc_str receive, cc_str 
 		const int pp = 1500;
 		for (i = 0; i < pp; i++) et[t + i] = 'A';
 		et[t + pp] = '\0';
+		tmp = (char*)mmalloc(sizeof(char) * (strlen(et) + strlen(sendup) + 50));
 		sprintf(tmp, sendup, strlen(et), et);
 		return { (int)strlen(tmp), tmp };
 		//return { (int)strlen(error), error };
