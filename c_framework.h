@@ -316,6 +316,7 @@ extern "C" {
 
 	}
 
+	// Here's to be implemented.
 	typedef struct _send_para {
 		c_pair *cp;
 		int cp_len;

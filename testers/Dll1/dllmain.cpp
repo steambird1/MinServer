@@ -11,7 +11,7 @@ extern "C" {
 #endif
 	__declspec(dllexport) send_info ServerMain(const char *data, sdata *sdata) {
 		// 301 Moved Permanently
-		static const char *sendup = { "HTTP/1.1 301 Moved Permanently\nContent-Length: %d\n\n%s" };
+		static const char *sendup = { "HTTP/1.1 200 OK\nContent-Type: text/plain\nContent-Length: %d\n\n%s" };
 		char t[30];
 		char *stmp;
 		sprintf(t, "/cc.html");
