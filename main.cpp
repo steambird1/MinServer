@@ -107,6 +107,7 @@ private:
 };
 // Allocate memory for it
 size_t memory_manager::dll_mem;
+map<void*, size_t> memory_manager::ptr_mem;
 
 map<int, file_structure> file_token;
 
