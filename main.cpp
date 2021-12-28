@@ -1118,6 +1118,7 @@ int main(int argc, char* argv[]) {
 					sdata s_prep;
 					// To be updated:
 					s_prep.cal_lib = { uidctrl::request, uidctrl::vaild, uidctrl::uidof, uidctrl::release, c_user_auth, file_operator::release, c_file_open, c_memory_usage, c_utoken_usage, c_ftoken_usage, c_ip_health, user_groups::insert, user_groups::remove, c_ug_query, c_uo_mod, c_uo_chperm, c_uo_exists, ec403, ec404, ec501, ec200_ok, ec200_redirect };
+					s_prep.mc_lib = { memory_manager::allocate, memory_manager::release };
 					const char *tc = s.get_prev().toCharArray();
 					send_info ds;
 					ds = df(tc, &s_prep);
@@ -1304,6 +1305,7 @@ int main(int argc, char* argv[]) {
 							asdata *s_prep = new asdata;	// Memory leak before here
 							// To be updated:
 							s_prep->cal_lib = { uidctrl::request, uidctrl::vaild, uidctrl::uidof, uidctrl::release, c_user_auth, file_operator::release, c_file_open, c_memory_usage, c_utoken_usage, c_ftoken_usage, c_ip_health, user_groups::insert, user_groups::remove, c_ug_query, c_uo_mod, c_uo_chperm, c_uo_exists, ec403, ec404, ec501, ec200_ok, ec200_redirect };
+							s_prep->mc_lib = { memory_manager::allocate, memory_manager::release };
 							cc_str stc = s.get_prev().toCharArray();
 							send_info sc;
 							sc = acaller[ex](stc, rpath.c_str(), s_prep);

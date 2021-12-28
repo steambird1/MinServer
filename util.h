@@ -344,7 +344,7 @@ typedef struct _callers {
 
 
 typedef void*(*mem_alloc)(size_t);
-	typedef void(*mem_free)(void);
+	typedef void(*mem_free)(void*);
 	
 	typedef struct _mem_callers {
 		mem_alloc m_alloc;
