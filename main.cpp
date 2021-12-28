@@ -4,6 +4,8 @@
 #include <iostream>
 #include <set>
 #include <psapi.h>
+#define _CP_DEFINED
+#include "c_framework.h"
 //#include "c_framework.h"
 // For MSVC:
 #ifdef _MSC_VER
@@ -68,16 +70,43 @@ private:
 	bool read_ok, write_ok;
 };
 
+// DLL LastError System
+int *dll_err;
+void setDLLError(int err) {
+	(*dll_err) = err;
+}
+
 // Preparing for DLL manager.
 class memory_manager {
 public:
 	static void* allocate(size_t size) {
-		return (void*) new char[size];
+		void *ptr = (void*) new (nothrow) char[size];
+		if (ptr != nullptr) {
+			dll_mem += size;
+			ptr_mem[ptr] = size;
+			memset(ptr, 0, sizeof(char)*size);
+		}
+		else {
+			setDLLError(2);
+		}
+		return ptr;
 	}
 	static void release(void *ptr) {
-		delete[] ptr;
+		if (!ptr_mem.count(ptr)) {
+			// Bad free
+			setDLLError(1);
+		}
+		else {
+			dll_mem -= ptr_mem[ptr];
+			delete[] ptr;
+		}
 	}
+private:
+	static size_t dll_mem;
+	static map<void*, size_t> ptr_mem;//Count memory usage.
 };
+// Allocate memory for it
+size_t memory_manager::dll_mem;
 
 map<int, file_structure> file_token;
 
@@ -483,6 +512,7 @@ int main(int argc, char* argv[]) {
 	int tbuf = RCV_DEFAULT;
 //	cbt = c_boundary("text/html; boundary=------BoundaryInformationDataHereAAABBBCCCDDDEEEFFFGGG");
 //	cout_d << "C-Boundary tester:" << cbt << endl_d;
+	dll_err = new int;
 	
 	for (int i = 1; i < argc; i++) {
 		string it = argv[i];
@@ -1119,6 +1149,7 @@ int main(int argc, char* argv[]) {
 					// To be updated:
 					s_prep.cal_lib = { uidctrl::request, uidctrl::vaild, uidctrl::uidof, uidctrl::release, c_user_auth, file_operator::release, c_file_open, c_memory_usage, c_utoken_usage, c_ftoken_usage, c_ip_health, user_groups::insert, user_groups::remove, c_ug_query, c_uo_mod, c_uo_chperm, c_uo_exists, ec403, ec404, ec501, ec200_ok, ec200_redirect };
 					s_prep.mc_lib = { memory_manager::allocate, memory_manager::release };
+					s_prep.m_error = dll_err;
 					const char *tc = s.get_prev().toCharArray();
 					send_info ds;
 					ds = df(tc, &s_prep);
@@ -1306,6 +1337,7 @@ int main(int argc, char* argv[]) {
 							// To be updated:
 							s_prep->cal_lib = { uidctrl::request, uidctrl::vaild, uidctrl::uidof, uidctrl::release, c_user_auth, file_operator::release, c_file_open, c_memory_usage, c_utoken_usage, c_ftoken_usage, c_ip_health, user_groups::insert, user_groups::remove, c_ug_query, c_uo_mod, c_uo_chperm, c_uo_exists, ec403, ec404, ec501, ec200_ok, ec200_redirect };
 							s_prep->mc_lib = { memory_manager::allocate, memory_manager::release };
+							s_prep->m_error = dll_err;
 							cc_str stc = s.get_prev().toCharArray();
 							send_info sc;
 							sc = acaller[ex](stc, rpath.c_str(), s_prep);

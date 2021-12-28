@@ -1,7 +1,7 @@
 #pragma once
 
 // This is DLL (C compile rules) Framework for MinServer external DLL.
-// Notice: Don't forgot to FREE MEMORY SPACE.
+// Notice: Don't forgot to FREE MEMORY SPACE using given library.
 
 extern "C" {
 
@@ -88,6 +88,7 @@ extern "C" {
 	typedef struct _sdata {
 		callers cal_lib;
 		mem_callers mc_lib;
+		int *m_error;
 	} sdata, asdata;
 
 	typedef struct _send_info {
@@ -97,6 +98,10 @@ extern "C" {
 	typedef send_info(*d_func)(cc_str, sdata*);
 	typedef send_info(*as_func)(cc_str, cc_str, asdata*);	// Assiocated caller. asdata* currently NULL. another one is file content
 #endif
+
+	// By this way, Intellisense can read them and we can edit them
+#if !defined(_CP_DEFINED) || defined(__INTELLISENSE__)
+#define _CP_DEFINED
 
 	typedef struct _c_pair {
 		c_str key, value;
@@ -127,12 +132,14 @@ extern "C" {
 		} data;
 	} cpost_info;
 
-	recv_info c_resolve(const char *req) {
+#define callocer(count, objsize) (mallocer(count*objsize))
+
+	recv_info c_resolve(const char *req, mem_alloc mallocer) {
 		char buf[64];
 		recv_info res = {};
-		res.method = (char*)calloc(8, sizeof(char));
-		res.path = (char*)calloc(MAX_PATH, sizeof(char));
-		res.proto = (char*)calloc(16, sizeof(char));
+		res.method = (char*)callocer(8, sizeof(char));
+		res.path = (char*)callocer(MAX_PATH, sizeof(char));
+		res.proto = (char*)callocer(16, sizeof(char));
 		res.attr.len = 0;
 		int ptr = 0, r_ptr = 0, sr_ptr, sr_len = 0, r_len = strlen(req);
 		// Get first-line information
@@ -149,10 +156,10 @@ extern "C" {
 		sr_len++;
 		r_ptr = sr_ptr;
 		res.attr.len = sr_len;
-		res.attr.param = (c_pair*)calloc(sr_len + 1, sizeof(c_pair));
+		res.attr.param = (c_pair*)callocer(sr_len + 1, sizeof(c_pair));
 		for (int i = 0; i < sr_len; i++) {
-			res.attr.param[i].key = (char*)calloc(128, sizeof(char));
-			res.attr.param[i].value = (char*)calloc(512, sizeof(char));
+			res.attr.param[i].key = (char*)callocer(128, sizeof(char));
+			res.attr.param[i].value = (char*)callocer(512, sizeof(char));
 		}
 		bool mode = false;
 		int mode_len = 0, cur_len = 0, cont_len = 0;
@@ -182,15 +189,15 @@ extern "C" {
 			r_ptr++;
 		}
 		r_ptr++;	// EOL Remains
-		res.content = (char*)calloc(cont_len + 1, sizeof(char));
+		res.content = (char*)callocer(cont_len + 1, sizeof(char));
 		for (int i = 0; i < cont_len; i++) res.content[i] = req[r_ptr + i];
 		return res;
 	}
 
-	const char* c_boundary(const char *ctypes) {
+	const char* c_boundary(const char *ctypes, mem_alloc mallocer) {
 		int sl = strlen(ctypes);
 		int bs = 0, pt = 0;
-		char *tmp = (char*)calloc(60, sizeof(char));	// Boundary in usually 60
+		char *tmp = (char*)callocer(60, sizeof(char));	// Boundary in usually 60
 		for (int i = 0; i < sl; i++) {
 			if (bs == 2) {
 				tmp[pt++] = ctypes[i];
@@ -216,21 +223,21 @@ extern "C" {
 	}
 
 	// Gets how many succeed (Automaticly stopped if size > read_buffer or count > read_count..)
-	cpost_info c_postres(const char *content, const char *boundary, int content_length, int read_count, int read_buffer) {
+	cpost_info c_postres(const char *content, const char *boundary, int content_length, int read_count, int read_buffer, mem_alloc mallocer) {
 		static const int para_count = 16;
 		// End
 
 		cpost_info res;
 		//for (int i = 0; i < read_count; i++) {
 		res.data.len = 0;
-		res.data.param = (struct _single_cpost_info*)calloc(read_count, sizeof(struct _single_cpost_info));
+		res.data.param = (struct _single_cpost_info*)callocer(read_count, sizeof(struct _single_cpost_info));
 		for (int i = 0; i < read_count; i++) {
-			res.data.param[i].attr.param = (c_pair*)calloc(para_count, sizeof(c_pair));
+			res.data.param[i].attr.param = (c_pair*)callocer(para_count, sizeof(c_pair));
 			for (int j = 0; j < para_count; j++) {
-				res.data.param[i].attr.param[j].key = (char*)calloc(64, sizeof(char));
-				res.data.param[i].attr.param[j].value = (char*)calloc(128, sizeof(char));
+				res.data.param[i].attr.param[j].key = (char*)callocer(64, sizeof(char));
+				res.data.param[i].attr.param[j].value = (char*)callocer(128, sizeof(char));
 			}
-			res.data.param[i].content = (char*)calloc(read_buffer, sizeof(char));
+			res.data.param[i].content = (char*)callocer(read_buffer, sizeof(char));
 		}
 		//}
 		char ldata[1024] = {};
@@ -308,5 +315,18 @@ extern "C" {
 		return res;
 
 	}
+
+	typedef struct _send_para {
+		c_pair *cp;
+		int cp_len;
+		cc_str proto, stde;		// Proto var and response type
+		int recode;				// Response code
+	} send_para;
+
+	send_info c_send(_send_para sp, cc_str content, mem_alloc mallocer) {
+
+	}
+
+#endif
 	
 }
