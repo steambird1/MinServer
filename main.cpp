@@ -98,6 +98,7 @@ public:
 		}
 		else {
 			dll_mem -= ptr_mem[ptr];
+			ptr_mem.erase(ptr);
 			delete[] ptr;
 		}
 	}
