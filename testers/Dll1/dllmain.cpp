@@ -11,11 +11,13 @@ extern "C" {
 #endif
 	__declspec(dllexport) send_info ServerMain(const char *data, sdata *sdata) {
 		static const char *sendup = { "HTTP/1.1 200 OK\nContent-Type: text/plain\nContent-Type: text/plain\nContent-Length: %d\n\n%s" };
-		char *stmp = new char[strlen(sendup) + 2000], t[1500];
+		char stmp[5000], t[3000];
 		sprintf(t, "MinServer Diag\nTester DLL.dll\n\nValues:\nCurrent Memory Usage State: %.2lf\n\n", sdata->cal_lib.mem_usage());
-		size_t curl = strlen(t);
-		for (size_t i = curl, j = 0; j < 1099; i++, j++) t[i] = 'A';
-		t[curl + 1099] = t[curl + 1100] = '\0';
+		size_t tt = strlen(t);
+		int i;
+		const int llen = 2000;
+		for (i = 0; i < llen; i++) t[tt + i] = 'A';
+		t[tt + llen] = '\0';
 		sprintf(stmp, sendup, strlen(t), t);
 		/*sprintf(stmp, sendup, strlen(cb), cb);
 		printf("DLL: Outputting returning: \n%s\n", stmp);*/

@@ -68,6 +68,17 @@ private:
 	bool read_ok, write_ok;
 };
 
+// Preparing for DLL manager.
+class memory_manager {
+public:
+	static void* allocate(size_t size) {
+		return (void*) new char[size];
+	}
+	static void release(void *ptr) {
+		delete[] ptr;
+	}
+};
+
 map<int, file_structure> file_token;
 
 int findToken() {
@@ -662,7 +673,7 @@ int main(int argc, char* argv[]) {
 	cout << "* Listening started at port " << portz << " *" << endl;
 	bytes bs;
 	bool downgraded = false, al_cause = false;
-	//volatile char leak_detector[] = { "TESTtestTESTtestTESTtestTESTtestTESTtest" };
+	volatile char leak_detector[] = { "TESTtestTESTtestTESTtestTESTtestTESTtest" };
 	while (true) {
 
 		if (!no_data_screen) 
@@ -1103,21 +1114,21 @@ int main(int argc, char* argv[]) {
 					sndinfo.code_info = "Bad Request";
 				}
 				else {
-					sdata *s_prep = new sdata;
-					//sdata s_prep;
+					//sdata *s_prep = new sdata;
+					sdata s_prep;
 					// To be updated:
-					s_prep->cal_lib = { uidctrl::request, uidctrl::vaild, uidctrl::uidof, uidctrl::release, c_user_auth, file_operator::release, c_file_open, c_memory_usage, c_utoken_usage, c_ftoken_usage, c_ip_health, user_groups::insert, user_groups::remove, c_ug_query, c_uo_mod, c_uo_chperm, c_uo_exists, ec403, ec404, ec501, ec200_ok, ec200_redirect };
+					s_prep.cal_lib = { uidctrl::request, uidctrl::vaild, uidctrl::uidof, uidctrl::release, c_user_auth, file_operator::release, c_file_open, c_memory_usage, c_utoken_usage, c_ftoken_usage, c_ip_health, user_groups::insert, user_groups::remove, c_ug_query, c_uo_mod, c_uo_chperm, c_uo_exists, ec403, ec404, ec501, ec200_ok, ec200_redirect };
+					s_prep.mc_lib = { memory_manager::allocate, memory_manager::release };
 					const char *tc = s.get_prev().toCharArray();
 					send_info ds;
-					ds = df(tc, s_prep);	// But leaks before here.
+					ds = df(tc, &s_prep);
 					bytes b;
-					b.add(ds.cdata, ds.len);	// Problem here.
-					FreeLibrary(h);
+					b.add(ds.cdata, ds.len);	// Leaks somewhere. Probably here.
 					cout_d << "Trans back: " << endl_d;
 					cout_d << b.toCharArray() << endl_d;
 					cout_d << "End" << endl_d;
 					s.sends(b);
-					delete[] tc;
+					//delete[] tc;
 					b.release();
 					goto after_sentup;
 				}
@@ -1291,9 +1302,10 @@ int main(int argc, char* argv[]) {
 						// First of all scan for existing assiocation
 						string ex = getExt(rpath);	// Get extension, surely contains '.'.
 						if (acaller.count(ex)) {
-							asdata *s_prep = new asdata;
+							asdata *s_prep = new asdata;	// Memory leak before here
 							// To be updated:
 							s_prep->cal_lib = { uidctrl::request, uidctrl::vaild, uidctrl::uidof, uidctrl::release, c_user_auth, file_operator::release, c_file_open, c_memory_usage, c_utoken_usage, c_ftoken_usage, c_ip_health, user_groups::insert, user_groups::remove, c_ug_query, c_uo_mod, c_uo_chperm, c_uo_exists, ec403, ec404, ec501, ec200_ok, ec200_redirect };
+							s_prep->mc_lib = { memory_manager::allocate, memory_manager::release };
 							cc_str stc = s.get_prev().toCharArray();
 							send_info sc;
 							sc = acaller[ex](stc, rpath.c_str(), s_prep);
@@ -1301,7 +1313,7 @@ int main(int argc, char* argv[]) {
 							//delete[] stc;
 							//sndinfo.content.add(sc.cdata, sc.len);
 							bytes b;
-							b.add(sc.cdata, sc.len);	// Memory failure before this
+							b.add(sc.cdata, sc.len);
 							s.sends(b);
 							b.release();
 							goto after_sentup;
