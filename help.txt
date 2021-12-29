@@ -1,4 +1,4 @@
-MinServer 1.1
+MinServer 2
 Usage: MinServer [options]
 
 Run MinServer without executable options to launch server.
