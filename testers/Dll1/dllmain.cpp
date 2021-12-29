@@ -14,7 +14,7 @@ extern "C" {
 		//static const char *sendup = { "HTTP/1.1 200 OK\nContent-Type: text/plain\nContent-Length: %d\n\n%s" };
 		char t[] = { "/cc.html" };
 		// Let's make a test using csend
-		send_para s;
+		send_para s = {};
 		s.clen = strlen(t);
 		//s.content = t;
 		strcpy(s.content, t);	// As no special things
