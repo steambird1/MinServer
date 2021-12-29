@@ -320,9 +320,9 @@ extern "C" {
 	typedef struct _send_para {
 		c_pair *cp;
 		int cp_len;				// Attributes
-		cc_str proto, stde;		// Proto var and response type
+		c_str proto, stde;		// Proto var and response type
 		int recode;				// Response code
-		cc_str content;
+		c_str content;
 		int clen;				// Content and its length
 	} send_para;
 

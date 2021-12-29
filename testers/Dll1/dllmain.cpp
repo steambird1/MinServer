@@ -11,21 +11,29 @@ extern "C" {
 #endif
 	__declspec(dllexport) send_info ServerMain(const char *data, sdata *sdata) {
 		// 301 Moved Permanently
-		static const char *sendup = { "HTTP/1.1 200 OK\nContent-Type: text/plain\nContent-Length: %d\n\n%s" };
-		char t[30];
-		char *stmp;
-		sprintf(t, "/cc.html");
-		stmp = (char*)sdata->mc_lib.m_alloc(sizeof(char) *(strlen(t) + strlen(sendup) + 20));
-		/*size_t tt = strlen(t);
-		int i;
-		const int llen = 2000;
-		for (i = 0; i < llen; i++) t[tt + i] = 'A';
-		t[tt + llen] = '\0';*/
-		sprintf(stmp, sendup, strlen(t), t);
-		/*sprintf(stmp, sendup, strlen(cb), cb);
-		printf("DLL: Outputting returning: \n%s\n", stmp);*/
-		return { (int)strlen(stmp), stmp };
-		//return sendup;
+		//static const char *sendup = { "HTTP/1.1 200 OK\nContent-Type: text/plain\nContent-Length: %d\n\n%s" };
+		char t[] = { "/cc.html" };
+		// Let's make a test using csend
+		send_para s;
+		s.clen = strlen(t);
+		//s.content = t;
+		strcpy(s.content, t);	// As no special things
+		s.cp = (c_pair*)sdata->mc_lib.m_alloc(sizeof(c_pair) * 3);
+		s.clen = 2;
+		for (int i = 0; i < s.clen; i++) {
+			s.cp[i].key = (char*)sdata->mc_lib.m_alloc(sizeof(char) * 50);
+			s.cp[i].value = (char*)sdata->mc_lib.m_alloc(sizeof(char) * 50);
+		}
+		sprintf(s.cp[0].key, "Content-Type");
+		sprintf(s.cp[0].value, "text/plain");
+		sprintf(s.cp[1].key, "Content-Length");
+		sprintf(s.cp[1].value, "%d", s.clen);
+		s.proto = (char*)sdata->mc_lib.m_alloc(sizeof(char) * 20);
+		sprintf(s.proto, "HTTP/1.1");
+		s.recode = 200;
+		s.stde = (char*)sdata->mc_lib.m_alloc(sizeof(char) * 10);
+		sprintf(s.stde, "OK");
+		return c_send(s, 150, sdata->mc_lib.m_alloc);
 	}
 #ifdef __cplusplus
 }
