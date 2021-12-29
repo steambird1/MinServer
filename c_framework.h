@@ -319,13 +319,31 @@ extern "C" {
 	// Here's to be implemented.
 	typedef struct _send_para {
 		c_pair *cp;
-		int cp_len;
+		int cp_len;				// Attributes
 		cc_str proto, stde;		// Proto var and response type
 		int recode;				// Response code
+		cc_str content;
+		int clen;				// Content and its length
 	} send_para;
 
-	send_info c_send(_send_para sp, cc_str content, mem_alloc mallocer) {
-
+	send_info c_send(send_para sp, int alloc_len, mem_alloc mallocer) {
+		int pre_len = 4;	// like 2 EOL
+		char header[100];
+		sprintf(header, "%s %d %s", sp.proto, sp.recode, sp.stde);
+		pre_len += strlen(header);
+		for (int i = 0; i < sp.cp_len; i++) {
+			pre_len += (strlen(sp.cp[i].key) + strlen(sp.cp[i].value) + strlen(": \n"));
+		}
+		pre_len += sp.clen;
+		char *res = (char*)mallocer(pre_len+20);	// Prevent too long prelen
+		strcpy(res, header);
+		for (int i = 0; i < sp.cp_len; i++) {
+			sprintf(res, "%s\n%s: %s", res, sp.cp[i].key, sp.cp[i].value);
+		}
+		sprintf(res, "%s\n\n", res);
+		size_t res_p = sizeof(char) * strlen(res);
+		memcpy(res + res_p, sp.content, sizeof(char) * sp.clen);
+		return { pre_len, res };
 	}
 
 #endif
