@@ -518,6 +518,12 @@ bool auto_release = true;
 map<string, as_func> acaller;
 
 int main(int argc, char* argv[]) {
+#if MINSERVER_DEBUG == 4
+	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
+	HANDLE logHandle = CreateFile(".\\memory.log", GENERIC_WRITE, FILE_SHARE_WRITE | FILE_SHARE_READ, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+	_CrtSetReportMode(_CRT_WARN, _CRTDBG_MODE_FILE);
+	_CrtSetReportFile(_CRT_WARN, logHandle);
+#endif
 	//cout << "Running in directory: " << sCurrDir("example") << endl;
 	const char *cbt = new char[60];
 	int tbuf = RCV_DEFAULT;
@@ -736,9 +742,9 @@ int main(int argc, char* argv[]) {
 		}
 		http_recv hinfo = s.receive();
 		visit[s.get_paddr()]++;	// Now suite with DLLs
-		cout_d << "Receiver receives:" << endl_d << endl_d;
-		cout_d << s.get_prev().toString() << endl_d;
-		cout_d << "End" << endl_d;
+//		cout_d << "Receiver receives:" << endl_d << endl_d;
+//		cout_d << s.get_prev().toString() << endl_d;
+//		cout_d << "End" << endl_d;
 		string path = hinfo.path, rpath;
 		auto path_pinfo = hinfo.toPaths();
 		vector<post_info> post_infolist;			// In file writes WOULD NOT SEND AS POST STANDARD
@@ -1393,7 +1399,6 @@ int main(int argc, char* argv[]) {
 		fclose_m(fx);
 		// End
 		*/
-		// Leakage occurs once again
 		s.sends(bs);
 		bs.release();
 	 after_sentup: s.end_accept();
@@ -1408,7 +1413,8 @@ int main(int argc, char* argv[]) {
 #if MINSERVER_DEBUG == 4
 	system("cls");
 	_CrtDumpMemoryLeaks();
-	system("pause");
+	//system("pause");
+	CloseHandle(logHandle);
 #endif
 
 	return 0;
