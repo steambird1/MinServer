@@ -20,11 +20,11 @@ extern "C" __declspec(dllexport) send_info AssiocateMain(cc_str receive, cc_str 
 	char *tmp;
 	if (df == NULL) {
 		//sprintf(tmp, sendup, strlen(error), error);
-		size_t t = strlen(et);
-		int i;
-		const int pp = 1500;
-		for (i = 0; i < pp; i++) et[t + i] = 'A';
-		et[t + pp] = '\0';
+		//size_t t = strlen(et);
+		//int i;
+		//const int pp = 1500;
+		//for (i = 0; i < pp; i++) et[t + i] = 'A';
+		//et[t + pp] = '\0';
 		tmp = (char*)mmalloc(sizeof(char) * (strlen(et) + strlen(sendup) + 50));
 		sprintf(tmp, sendup, strlen(et), et);
 		return { (int)strlen(tmp), tmp };

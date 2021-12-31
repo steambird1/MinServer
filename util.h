@@ -1,13 +1,15 @@
 #pragma once
-#define CRTDBG_MAP_ALLOC
 #include <Windows.h>
 #include <cstdio>
-#include <cstdlib>
 #include <ctime>
 #include <vector>
 #include <map>
 #include <string>
-#include <crtdbg.h>
+#include <cstdlib>
+#define MINSERVER_DEBUG 0
+#if MINSERVER_DEBUG == 4
+#include "debugs.h"
+#endif
 //#include "c_framework.h"
 using namespace std;
 
@@ -255,7 +257,6 @@ string sRemovingQuotes(string s) {
 // Uses for debug:
 // A support of none-stream
 
-#define MINSERVER_DEBUG 5
 #if MINSERVER_DEBUG == 1 || MINSERVER_DEBUG == 3
 #define cout_d cout
 #define endl_d endl
@@ -268,7 +269,6 @@ int no_data_screen = 1;
 #define heap_test() do {char *c = new char[2]; delete[] c; } while (false)
 #else
 #define heap_test() __noop
-#define vs_heap_test() __noop
 #endif
 class null_stream {
 public:

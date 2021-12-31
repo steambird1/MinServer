@@ -10,17 +10,14 @@ using namespace std;
 extern "C" {
 #endif
 	__declspec(dllexport) send_info ServerMain(const char *data, sdata *sdata) {
-		// 301 Moved Permanently
-		//static const char *sendup = { "HTTP/1.1 200 OK\nContent-Type: text/plain\nContent-Length: %d\n\n%s" };
-		char t[] = { "/cc.html" };
-		// Let's make a test using csend
+		char t[] = { "/cc.html (Here is content, AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA)" };
 		send_para s = {};
 		s.clen = strlen(t);
-		//s.content = t;
+		s.content = (char*)sdata->mc_lib.m_alloc(sizeof(char)*s.clen + 5);
 		strcpy(s.content, t);	// As no special things
 		s.cp = (c_pair*)sdata->mc_lib.m_alloc(sizeof(c_pair) * 3);
-		s.clen = 2;
-		for (int i = 0; i < s.clen; i++) {
+		s.cp_len = 2;
+		for (int i = 0; i < s.cp_len; i++) {
 			s.cp[i].key = (char*)sdata->mc_lib.m_alloc(sizeof(char) * 50);
 			s.cp[i].value = (char*)sdata->mc_lib.m_alloc(sizeof(char) * 50);
 		}

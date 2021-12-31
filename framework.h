@@ -29,13 +29,13 @@ using namespace std;
 #define SEABIRD_NET_STRUCTURE_VER 2
 
 #define SEABIRD_NET_DEBUG 0
-#if SEABIRD_NET_DEBUG
+#if SEABIRD_NET_DEBUG == 1
 #define SEABIRD_NET_DEBUG_PRINT(...) printf(__VA_ARGS__)
 #else
-#define SEABIRD_NET_DEBUG_PRINT(...) __noop
-#ifndef vs_heap_test
-#define vs_heap_test() __noop
+#if SEABIRD_NET_DEBUG == 2
+#include "debugs.h"
 #endif
+#define SEABIRD_NET_DEBUG_PRINT(...) __noop
 #endif
 #define printf_d(...) SEABIRD_NET_DEBUG_PRINT(__VA_ARGS__)
 

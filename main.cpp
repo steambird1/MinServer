@@ -13,6 +13,9 @@
 #else
 #include <bits/stl_pair.h>
 #endif
+#if MINSERVER_DEBUG == 4
+#include <conio.h>
+#endif
 /*
 #ifdef MINSERVER_EXT_DEBUG
 #include "test1.h"
@@ -80,7 +83,13 @@ void setDLLError(int err) {
 class memory_manager {
 public:
 	static void* allocate(size_t size) {
-		void *ptr = (void*) new (nothrow) char[size];
+		void *ptr = nullptr;
+		try {
+			ptr = (void*) new char[size];
+		} catch (...) {
+			return nullptr;
+		}
+		
 		if (ptr != nullptr) {
 			dll_mem += size;
 			ptr_mem[ptr] = size;
@@ -707,12 +716,17 @@ int main(int argc, char* argv[]) {
 	bool downgraded = false, al_cause = false;
 	volatile char leak_detector[] = { "TESTtestTESTtestTESTtestTESTtestTESTtest" };
 	while (true) {
-
 		if (!no_data_screen) 
 		{
 			stat();
 			cout << endl << "* Listening at port " << portz << " *" << endl;
 		}
+#if MINSERVER_DEBUG == 4
+		cout << "Press any key to exit and view memory state" << endl;
+		if (_kbhit()) {
+			break;
+		}
+#endif
 		if (al_cause) cout << endl << "* Auto-release runned" << endl;
 		if (c_ftoken_usage() <= 0.0 || c_utoken_usage() <= 0.0) downgraded = true;
 		s.accepts();
@@ -1389,5 +1403,12 @@ int main(int argc, char* argv[]) {
 
 	WSACleanup();
 	s.end();
+
+	// View memory state
+#if MINSERVER_DEBUG == 4
+	system("cls");
+	_CrtDumpMemoryLeaks();
+#endif
+
 	return 0;
 }

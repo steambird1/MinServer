@@ -45,6 +45,9 @@
     <ClInclude Include="c_framework.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="debugs.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="mslib.js">
