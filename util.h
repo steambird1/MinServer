@@ -6,7 +6,7 @@
 #include <map>
 #include <string>
 #include <cstdlib>
-#define MINSERVER_DEBUG 0
+#define MINSERVER_DEBUG 4
 #if MINSERVER_DEBUG == 4
 #include "debugs.h"
 #endif

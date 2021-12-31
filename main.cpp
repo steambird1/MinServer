@@ -1408,6 +1408,7 @@ int main(int argc, char* argv[]) {
 #if MINSERVER_DEBUG == 4
 	system("cls");
 	_CrtDumpMemoryLeaks();
+	system("pause");
 #endif
 
 	return 0;
