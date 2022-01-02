@@ -28,7 +28,7 @@ using namespace std;
 // Not include BUG (NOT FEATURE) FIXES.
 #define SEABIRD_NET_STRUCTURE_VER 2
 
-#define SEABIRD_NET_DEBUG 2
+#define SEABIRD_NET_DEBUG 0
 #if SEABIRD_NET_DEBUG == 1
 #define SEABIRD_NET_DEBUG_PRINT(...) printf(__VA_ARGS__)
 #else

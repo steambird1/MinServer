@@ -479,7 +479,9 @@ void stat() {
 	printf("Assiocations loaded: %d\n\n", aldr);
 
 	printf("Memory Usage: %.2lf MB\n\n", c_memory_usage());
+#if MINSERVER_DEBUG == 4
 	printf("Free times: %d\n\n", bytes::decst);
+#endif
 
 	int ut_use = uidctrl::size();
 	int ft_use = file_token.size();
