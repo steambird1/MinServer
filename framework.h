@@ -58,6 +58,7 @@ public:
 	bytes(const char* b);
 	bytes(char b);
 	bytes(const bytes &other);
+	~bytes();
 	void release();
 	void clear();
 	void fill(char c);

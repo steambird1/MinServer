@@ -32,6 +32,11 @@
 	 this->add(other.byte_space, other.len);
  }
 
+ bytes::~bytes()
+ {
+	 release();
+ }
+
 void bytes::release()
  {
 	 if (this->byte_space != nullptr) delete[] this->byte_space;
