@@ -32,9 +32,13 @@
 	 this->add(other.byte_space, other.len);
  }
 
+ int bytes::decst = 0;
+
  bytes::~bytes()
  {
-	 release();
+	 // Why do I still can't do that ...
+	 //release();
+	 decst++;
  }
 
 void bytes::release()
@@ -124,7 +128,7 @@ void bytes::release()
 	//return *this;
 }
 
- void bytes::operator+=(bytes b)
+ void bytes::operator+=(const bytes& b)
 {
 	add(b.byte_space, b.len);
 	//return *this;
@@ -168,51 +172,56 @@ void bytes::release()
 	this->len = sz;
 }
 
- bytes operator+(bytes a, string v)
+ bytes operator+(const bytes& a, string v)
 {
-	 a.add(v.c_str(), v.length());
-	 return a;
+	 bytes ax = bytes(a);
+	 ax.add(v.c_str(), v.length());
+	 return move(ax);
 	//return w += v;
 }
 
- bytes operator+(bytes a, bytes b)
+ bytes operator+(const bytes& a, const bytes& b)
 {
-	 a.add(b.byte_space, b.len);
-	 return a;
+	 bytes ax = bytes(a);
+	 ax.add(b.byte_space, b.len);
+	 return move(ax);
 }
 
- bytes operator+(bytes a, char b)
+ bytes operator+(const bytes& a, char b)
 {
 	 const char c[1] = { b };
-	 a.add(c, 1);
-	 return a;
+	 bytes ax = bytes(a);
+	 ax.add(c, 1);
+	 return move(ax);
 }
 
- bytes operator+(bytes a, const char * b)
+ bytes operator+(const bytes& a, const char * b)
  {
 	 return a + string(b);
  }
 
- bool operator==(bytes a, bytes b)
+ bool operator==(const bytes& a, const bytes& b)
  {
-	 if (a.length() != b.length())
+	 if (a.len != b.len)
 		 return false;
-	 for (size_t i = 0; i < a.length(); i++)
-		 if (a[i] != b[i])
+	 for (size_t i = 0; i < a.len; i++)
+		 if (a.byte_space[i] != b.byte_space[i])
 			 return false;
 	 return true;
  }
 
- bool operator==(bytes a, char b)
+ bool operator==(const bytes &a, char b)
  {
-	 if (a.length() == 0)
+	 if (a.len == 0)
 		 return false;
-	 return a.length() == 1 && a[0] == b;
+	 return a.len == 1 && a.byte_space[0] == b;
  }
 
- bool operator==(bytes a, string b)
+ bool operator==(const bytes &a, string b)
  {
-	 return a.toString() == b;
+	 if (a.len != b.length())
+		 return false;
+	 return b == a.byte_space;
  }
 
  WSADATA initalize_socket()
@@ -378,7 +387,7 @@ void bytes::release()
 	 return h;
  }
 
- bool ssocket::sends(bytes data)
+ bool ssocket::sends(bytes &data)
  {
 	 const char* dc = data.toCharArray();
 	 bool t = (send(this->ace,dc, data.length(), 0) != SOCKET_ERROR);
@@ -698,7 +707,7 @@ void bytes::release()
 	 }
 	 b += '\n';
 	 b += content;
-	 return b;
+	 return move(b);
  }
 //#pragma optimize("", on)
 

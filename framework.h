@@ -47,12 +47,20 @@ long getFileLength(FILE *f);
 // This function may makes empty element.
 vector<string> splitLines(const char *data, char spl = '\n', bool firstonly = false, char filter = '\r');
 
+// Pre-declaration
+class sscoket;
+class bytes;
+
 class bytes {
 public:
-	friend bytes operator + (bytes a, string v);
-	friend bytes operator + (bytes a, bytes b);
-	friend bytes operator + (bytes a, char b);
-	friend bytes operator + (bytes a, const char* b);
+	friend bytes operator + (const bytes& a, string v);
+	friend bytes operator + (const bytes& a, const bytes& b);
+	friend bytes operator + (const bytes& a, char b);
+	friend bytes operator + (const bytes& a, const char* b);
+	friend bool operator == (const bytes &a, const bytes &b);
+	friend bool operator == (const bytes &a, char b);
+	friend bool operator == (const bytes &a, string b);
+//	friend bool ssocket::sends (const bytes &data);
 	bytes();
 	bytes(string b);
 	bytes(const char* b);
@@ -72,10 +80,11 @@ public:
 												// Will search '\0' and ignore informations after it automaticly.
 	size_t length();
 	void operator += (string v);
-	void operator += (bytes b);
+	void operator += (const bytes& b);
 	void operator += (char b);
 	char& operator [] (size_t pos);
 	operator string();
+	static int decst;
 	// Fuck optimize
 	//~bytes() = delete;
 private:
@@ -84,18 +93,19 @@ private:
 	size_t len;
 };
 
-bytes operator + (bytes a, string v);
-bytes operator + (bytes a, bytes b);
-bytes operator + (bytes a, char b);
-bytes operator + (bytes a, const char* b);
+bytes operator + (const bytes& a, string v);
+bytes operator + (const bytes& a, const bytes& b);
+bytes operator + (const bytes& a, char b);
+bytes operator + (const bytes& a, const char* b);
 
-bool operator == (bytes a, bytes b);
-bool operator == (bytes a, char b);
-bool operator == (bytes a, string b);
+bool operator == (const bytes& a, const bytes& b);
+bool operator == (const bytes& a, char b);
+bool operator == (const bytes& a, string b);
 
-// You have to run this before everything!!
-WSADATA initalize_socket();
+// Some declaration problem makes us want to say fuck
+#define RCV_DEFAULT 4096
 
+#pragma region(SSocket Extended Types)
 struct path_info {
 	vector<string> path;
 	map<string, string> exts;
@@ -140,13 +150,11 @@ struct http_send {
 	bytes content;
 
 	void loadContent(FILE *hnd);
-								// Load content from a file.
+	// Load content from a file.
 	bytes toSender(bool autolen = true);			// Returns sendable info.
 };
+#pragma endregion
 
-#define RCV_DEFAULT 4096
-
-// Socket for server.
 class ssocket {
 public:
 	ssocket();
@@ -159,7 +167,7 @@ public:
 	bool accept_vaild();
 	// These functions requires accepts():
 	http_recv receive();		// Before call this call accepts().
-	bool sends(bytes data);
+	bool sends(bytes& data);
 	void end_accept();
 	void end();
 	bytes get_prev();
@@ -170,12 +178,15 @@ private:
 	bytes raw_receive();		// It can keep receiving
 
 	bytes prev_recv;
-	SOCKET s,ace; // ace = Accepted socket
+	SOCKET s, ace; // ace = Accepted socket
 	sockaddr_in acc; // acc = Accepted socket address
 	char *recv_buf;
 	int rcbsz, last_receive;
-	bool acc_errored,errored;
+	bool acc_errored, errored;
 };
+
+// You have to run this before everything!!
+WSADATA initalize_socket();
 
 // Tools
 

@@ -479,6 +479,7 @@ void stat() {
 	printf("Assiocations loaded: %d\n\n", aldr);
 
 	printf("Memory Usage: %.2lf MB\n\n", c_memory_usage());
+	printf("Free times: %d\n\n", bytes::decst);
 
 	int ut_use = uidctrl::size();
 	int ft_use = file_token.size();

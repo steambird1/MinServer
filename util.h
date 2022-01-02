@@ -59,7 +59,7 @@ bytes readAll(string cwtemp) {
 	fclose(rs);
 	bytes b;
 	b.add(sending, cws);
-	return b;
+	return move(b);
 }
 
 string getExt(string cwtemp) {
