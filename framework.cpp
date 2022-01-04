@@ -246,7 +246,7 @@ void bytes::release()
 			 b += i;
 		 }
 	 }
-	 return b;
+	 return move(b);
  }
 
  ssocket::ssocket()
@@ -308,6 +308,7 @@ void bytes::release()
 	 this->prev_recv.clear();	// May be unsafe ?
 	 bytes b = raw_receive();
 	 this->prev_recv += b;
+	 //b = bytes();				// Re-initalize
 	 http_recv h;
 	 // Getting 1st line (surely can use string
 	 // that will not contains '\0')
@@ -348,7 +349,7 @@ void bytes::release()
 		 */
 	 }
 	 if (!h.attr.count("Content-Length"))
-		 return h;
+		 return move(h);
 	 int l = atoi(h.attr["Content-Length"].c_str());
 	 //for (; i != lf.end(); i++) {
 		 // Oh! We can't do that.
@@ -384,7 +385,7 @@ void bytes::release()
 	 // End
 	 printf_d("End\n");										// debugging
 	 b.release();
-	 return h;
+	 return move(h);
  }
 
  bool ssocket::sends(bytes &data)
@@ -445,7 +446,7 @@ void bytes::release()
 		 bytes b;
 		 b.add(this->recv_buf, ret);
 		 printf_d("Receive: Received data:\n%s\n==END==\n", b.toCharArray());
-		 return b;
+		 return move(b);
 	 }
 	 else
 		 return bytes();
@@ -651,7 +652,7 @@ void bytes::release()
 		 }
 	 }
 	 if (tmp.length()) res.push_back(tmp);
-	 return res;
+	 return move(res);
  }
 
  // It requires open in write/append binary.
