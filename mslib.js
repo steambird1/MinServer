@@ -56,12 +56,13 @@ function msfile(token, xhobject, f_operate) {
 }
 
 // Usage: var x = new msuser();
-function msuser(token, xhobject, f_operate, u_operate, myuid) {
+function msuser(token, xhobject, f_operate, u_operate, d_operate, myuid) {
 
     this.xhobject = xhobject;
     this.token = token;
     this.f_operate = f_operate;
     this.u_operate = u_operate;
+    this.d_operate = d_operate;
     this.myuid = myuid;
 
     // Operations
@@ -98,6 +99,17 @@ function msuser(token, xhobject, f_operate, u_operate, myuid) {
         }
     }
 
+    this.upload = function (content, target, jump_to) {
+        wjumpto = "&jumpto=" + jump_to;
+        if (jump_to == undefined) {
+            wjumpto = "";
+        }
+        this.xhobject.send("POST", this.d_operate + "?utoken=" + this.token + "&name=" + target + wjumpto, false);
+        if (this.xhobject.status != 200) {
+            throw new msexception("Permission denied", 1);
+        }
+    }
+
     this.logout = function () {
         this.xhobject.open("GET", this.u_operate + "?operate=logout&token=" + this.token, false);
         this.xhobject.send(null);
@@ -122,6 +134,7 @@ function mslib() {
     // Operations
     this.f_operate = "/file_operate";
     this.u_operate = "/auth_workspace";
+    this.d_operate = "/caller";
     this.default_user = new msuser(0, this.xhobject);
 
     this.auth = function (uid, passwd) {
@@ -130,8 +143,36 @@ function mslib() {
         if (this.xhobject.status != 200) {
             throw new msexception("Incorrect user name or password", 2);
         } else {
-            return new msuser(this.xhobject.responseText, this.xhobject, this.f_operate, this.u_operate, uid);
+            return new msuser(this.xhobject.responseText, this.xhobject, this.f_operate, this.u_operate, this.d_operate, uid);
         }
+    }
+
+    this.request = function (operator, path, content) {
+        this.xhobject.open(operator, path, false);
+        this.xhobject.send(null);
+        return this.xhobject.responseText;
+    }
+
+    this.status = function () {
+        return this.xhobject.status;
+    }
+
+    this.call = function (dll, parameter, method, content) {
+        wmethod = method;
+        if (method == undefined) {
+            wmethod = "GET";
+        }
+        wcontent = content;
+        if (content == undefined) {
+            wcontent = null;
+        }
+        calls = "";
+        for (var i in parameter) {
+            calls += ("&" + i + "=" + parameter[i]);
+        }
+        this.xhobject.open(wmethod, this.d_operate + "?module=" + dll + calls, false);
+        this.xhobject.send(wcontent);
+        return this.xhobject.responseText;
     }
 
     this.register = function (passwd, uid) {
@@ -157,7 +198,7 @@ function mslib() {
 // Some tools useful
 // Input: MinServer key-value object (like pageinfo.head_args)
 function toJSDictionary(mins_dict_obj) {
-    var res = new Array();
+    var res = new Object();
     for (var i = 0; i < mins_dict_obj.length; i++) {
         res[mins_dict_obj[i].key] = mins_dict_obj[i].value;
     }
