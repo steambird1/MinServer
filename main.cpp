@@ -724,6 +724,12 @@ int main(int argc, char* argv[]) {
 	bytes bs;
 	bool downgraded = false, al_cause = false;
 	volatile char leak_detector[] = { "TESTtestTESTtestTESTtestTESTtestTESTtest" };
+	// To same memory, use once:
+	http_recv hinfo;
+	vector<post_info> post_infolist;			// In file writes WOULD NOT SEND AS POST STANDARD
+	http_send sndinfo;
+	const set<string> operations = { "file_operate", "auth_workspace", "uploader", "caller" };
+	// End
 	while (true) {
 		if (!no_data_screen) 
 		{
@@ -743,25 +749,24 @@ int main(int argc, char* argv[]) {
 			s.end_accept();
 			continue;
 		}
-		http_recv hinfo = s.receive();
+		hinfo.content.release();
+		hinfo = s.receive();
+		post_infolist.clear();
 		visit[s.get_paddr()]++;	// Now suite with DLLs
 //		cout_d << "Receiver receives:" << endl_d << endl_d;
 //		cout_d << s.get_prev().toString() << endl_d;
 //		cout_d << "End" << endl_d;
 		string path = hinfo.path, rpath;
 		auto path_pinfo = hinfo.toPaths();
-		vector<post_info> post_infolist;			// In file writes WOULD NOT SEND AS POST STANDARD
-		http_send sndinfo;
 
 		sndinfo.codeid = 200;
 		sndinfo.code_info = "OK";
 		sndinfo.proto_ver = hinfo.proto_ver;
+		sndinfo.attr.clear();
 		sndinfo.attr["Connection"] = "Keep-Alive";
-		sndinfo.content.clear();
+		sndinfo.content.release();
 
 		bool flag;
-
-		set<string> operations = { "file_operate", "auth_workspace", "uploader", "caller" };
 
 		if (downgraded) {
 			// A server downgrade is because the limit of fopen().
@@ -910,7 +915,7 @@ int main(int argc, char* argv[]) {
 				else {
 					sndinfo.codeid = 501;
 					sndinfo.code_info = "Not Implemented";
-					sndinfo.content = not_supported;
+					sndinfo.content = bytes(not_supported);
 				}
 			}
 			else if (path_pinfo.path[0] == "auth_workspace") {
@@ -1103,7 +1108,7 @@ int main(int argc, char* argv[]) {
 				else {
 				sndinfo.codeid = 501;
 				sndinfo.code_info = "Not Implemented";
-				sndinfo.content = not_supported;
+				sndinfo.content = bytes(not_supported);
 				}
 
 				/*
@@ -1199,7 +1204,7 @@ int main(int argc, char* argv[]) {
 			if (m.first.find('$') != string::npos) {
 				sndinfo.codeid = 403;
 				sndinfo.code_info = "Forbidden";
-				sndinfo.content = no_perm;
+				sndinfo.content = bytes(no_perm);
 				goto sendup;	// As for less jumpers
 			}
 			bool flag2 = false;
@@ -1242,7 +1247,7 @@ int main(int argc, char* argv[]) {
 				if (!flag) {
 					sndinfo.codeid = 404;
 					sndinfo.code_info = "Not found";
-					sndinfo.content = not_found;
+					sndinfo.content = bytes(not_found);
 				} else {
 					sndinfo.attr["Connection"] = "close";	// It's stupid to keep alive
 					sndinfo.attr["Content-Type"] = findType(rpath);
@@ -1389,7 +1394,7 @@ int main(int argc, char* argv[]) {
 			else {
 				sndinfo.codeid = 403;
 				sndinfo.code_info = "Forbidden";
-				sndinfo.content = no_perm;
+				sndinfo.content = bytes(no_perm);
 			}
 		}
 	sendup: bs = sndinfo.toSender();

@@ -43,7 +43,7 @@
 
 void bytes::release()
  {
-	 if (this->byte_space != nullptr) delete[] this->byte_space;
+	 if (this->byte_space != nullptr && this->len) delete[] this->byte_space;
 	 this->len = 0;
  }
 
