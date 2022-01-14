@@ -30,6 +30,7 @@ string user_data_path = "$users.txt";
 string public_file_path = "$public.txt";
 string group_path = "$groups.txt";
 string assiocate_path = "$assiocate.txt";
+string redirect_path = "$redirect.txt";
 int default_join_g = -1;
 
 // Allocate ONCE
@@ -519,6 +520,278 @@ void stat() {
 bool auto_release = true;
 
 map<string, as_func> acaller;
+int max_recesuive = 255;
+
+// To same memory, use once:
+http_recv hinfo;
+vector<post_info> post_infolist;			// In file writes WOULD NOT SEND AS POST STANDARD
+http_send sndinfo;
+const set<string> operations = { "file_operate", "auth_workspace", "uploader", "caller" };
+path_info path_pinfo;
+
+#pragma region(preparations)
+const bytes not_found = not_found_c;
+const bytes not_supported = not_supported_c;
+const bytes no_perm = no_perm_c;
+// Also got something as C
+cc_str ec403 = no_perm_c.toCharArray();
+cc_str ec404 = not_found_c.toCharArray();
+cc_str ec501 = not_supported_c.toCharArray();
+cc_str ec200_ok = ok.c_str();
+cc_str ec200_redirect = redirect.c_str();
+#pragma endregion
+
+void normalSender(ssocket &s, string path, string external, int recesuive = 0) {
+	if (recesuive > max_recesuive) {
+		sndinfo.codeid = 500;
+		sndinfo.code_info = "Internal Server Error";
+	}
+	// As the normal processor
+	if (hinfo.process == "POST")
+		post_infolist = hinfo.toPost(); // Can be safe only here
+	pair<string, string> m;
+	m.first = path;
+	m.second = external;
+	// Or redirection
+	// As convert string to wstring take too long
+	bool flag = false;
+	string rpath = "";
+	bool flag2 = false;
+	FILE *f = fopen(public_file_path.c_str(), "r");
+	cout_d << "Expected main path: " << m.first << endl_d;
+	cout_d << "Expected external: " << m.second << endl_d;
+	if (m.first.find('$') != string::npos) {
+		sndinfo.codeid = 403;
+		sndinfo.code_info = "Forbidden";
+		sndinfo.content = bytes(no_perm);
+		goto sendup;	// As for less jumpers
+}
+	//heap_test();
+	if (f != NULL) {
+		while (!feof(f)) {
+			// buf uses begin
+			fgets(buf, MAX_PATH, f);
+			cout_d << "Try: Got: " << buf << endl_d;
+			if (m.first == sRemovingEOL(buf)) {	// As there is end of line in BUF
+				cout_d << "Equals: " << m.first << endl_d;
+				flag2 = true;
+				break;
+			}
+			// buf uses end
+		}
+		fclose_m(f);
+	}
+	if (flag2) {
+		// Get path
+		flag = false;
+		string wpath = m.first;
+		// -- Is it redirection? --
+		FILE *fr = fopen(redirect_path.c_str(), "r");
+		if (fr != NULL) {
+			while (!feof(fr)) {
+				// buf4 uses begin
+				fgets(buf4, 4096, fr);
+				auto vs = splitLines(buf4, '|');
+				bool directz = false;
+				if (vs.size() < 2) continue;
+				if (wpath == vs[0]) {
+					// Got
+					// Select 1 or 0
+					if (vs.size() >= 3) directz = bool(atoi(vs[2].c_str()));
+					if (directz) {
+						// Send only OK page, buf4 and buf5 uses begin
+						sprintf(buf4, redirect.c_str(), vs[1].c_str(), encodeBytes(vs[1]));
+						sprintf(buf5, ok.c_str(), buf4);
+						sndinfo.content = buf5;
+						goto sendup;
+					}
+					else {
+						// Proceed as another
+						normalSender(s, vs[1], external, recesuive + 1);
+						return;
+					}
+				}
+				
+				// buf4 uses end
+			}
+			fclose_m(fr);
+		}
+		// -- End --
+		wpath.erase(wpath.begin());	// As removing '/' at first
+		for (auto &i : defiles) {
+			rpath = wpath + i;
+			if (!rpath.length()) continue;
+			if (rpath[0] == '\\') rpath.erase(rpath.begin());	// As removing '\\' at first
+			if (fileExists(rpath)) {
+				flag = true;
+				break;
+			}
+			rpath = wpath + '\\' + i;
+			if (fileExists(rpath)) {
+				flag = true;
+				break;
+			}
+		}
+		cout_d << "Finally path: " << rpath << endl_d;
+		if (!flag) {
+			sndinfo.codeid = 404;
+			sndinfo.code_info = "Not found";
+			sndinfo.content = bytes(not_found);
+		}
+		else {
+			sndinfo.attr["Connection"] = "close";	// It's stupid to keep alive
+			sndinfo.attr["Content-Type"] = findType(rpath);
+
+			cout_d << "Sending type: " << sndinfo.attr["Content-Type"] << endl_d;
+
+			// You can see this as a bulitin text/html assiocation
+			if (sndinfo.attr["Content-Type"] == "text/html") {
+				// Insert script
+				cout_d << "Inserting script ..." << endl_d;
+				string dest = makeTemp();
+				cout_d << "Tempatory file: " << dest << endl_d;
+				//CopyFile(rpath.c_str(), dest.c_str(), FALSE);
+				// Simply resolve <head> or <body>.
+				string qu = "";
+				bool mode1 = false, mode2 = false;
+				FILE *f = fopen(rpath.c_str(), "r"), *fr = fopen(dest.c_str(), "w");
+				while (true) {
+					char c = fgetc(f);
+					if (feof(f)) break;	 // Preventing EOF remaining
+					if (c == '<') {
+						qu = "";
+						mode1 = true;
+					}
+					else if (c == '>') {
+						cout_d << "Label got: " << c << endl_d;
+						mode1 = false;
+						if ((sToLower(qu) == "head" || sToLower(qu) == "body") && (!mode2)) {
+							// Insert script, now!
+							mode2 = true;
+							fprintf(fr, "><script>\n");
+
+							// 1. Parameters & Post informations
+							string s = readAll("mspara.js").toString();
+							auto hp = resolveMinorPath(hinfo.path);
+							int t = s.length() + hp.first.length() - 4;			// removing two '%s'
+							// Prepare URL Args
+							string ua = "", pa = "[", ba = "", ha = "";
+							for (auto &i : path_pinfo.exts) {
+								ua += "{key:\"" + i.first + "\",value:\"" + i.second + "\"},\n";
+							}
+							if (ua.length()) {
+								ua.pop_back(); ua.pop_back();
+							} 	// ',' and 'LF'.
+							t += ua.length();
+							// Prepare POST Args
+							// ...
+							for (auto &i : post_infolist) {
+								pa += "{\nattr:[";
+								bool flag11 = false;
+								for (auto &j : i.attr) {
+									pa += "{key:\"" + j.first + "\",value:\"" + encodeBytes(j.second) + "\"},\n";
+									flag11 = true;
+								}
+								if (flag11) {
+									pa.pop_back();	// 'LF'
+									pa.pop_back();	// ','
+								}
+
+								pa += "],content:\"" + encodeBytes(i.content) + "\"},";
+							}
+							pa.pop_back(); // ','
+							if (pa.length()) pa += "]";	// As not removed all of things
+							t += pa.length();
+
+							// Prepare HEAD-data args (sometimes it'll be useful)
+							for (auto &i : hinfo.attr) {
+								ha += "{key:\"" + encodeBytes(i.first) + "\",value:\"" + encodeBytes(i.second) + "\"},\n";
+							}
+							if (ha.length()) {
+								ha.pop_back();	// ','
+							}
+
+							t += ha.length();
+
+							t += hinfo.process.length();
+							t += hinfo.proto_ver.length();
+
+							if (!ua.length()) ua = " ";	// To be not really empty ???
+							if (!pa.length()) pa = " ";
+
+							// Print
+							cout_d << "Allocated length for buf: " << t + 20 << endl_d;
+							char *buf = new char[t + 20];	// Also added ua/pa spaces
+							//      Buffer|Template|Args -->
+							sprintf(buf, s.c_str(), hinfo.process.c_str(), hinfo.proto_ver.c_str(), hp.first.c_str(), ha.c_str(), ua.c_str(), pa.c_str());	// Fails here, but why?
+							//cout << "Builtin scripts: " << endl << buf << endl << "== END ==" << endl;
+							fprintf(fr, "// Args\n%s\n", buf);
+							// End
+
+							// 2. Default APIs
+							// (Copy from javascript)
+							fprintf(fr, "// Default MSLIB API\n%s\n", readAll("mslib.js").toCharArray());
+
+							// End
+							fprintf(fr, "\n</script>");
+
+							delete[] buf;
+							continue;
+						}
+					}
+					else if (mode1) {
+						qu += c;
+					}
+					fputc(c, fr);
+				}
+				fclose_m(f);
+				fclose_m(fr);
+				fr = fopen(dest.c_str(), "rb");
+				sndinfo.loadContent(fr);	// Here doesn't leak
+				fclose_m(fr);
+			}
+			else {
+				// First of all scan for existing assiocation
+				string ex = getExt(rpath);	// Get extension, surely contains '.'.
+				if (acaller.count(ex)) {
+					asdata *s_prep = new asdata;	// Memory leak before here
+					// To be updated:
+					s_prep->cal_lib = { uidctrl::request, uidctrl::vaild, uidctrl::uidof, uidctrl::release, c_user_auth, file_operator::release, c_file_open, c_memory_usage, c_utoken_usage, c_ftoken_usage, c_ip_health, user_groups::insert, user_groups::remove, c_ug_query, c_uo_mod, c_uo_chperm, c_uo_exists, ec403, ec404, ec501, ec200_ok, ec200_redirect };
+					s_prep->mc_lib = { memory_manager::allocate, memory_manager::release };
+					s_prep->m_error = dll_err;
+					cc_str stc = s.get_prev().toCharArray();
+					send_info sc;
+					sc = acaller[ex](stc, rpath.c_str(), s_prep);
+					//delete s_prep;
+					//delete[] stc;
+					//sndinfo.content.add(sc.cdata, sc.len);
+					bytes b;
+					b.add(sc.cdata, sc.len);
+					s.sends(b);
+					b.release();
+					goto after_sentup;
+				}
+				else {
+					FILE *f = fopen(rpath.c_str(), "rb");
+					sndinfo.loadContent(f);
+					fclose_m(f);
+				}
+				// End
+				// Send directly
+
+			}
+		}
+	}
+	else {
+		sndinfo.codeid = 403;
+		sndinfo.code_info = "Forbidden";
+		sndinfo.content = bytes(no_perm);
+	}
+sendup: s.sends(move(sndinfo.toSender()));
+after_sentup: s.end_accept();
+s.release_prev();
+	// Doesn't need to send in the end
+}
 
 int main(int argc, char* argv[]) {
 #if MINSERVER_DEBUG == 4
@@ -572,8 +845,17 @@ int main(int argc, char* argv[]) {
 			default_join_g = atoi(argv[i + 1]);
 			i++;
 		}
+		else if (it == "--max-recesuive") {
+			max_recesuive = atoi(argv[i + 1]);
+			i++;
+		}
 		else if (it == "--assiocate-table") {
 			assiocate_path = argv[i + 1];
+			i++;
+		}
+		else if (it == "--redirect-table") {
+			redirect_path = argv[i + 1];
+			// Writes as [request]|[redirect_to]|[direct_send (1) or jumper (0)]
 			i++;
 		}
 		else if (it == "--root-file") {
@@ -667,17 +949,8 @@ int main(int argc, char* argv[]) {
 		return 0;
 		}
 	}
-	const bytes not_found = not_found_c;
-	const bytes not_supported = not_supported_c;
-	const bytes no_perm = no_perm_c;
-	// Also got something as C
-	cc_str ec403 = no_perm_c.toCharArray();
-	cc_str ec404 = not_found_c.toCharArray();
-	cc_str ec501 = not_supported_c.toCharArray();
-	cc_str ec200_ok = ok.c_str();
-	cc_str ec200_redirect = redirect.c_str();
 	/*
-	FILE *f = fopen(public_file_path.c_str(), "r");
+	FILE *f = fopen(public_file_path.c_str(), "r"); 
 	if (f != NULL) {
 		while (!feof(f)) {
 			// buf uses begin
@@ -723,12 +996,8 @@ int main(int argc, char* argv[]) {
 	cout << "* Listening started at port " << portz << " *" << endl;
 	bytes bs;
 	bool downgraded = false, al_cause = false;
-	volatile char leak_detector[] = { "TESTtestTESTtestTESTtestTESTtestTESTtest" };
-	// To same memory, use once:
-	http_recv hinfo;
-	vector<post_info> post_infolist;			// In file writes WOULD NOT SEND AS POST STANDARD
-	http_send sndinfo;
-	const set<string> operations = { "file_operate", "auth_workspace", "uploader", "caller" };
+	//volatile char leak_detector[] = { "TESTtestTESTtestTESTtestTESTtestTESTtest" };
+	
 	// End
 	while (true) {
 		if (!no_data_screen) 
@@ -757,7 +1026,7 @@ int main(int argc, char* argv[]) {
 //		cout_d << s.get_prev().toString() << endl_d;
 //		cout_d << "End" << endl_d;
 		string path = hinfo.path, rpath;
-		auto path_pinfo = hinfo.toPaths();
+		path_pinfo = hinfo.toPaths();
 
 		sndinfo.codeid = 200;
 		sndinfo.code_info = "OK";
@@ -1154,12 +1423,14 @@ int main(int argc, char* argv[]) {
 					}
 
 					if (!flag) {
+						// buf4 and buf5 uses begin
 						memset(buf4, 0, sizeof(buf4));
 						if (path_pinfo.exts.count("jumpto")) {
 							sprintf(buf4, redirect.c_str(), path_pinfo.exts["jumpto"].c_str(), encodeBytes(path_pinfo.exts["jumpto"]).c_str());
 						}
 						sprintf(buf5, ok.c_str(), buf4);
 						sndinfo.content = buf5;
+						// buf4 and buf5 uses end
 					}
 					
 			}
@@ -1194,224 +1465,22 @@ int main(int argc, char* argv[]) {
 					goto after_sentup;
 				}
 }
+sendup: bs = sndinfo.toSender();
+s.sends(bs);
+bs.release();
+after_sentup: s.end_accept();
+s.release_prev();
 		}
 		else {
-			if (hinfo.process == "POST")
-				post_infolist = hinfo.toPost(); // Can be safe only here
-			pair<string, string> m = resolveMinorPath(hinfo.path);
-			cout_d << "Expected main path: " << m.first << endl_d;
-			cout_d << "Expected external: " << m.second << endl_d;
-			if (m.first.find('$') != string::npos) {
-				sndinfo.codeid = 403;
-				sndinfo.code_info = "Forbidden";
-				sndinfo.content = bytes(no_perm);
-				goto sendup;	// As for less jumpers
-			}
-			bool flag2 = false;
-			FILE *f = fopen(public_file_path.c_str(), "r");
-			heap_test();
-			if (f != NULL) {
-				while (!feof(f)) {
-					// buf uses begin
-					fgets(buf, MAX_PATH, f);
-					cout_d << "Try: Got: " << buf << endl_d;
-					if (m.first == sRemovingEOL(buf)) {	// As there is end of line in BUF
-						cout_d << "Equals: " << m.first << endl_d;
-						flag2 = true;
-						break;
-					}
-					// buf uses end
-				}
-				fclose_m(f);
-			}
-			if (flag2) {
-				// Get path
-				flag = false;
-				string wpath = m.first;
-				wpath.erase(wpath.begin());	// As removing '/' at first
-				for (auto &i : defiles) {
-					rpath = wpath + i;
-					if (!rpath.length()) continue;
-					if (rpath[0] == '\\') rpath.erase(rpath.begin());	// As removing '\\' at first
-					if (fileExists(rpath)) {
-						flag = true;
-						break;
-					}
-					rpath = wpath + '\\' + i;
-					if (fileExists(rpath)) {
-						flag = true;
-						break;
-					}
-				}
-				cout_d << "Finally path: " << rpath << endl_d;
-				if (!flag) {
-					sndinfo.codeid = 404;
-					sndinfo.code_info = "Not found";
-					sndinfo.content = bytes(not_found);
-				} else {
-					sndinfo.attr["Connection"] = "close";	// It's stupid to keep alive
-					sndinfo.attr["Content-Type"] = findType(rpath);
-
-					cout_d << "Sending type: " << sndinfo.attr["Content-Type"] << endl_d;
-
-					// You can see this as a bulitin text/html assiocation
-					if (sndinfo.attr["Content-Type"] == "text/html") {
-						// Insert script
-						cout_d << "Inserting script ..." << endl_d;
-						string dest = makeTemp();
-						cout_d << "Tempatory file: " << dest << endl_d;
-						//CopyFile(rpath.c_str(), dest.c_str(), FALSE);
-						// Simply resolve <head> or <body>.
-						string qu = "";
-						bool mode1 = false, mode2 = false;
-						FILE *f = fopen(rpath.c_str(), "r"), *fr = fopen(dest.c_str(), "w");
-						while (true) {
-							char c = fgetc(f);
-							if (feof(f)) break;	 // Preventing EOF remaining
-							if (c == '<') {
-								qu = "";
-								mode1 = true;
-							}
-							else if (c == '>') {
-								cout_d << "Label got: " << c << endl_d;
-								mode1 = false;
-								if ((sToLower(qu) == "head" || sToLower(qu) == "body") && (!mode2)) {
-									// Insert script, now!
-									mode2 = true;
-									fprintf(fr, "><script>\n");
-
-									// 1. Parameters & Post informations
-									string s = readAll("mspara.js").toString();
-									int t = s.length() - 4;			// removing two '%s'
-									// Prepare URL Args
-									string ua = "", pa = "[", ba = "", ha = "";
-									for (auto &i : path_pinfo.exts) {
-										ua += "{key:\"" + i.first + "\",value:\"" + i.second + "\"},\n";
-									}
-									if (ua.length()) {
-										ua.pop_back(); ua.pop_back();
-									} 	// ',' and 'LF'.
-									t += ua.length();
-									// Prepare POST Args
-									// ...
-									for (auto &i : post_infolist) {
-										pa += "{\nattr:[";
-										bool flag11 = false;
-										for (auto &j : i.attr) {
-											pa += "{key:\"" + j.first + "\",value:\"" + encodeBytes(j.second) + "\"},\n";
-											flag11 = true;
-										}
-										if (flag11) {
-											pa.pop_back();	// 'LF'
-											pa.pop_back();	// ','
-										}
-										
-										pa += "],content:\"" + encodeBytes(i.content) + "\"},";
-									}
-									pa.pop_back(); // ','
-									if (pa.length()) pa += "]";	// As not removed all of things
-									t += pa.length();
-
-									// Prepare HEAD-data args (sometimes it'll be useful)
-									for (auto &i : hinfo.attr) {
-										ha += "{key:\"" + encodeBytes(i.first) + "\",value:\"" + encodeBytes(i.second) + "\"},\n";
-									}
-									if (ha.length()) {
-										ha.pop_back();	// ','
-									}
-
-									t += ha.length();
-
-									t += hinfo.process.length();
-									t += hinfo.proto_ver.length();
-
-									if (!ua.length()) ua = " ";	// To be not really empty ???
-									if (!pa.length()) pa = " ";
-
-										// Print
-									cout_d << "Allocated length for buf: " << t + 20 << endl_d;
-									char *buf = new char[t + 20];	// Also added ua/pa spaces
-									//      Buffer|Template|Args -->
-									sprintf(buf, s.c_str(), hinfo.process.c_str(), hinfo.proto_ver.c_str(), ha.c_str(), ua.c_str(), pa.c_str());	// Fails here, but why?
-									//cout << "Builtin scripts: " << endl << buf << endl << "== END ==" << endl;
-									fprintf(fr, "// Args\n%s\n", buf);
-									// End
-
-									// 2. Default APIs
-									// (Copy from javascript)
-									fprintf(fr, "// Default MSLIB API\n%s\n", readAll("mslib.js").toCharArray());
-
-									// End
-									fprintf(fr, "\n</script>");
-
-									delete[] buf;
-									continue;
-								}
-							}
-							else if (mode1) {
-								qu += c;
-							}
-							fputc(c, fr);
-						}
-						fclose_m(f);
-						fclose_m(fr);
-						fr = fopen(dest.c_str(), "rb");
-						sndinfo.loadContent(fr);	// Here doesn't leak
-						fclose_m(fr);
-					}
-					else {
-						// First of all scan for existing assiocation
-						string ex = getExt(rpath);	// Get extension, surely contains '.'.
-						if (acaller.count(ex)) {
-							asdata *s_prep = new asdata;	// Memory leak before here
-							// To be updated:
-							s_prep->cal_lib = { uidctrl::request, uidctrl::vaild, uidctrl::uidof, uidctrl::release, c_user_auth, file_operator::release, c_file_open, c_memory_usage, c_utoken_usage, c_ftoken_usage, c_ip_health, user_groups::insert, user_groups::remove, c_ug_query, c_uo_mod, c_uo_chperm, c_uo_exists, ec403, ec404, ec501, ec200_ok, ec200_redirect };
-							s_prep->mc_lib = { memory_manager::allocate, memory_manager::release };
-							s_prep->m_error = dll_err;
-							cc_str stc = s.get_prev().toCharArray();
-							send_info sc;
-							sc = acaller[ex](stc, rpath.c_str(), s_prep);
-							//delete s_prep;
-							//delete[] stc;
-							//sndinfo.content.add(sc.cdata, sc.len);
-							bytes b;
-							b.add(sc.cdata, sc.len);
-							s.sends(b);
-							b.release();
-							goto after_sentup;
-						}
-						else {
-							FILE *f = fopen(rpath.c_str(), "rb");
-							sndinfo.loadContent(f);
-							fclose_m(f);
-						}
-						// End
-						// Send directly
-						
-					}
-				}
-			}
-			else {
-				sndinfo.codeid = 403;
-				sndinfo.code_info = "Forbidden";
-				sndinfo.content = bytes(no_perm);
-			}
+		//...
+		auto t = resolveMinorPath(hinfo.path);
+		normalSender(s, t.first, t.second);
 		}
-	sendup: bs = sndinfo.toSender();
-		/*
-			// To prove
-			string desprov = makeTemp();
-		cout << "Proving file: " << desprov << endl;
-		FILE *fx = fopen(desprov.c_str(), "wb");
-		fwrite(bs.toCharArray(), sizeof(char), sndinfo.content.length(), fx);
-		fclose_m(fx);
-		// End
-		*/
+	/*sendup: bs = sndinfo.toSender();
 		s.sends(bs);
 		bs.release();
 	 after_sentup: s.end_accept();
-		s.release_prev();
-//		sndinfo.content.release();	// Fuck optimize
+		s.release_prev();*/
 	}
 
 	WSACleanup();

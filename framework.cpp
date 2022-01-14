@@ -388,7 +388,7 @@ void bytes::release()
 	 return move(h);
  }
 
- bool ssocket::sends(bytes &data)
+ bool ssocket::sends(bytes data)
  {
 	 const char* dc = data.toCharArray();
 	 bool t = (send(this->ace,dc, data.length(), 0) != SOCKET_ERROR);

@@ -290,3 +290,6 @@ __pycache__/
 /$assiocate.txt
 /dau.dll
 /Docs
+# Test of foreign language
+/测试.txt
+/$redirect.txt

@@ -167,7 +167,7 @@ public:
 	bool accept_vaild();
 	// These functions requires accepts():
 	http_recv receive();		// Before call this call accepts().
-	bool sends(bytes& data);
+	bool sends(bytes data);
 	void end_accept();
 	void end();
 	bytes get_prev();

@@ -166,9 +166,13 @@ function mslib() {
         if (content == undefined) {
             wcontent = null;
         }
+        wparameter = parameter;
+        if (parameter == undefined || parameter == null) {
+            wparameter = new Object();
+        }
         calls = "";
-        for (var i in parameter) {
-            calls += ("&" + i + "=" + parameter[i]);
+        for (var i in wparameter) {
+            calls += ("&" + i + "=" + wparameter[i]);
         }
         this.xhobject.open(wmethod, this.d_operate + "?module=" + dll + calls, false);
         this.xhobject.send(wcontent);

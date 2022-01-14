@@ -1,6 +1,7 @@
 var pageinfo = {
     operate: "%s",
     http_version: "%s",
+    origin: "%s",
     head_args: [
         %s
     ],
