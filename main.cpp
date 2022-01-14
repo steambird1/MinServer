@@ -520,7 +520,7 @@ void stat() {
 bool auto_release = true;
 
 map<string, as_func> acaller;
-int max_recesuive = 255;
+int max_recesuive = 100;
 
 // To same memory, use once:
 http_recv hinfo;
@@ -591,7 +591,7 @@ void normalSender(ssocket &s, string path, string external, int recesuive = 0) {
 			while (!feof(fr)) {
 				// buf4 uses begin
 				fgets(buf4, 4096, fr);
-				auto vs = splitLines(buf4, '|');
+				auto vs = splitLines(buf4, '|', false, '\n');
 				bool directz = false;
 				if (vs.size() < 2) continue;
 				if (wpath == vs[0]) {
@@ -608,6 +608,7 @@ void normalSender(ssocket &s, string path, string external, int recesuive = 0) {
 					else {
 						// Proceed as another
 						normalSender(s, vs[1], external, recesuive + 1);
+						fclose_m(fr);
 						return;
 					}
 				}
