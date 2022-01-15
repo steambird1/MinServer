@@ -16,17 +16,17 @@ using namespace std;
 
 #pragma comment(lib, "ws2_32.lib")
 #ifndef __cplusplus
-#error Can't be used in C mode
+#error Seabird Network Library can't be used in C mode
 #endif
+#define SEABIRD_NET_FRAMEWORK
 
 // Change if code changed.
-#define SEABIRD_NET_FRAMEWORK_VER 202111L
-// ???
-#define SEABIRD_NET_FRAMEWORK
+#define SEABIRD_NET_FRAMEWORK_VER 202201L
 
 // Change if STRUCTURE or its PUBLIC BEHAIVOR changed.
 // Not include BUG (NOT FEATURE) FIXES.
 #define SEABIRD_NET_STRUCTURE_VER 2
+#define SEABIRD_NET_STRUCTURE_SUBVER 2
 
 #define SEABIRD_NET_DEBUG 0
 #if SEABIRD_NET_DEBUG == 1
@@ -183,7 +183,7 @@ public:
 	bool sends(http_send& sender);
 	void end_accept();
 	void end();
-	bytes get_prev();
+	bytes& get_prev();
 	void release_prev();
 	const char* get_paddr();
 private:

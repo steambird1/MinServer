@@ -762,11 +762,13 @@ void normalSender(ssocket &s, string path, string external, int recesuive = 0) {
 					s_prep->cal_lib = { uidctrl::request, uidctrl::vaild, uidctrl::uidof, uidctrl::release, c_user_auth, file_operator::release, c_file_open, c_memory_usage, c_utoken_usage, c_ftoken_usage, c_ip_health, user_groups::insert, user_groups::remove, c_ug_query, c_uo_mod, c_uo_chperm, c_uo_exists, ec403, ec404, ec501, ec200_ok, ec200_redirect };
 					s_prep->mc_lib = { memory_manager::allocate, memory_manager::release };
 					s_prep->m_error = dll_err;
-					cc_str stc = s.get_prev().toCharArray();
+					bytes q = s.get_prev();
+					cc_str stc = q.toCharArray();
+					q.release();
 					send_info sc;
 					sc = acaller[ex](stc, rpath.c_str(), s_prep);
 					//delete s_prep;
-					//delete[] stc;
+					delete[] stc;
 					//sndinfo.content.add(sc.cdata, sc.len);
 					bytes b;
 					b.add(sc.cdata, sc.len);
@@ -1457,17 +1459,20 @@ int main(int argc, char* argv[]) {
 					s_prep.cal_lib = { uidctrl::request, uidctrl::vaild, uidctrl::uidof, uidctrl::release, c_user_auth, file_operator::release, c_file_open, c_memory_usage, c_utoken_usage, c_ftoken_usage, c_ip_health, user_groups::insert, user_groups::remove, c_ug_query, c_uo_mod, c_uo_chperm, c_uo_exists, ec403, ec404, ec501, ec200_ok, ec200_redirect };
 					s_prep.mc_lib = { memory_manager::allocate, memory_manager::release };
 					s_prep.m_error = dll_err;
-					const char *tc = s.get_prev().toCharArray();
+					bytes b = move(s.get_prev());
+					const char *tc = b.toCharArray();	//***Here uses too much memory***
+					b.release();
 					send_info ds;
 					ds = df(tc, &s_prep);
-					bytes b;
-					b.add(ds.cdata, ds.len);	// Leaks somewhere. Probably here.
+					bytes bq;
+					bq.add(ds.cdata, ds.len);	// Leaks somewhere. Probably here.
 					cout_d << "Trans back: " << endl_d;
 					cout_d << b.toCharArray() << endl_d;
 					cout_d << "End" << endl_d;
-					s.sends(b);
-					//delete[] tc;
+					s.sends(bq);
+					delete[] tc;
 					b.release();
+					bq.release();
 					goto after_sentup;
 				}
 }
@@ -1481,6 +1486,7 @@ s.release_prev();
 		auto t = resolveMinorPath(hinfo.path);
 		normalSender(s, t.first, t.second);
 		}
+		sndinfo.content.release();
 	/*sendup: bs = sndinfo.toSender();
 		s.sends(bs);
 		bs.release();

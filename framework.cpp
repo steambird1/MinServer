@@ -376,20 +376,20 @@ void bytes::release()
 	 // BUT, FOR CONTENT
 	 // WE HAVE TO GET MORE
 	 printf_d("Less: %d\n", lres);
-	 bytes nr;
-	 for (int i = 0; i < l - lres; i += this->last_receive) {
-		 nr = raw_receive();
-		 h.content += nr;
-		 this->prev_recv += nr;
-		 nr.release();
+	// To save memory
+	 int r = 0;
+	 for (int i = 0; i < l - lres; i += r) {
+		 r = recv(this->ace, this->recv_buf, sizeof(char)*this->rcbsz, 0);
+		 if (r > 0) {
+			 h.content.add(this->recv_buf, r);
+			 this->prev_recv.add(this->recv_buf, r);
+		 }
 	 }
 	 // As for non-external document promises full
 	 /*
 	 FILE *f = fopen("promise.gif", "wb");
 	 fwrite(h.content.toCharArray(), sizeof(char), h.content.length(), f);
 	 fclose(f);*/
-	 // End
-	 printf_d("End\n");										// debugging
 	 b.release();
 	 return move(h);
  }
@@ -433,7 +433,7 @@ void bytes::release()
 	 closesocket(this->s);
  }
 
- bytes ssocket::get_prev()
+ bytes& ssocket::get_prev()
  {
 	 return this->prev_recv;
  }
