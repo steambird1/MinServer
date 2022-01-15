@@ -790,9 +790,7 @@ void normalSender(ssocket &s, string path, string external, int recesuive = 0) {
 		sndinfo.code_info = "Forbidden";
 		sndinfo.content = bytes(no_perm);
 	}
-sendup: send_temp = move(sndinfo.toSender());
-s.sends(send_temp);
-send_temp.release();
+sendup: s.sends(sndinfo);
 sndinfo.content.release();
 after_sentup: s.end_accept();
 s.release_prev();
@@ -1473,8 +1471,7 @@ int main(int argc, char* argv[]) {
 					goto after_sentup;
 				}
 }
-sendup: bs = sndinfo.toSender();
-s.sends(bs);
+sendup: s.sends(sndinfo);
 bs.release();
 after_sentup: s.end_accept();
 s.release_prev();

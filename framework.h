@@ -60,7 +60,7 @@ public:
 	friend bool operator == (const bytes &a, const bytes &b);
 	friend bool operator == (const bytes &a, char b);
 	friend bool operator == (const bytes &a, string b);
-//	friend bool ssocket::sends (const bytes &data);
+//	friend bool ssocket::sends(http_send& sender);
 	bytes();
 	bytes(string b);
 	bytes(const char* b);
@@ -151,6 +151,7 @@ struct http_send {
 
 	void loadContent(FILE *hnd);
 	// Load content from a file.
+	__declspec(deprecated("Too much memory usage in this function. consider directly use ssocket::sends(http_send)."))
 	inline bytes toSender(bool autolen = true) {
 		bytes b = proto_ver + " " + to_string(codeid) + " " + code_info + "\n";
 		if (autolen) attr["Content-Length"] = to_string(this->content.length());
@@ -179,6 +180,7 @@ public:
 	// These functions requires accepts():
 	http_recv receive();		// Before call this call accepts().
 	bool sends(bytes& data);
+	bool sends(http_send& sender);
 	void end_accept();
 	void end();
 	bytes get_prev();

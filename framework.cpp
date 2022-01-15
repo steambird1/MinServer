@@ -403,6 +403,24 @@ void bytes::release()
 	 return t;
  }
 
+ bool ssocket::sends(http_send& sender)
+ {
+	 bytes b = sender.proto_ver + " " + to_string(sender.codeid) + " " + sender.code_info + "\n";
+	 sender.attr["Content-Length"] = to_string(sender.content.length());
+	 //	 for (auto i = attr.begin(); i != attr.end(); i++)
+	 //		 b += (i->first + ": " + i->second) + "\n";
+	 for (auto &i : sender.attr) {
+		 b += (i.first + ": " + i.second + "\n");
+	 }
+	 b += '\n';
+	 b += sender.content;
+	 const char *d = b.toCharArray();
+	 bool t = (send(this->ace, d, b.length(), 0) != SOCKET_ERROR);
+	 delete[] d;
+	 b.release();
+	 return t;
+ }
+
  void ssocket::end_accept()
  {
 	 this->acc_errored = true;
