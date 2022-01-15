@@ -43,7 +43,10 @@
 
 void bytes::release()
  {
-	 if (this->byte_space != nullptr && this->len) delete[] this->byte_space;
+	if (this->byte_space != nullptr && this->len) {
+		delete[] this->byte_space;
+		this->byte_space = nullptr;
+	 }
 	 this->len = 0;
  }
 
@@ -114,7 +117,7 @@ void bytes::release()
 {
 	 if (this->len <= 0)
 		 return "";
-	return string(toCharArray());
+	return move(string(toCharArray()));
 }
 
  size_t bytes::length()
@@ -163,7 +166,7 @@ void bytes::release()
 	}
 	//release();
 	this->byte_space = new char[sz+2];
-	memset(this->byte_space, 0, sizeof(char)*sz);	// A waste of memory ???
+	memset(this->byte_space, 0, sizeof(char)*sz);
 	if (this->len) {
 		memcpy(byte_space, bs_old, sizeof(char)*this->len);
 		delete[] bs_old;
@@ -349,7 +352,10 @@ void bytes::release()
 		 */
 	 }
 	 if (!h.attr.count("Content-Length"))
+	 {
+		 b.release();
 		 return move(h);
+	 }
 	 int l = atoi(h.attr["Content-Length"].c_str());
 	 //for (; i != lf.end(); i++) {
 		 // Oh! We can't do that.
@@ -388,11 +394,12 @@ void bytes::release()
 	 return move(h);
  }
 
- bool ssocket::sends(bytes data)
+ bool ssocket::sends(bytes& data)
  {
 	 const char* dc = data.toCharArray();
 	 bool t = (send(this->ace,dc, data.length(), 0) != SOCKET_ERROR);
 	 delete[] dc; //?
+	 //data.release();	// It's a copy now
 	 return t;
  }
 
@@ -694,23 +701,6 @@ void bytes::release()
 	 this->content.add(c, len);
 	 delete[] c;
  }
-
- // ???
-//#pragma optimize("", off)
- bytes http_send::toSender(bool autolen)
- {
-	 bytes b = proto_ver + " " + to_string(codeid) + " " + code_info + "\n";
-	 if (autolen) attr["Content-Length"] = to_string(this->content.length());
-//	 for (auto i = attr.begin(); i != attr.end(); i++)
-//		 b += (i->first + ": " + i->second) + "\n";
-	 for (auto &i : attr) {
-		 b += (i.first + ": " + i.second + "\n");
-	 }
-	 b += '\n';
-	 b += content;
-	 return move(b);
- }
-//#pragma optimize("", on)
 
  int hex2dec(string s) {
 	 int t = 1, u = 0;

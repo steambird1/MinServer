@@ -233,7 +233,7 @@ string sToLower(string s) {
 string sRemovingEOL(string s) {
 	string t = s;
 	while (t[t.length() - 1] == '\n') t.pop_back();
-	return t;
+	return move(t);
 }
 
 string sCurrDir(string s = "") {

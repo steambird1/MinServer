@@ -293,3 +293,5 @@ __pycache__/
 # Test of foreign language
 /测试.txt
 /$redirect.txt
+/te st.txt
+/测 试.txt

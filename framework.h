@@ -151,7 +151,18 @@ struct http_send {
 
 	void loadContent(FILE *hnd);
 	// Load content from a file.
-	bytes toSender(bool autolen = true);			// Returns sendable info.
+	inline bytes toSender(bool autolen = true) {
+		bytes b = proto_ver + " " + to_string(codeid) + " " + code_info + "\n";
+		if (autolen) attr["Content-Length"] = to_string(this->content.length());
+		//	 for (auto i = attr.begin(); i != attr.end(); i++)
+		//		 b += (i->first + ": " + i->second) + "\n";
+		for (auto &i : attr) {
+			b += (i.first + ": " + i.second + "\n");
+		}
+		b += '\n';
+		b += content;
+		return move(b);
+	} // Returns sendable info.
 };
 #pragma endregion
 
@@ -167,7 +178,7 @@ public:
 	bool accept_vaild();
 	// These functions requires accepts():
 	http_recv receive();		// Before call this call accepts().
-	bool sends(bytes data);
+	bool sends(bytes& data);
 	void end_accept();
 	void end();
 	bytes get_prev();

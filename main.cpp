@@ -520,7 +520,7 @@ void stat() {
 bool auto_release = true;
 
 map<string, as_func> acaller;
-int max_recesuive = 100;
+int max_recesuive = 50;
 
 // To same memory, use once:
 http_recv hinfo;
@@ -540,6 +540,8 @@ cc_str ec501 = not_supported_c.toCharArray();
 cc_str ec200_ok = ok.c_str();
 cc_str ec200_redirect = redirect.c_str();
 #pragma endregion
+
+bytes send_temp = bytes();
 
 void normalSender(ssocket &s, string path, string external, int recesuive = 0) {
 	if (recesuive > max_recesuive) {
@@ -788,7 +790,10 @@ void normalSender(ssocket &s, string path, string external, int recesuive = 0) {
 		sndinfo.code_info = "Forbidden";
 		sndinfo.content = bytes(no_perm);
 	}
-sendup: s.sends(move(sndinfo.toSender()));
+sendup: send_temp = move(sndinfo.toSender());
+s.sends(send_temp);
+send_temp.release();
+sndinfo.content.release();
 after_sentup: s.end_accept();
 s.release_prev();
 	// Doesn't need to send in the end
@@ -1035,6 +1040,8 @@ int main(int argc, char* argv[]) {
 		sndinfo.attr.clear();
 		sndinfo.attr["Connection"] = "Keep-Alive";
 		sndinfo.content.release();
+
+		send_temp.release();
 
 		bool flag;
 
