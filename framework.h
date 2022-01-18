@@ -39,6 +39,13 @@ using namespace std;
 #endif
 #define printf_d(...) SEABIRD_NET_DEBUG_PRINT(__VA_ARGS__)
 
+#ifndef SEABIRD_NET_NO_DEPRECATE
+#define DEPRECATED(text) __declspec(deprecated(text))
+#else
+#define DEPRECATED(text)
+#endif
+#define MEM_DEPRECATE(cons) DEPRECATED("Too much memory usage in this function. consider directly use: "#cons)
+
 map<string, string> contentTypes();
 string searchTypes(string extension, string def = "text/plain");
 long getFileLength(FILE *f);
@@ -137,6 +144,7 @@ struct http_recv {
 	map<string, string> attr;	// Attributes
 	bytes content;				// Message body
 
+	void release();
 	path_info toPaths();		// To split path
 	content_info toCType();		// To Content-Type information
 	vector<post_info> toPost();	// To POST informations
@@ -151,7 +159,8 @@ struct http_send {
 
 	void loadContent(FILE *hnd);
 	// Load content from a file.
-	__declspec(deprecated("Too much memory usage in this function. consider directly use ssocket::sends(http_send)."))
+	// Deprecated
+	MEM_DEPRECATE("ssocket::sends(sender&)")
 	inline bytes toSender(bool autolen = true) {
 		bytes b = proto_ver + " " + to_string(codeid) + " " + code_info + "\n";
 		if (autolen) attr["Content-Length"] = to_string(this->content.length());
@@ -177,8 +186,10 @@ public:
 	bool accepts();
 	bool vaild();
 	bool accept_vaild();
-	// These functions requires accepts():
+	// Deprecated
+	MEM_DEPRECATE("ssocket::receive(receiver&)")
 	http_recv receive();		// Before call this call accepts().
+	void receive(http_recv &h); // To save memory
 	bool sends(bytes& data);
 	bool sends(http_send& sender);
 	void end_accept();

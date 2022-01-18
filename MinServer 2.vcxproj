@@ -135,6 +135,7 @@
     <ClInclude Include="util.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="cpp.hint" />
     <None Include="mslib.js" />
     <None Include="mspara.js" />
     <None Include="README.md" />

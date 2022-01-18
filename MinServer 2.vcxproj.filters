@@ -59,6 +59,7 @@
     <None Include="README.md">
       <Filter>Documents</Filter>
     </None>
+    <None Include="cpp.hint" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="help.txt">

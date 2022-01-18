@@ -1025,7 +1025,7 @@ int main(int argc, char* argv[]) {
 			continue;
 		}
 		hinfo.content.release();
-		hinfo = s.receive();
+		s.receive(hinfo);
 		post_infolist.clear();
 		visit[s.get_paddr()]++;	// Now suite with DLLs
 //		cout_d << "Receiver receives:" << endl_d << endl_d;
@@ -1487,6 +1487,7 @@ s.release_prev();
 		normalSender(s, t.first, t.second);
 		}
 		sndinfo.content.release();
+		hinfo.release();
 	/*sendup: bs = sndinfo.toSender();
 		s.sends(bs);
 		bs.release();
