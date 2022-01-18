@@ -135,7 +135,7 @@ function mslib() {
     this.f_operate = "/file_operate";
     this.u_operate = "/auth_workspace";
     this.d_operate = "/caller";
-    this.default_user = new msuser(0, this.xhobject);
+    this.default_user = new msuser(0, this.xhobject, this.f_operate, this.u_operate, this.d_operate, 0);
 
     this.auth = function (uid, passwd) {
         this.xhobject.open("GET", this.u_operate + "?operate=check&request=" + uid + "&passwd=" + passwd, false);
