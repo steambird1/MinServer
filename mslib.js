@@ -128,7 +128,7 @@ function mslib() {
     } else if (window.ActiveXObject) {
         this.xhobject = new ActiveXObject("Microsoft.XMLHTTP");
     } else {
-        throw new msexception("This bowser does not support XMLHTTP for connection!", -1);
+        throw new msexception("This browser does not support XMLHTTP object for connection!", -1);
     }
 
     // Operations

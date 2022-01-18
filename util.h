@@ -114,7 +114,7 @@ string makeTemp(void) {
 
 const bytes not_found_d = "<html><head><title>Page not found - 404</title></head><body><h1>404 Not found</h1><p>Requested page not found on this server.</p><hr /><p>MinServer 2.0</p></body></html>";
 const bytes not_supported_d = "<html><head><title>Not Implemented - 501</title></head><body><h1>501 Not Implemented</h1><p>Request not implemented by server.</p><hr /><p>MinServer 2.0</p></body></html>";
-const bytes no_perm_d = "<html><head><title>Forbidden - 403</title></head><body><h1>403 Forbidden</h1><p>You don't have permission to view this page. It might because your administrator doesn't give permission to you or there is too many redirections.</p><hr /><p>MinServer 2.0</p></body></html>";
+const bytes no_perm_d = "<html><head><title>Forbidden - 403</title></head><body><h1>403 Forbidden</h1><p>You don't have permission to view this page. It might because your administrator doesn't give permission to you or there are too many redirections.</p><hr /><p>MinServer 2.0</p></body></html>";
 
 bytes not_found_c = not_found_d, not_supported_c = not_supported_d, no_perm_c = no_perm_d;
 
