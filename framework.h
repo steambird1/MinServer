@@ -41,12 +41,15 @@ using namespace std;
 #endif
 #define printf_d(...) SEABIRD_NET_DEBUG_PRINT(__VA_ARGS__)
 
-#ifndef SEABIRD_NET_NO_DEPRECATE
 #define DEPRECATED(text) __declspec(deprecated(text))
-#else
-#define DEPRECATED(text)
-#endif
+
+#ifndef SEABIRD_NET_NO_MEM_DEPRECATE
 #define MEM_DEPRECATE(cons) DEPRECATED("Too much memory usage in this function. consider directly use: "#cons)
+#endif
+
+#ifndef SEABIRD_NET_NO_THREAD_DEPRECATE
+#define THREAD_DEPRECATE(cons) DEPRECATED("This version doesn't support multithreading. consider using "#cons)
+#endif
 
 map<string, string> contentTypes();
 string searchTypes(string extension, string def = "text/plain");
@@ -243,20 +246,47 @@ struct http_send {
 
 class ssocket {
 public:
+
+	class acceptor {
+	public:
+		acceptor(SOCKET a, sockaddr_in sa);
+		void receive(http_recv &h);
+		bool sends(http_send& sender);
+		void end_accept();
+		bool accept_vaild();
+		bytes& get_prev();
+		void release_prev();
+		const char* get_paddr();
+	private:
+		SOCKET ace;
+		sockaddr_in acc;
+		bytes prev_recv;
+		char *recv_buf;
+		int rcbsz, last_receive;
+		bool acc_errored;
+	};
+
 	ssocket();
 	ssocket(SOCKET s);
 	ssocket(int port, int rcvsz = RCV_DEFAULT);
 	bool binds(int port);
 	bool listens(int backlog = 5);
+	THREAD_DEPRECATE("accepts() with function objects.")
 	bool accepts();
+	bool accepts(function<http_send(http_recv&, bytes&)> acceptor, function<void(void)> runner = []() {});
 	bool vaild();
+	THREAD_DEPRECATE("accepts()")
 	bool accept_vaild();
 	// Deprecated
 	MEM_DEPRECATE("ssocket::receive(receiver&)")
 	http_recv receive();		// Before call this call accepts().
+	THREAD_DEPRECATE("accepts() with given paramaters")
 	void receive(http_recv &h); // To save memory
+	THREAD_DEPRECATE("accepts() with given paramaters")
 	bool sends(bytes& data);
+	THREAD_DEPRECATE("accepts() with given paramaters")
 	bool sends(http_send& sender);
+	THREAD_DEPRECATE("accepts()")
 	void end_accept();
 	void end();
 	bytes& get_prev();

@@ -297,6 +297,29 @@ void bytes::release()
 	 return this->ace != INVALID_SOCKET;
  }
 
+ bool ssocket::accepts(function<http_send(http_recv&, bytes&)> accept_f, function<void(void)> runner)
+ {
+	 while (true) {
+		 int acsz = sizeof(this->acc);
+		 this->ace = accept(this->s, (SOCKADDR*)&this->acc, &acsz);
+		 this->acc_errored = (this->ace == INVALID_SOCKET);
+		 acceptor p = acceptor(this->ace, this->acc);
+		// thread_local http_recv h;
+		 //thread_local http_send s;
+		 thread t = thread([&]() {
+			 http_recv h;
+			 p.receive(h);
+			 http_send s = move(accept_f(h, p.get_prev()));
+			 p.sends(s);
+			 h.release();
+			 s.content.release();
+		 });
+		 t.detach();
+		 runner();
+	 }
+	 return false;
+ }
+
  bool ssocket::vaild()
  {
 	 return (!errored) && this->s != INVALID_SOCKET;
@@ -828,4 +851,11 @@ void bytes::release()
 		 t *= 16;
 	 }
 	 return u;
+ }
+
+ ssocket::acceptor::acceptor(SOCKET a, sockaddr_in sa)
+ {
+	 this->ace = a;
+	 this->acc = sa;
+	 this->acc_errored = (a == INVALID_SOCKET);
  }
