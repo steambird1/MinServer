@@ -276,7 +276,8 @@ void bytes::release()
 	 sa.sin_family = AF_INET;
 	 sa.sin_port = htons(port);
 	 sa.sin_addr.S_un.S_addr = INADDR_ANY;
-	 auto be = bind(this->s, (LPSOCKADDR)&sa, sizeof(sa));
+	 // As we included something special, we have to use this to call C socket binder
+	 auto be = ::bind(this->s, (LPSOCKADDR)&sa, sizeof(sa));
 	 this->errored = (be == SOCKET_ERROR);
 	 return !(be == SOCKET_ERROR);
  }

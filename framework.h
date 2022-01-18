@@ -12,6 +12,8 @@
 #include <WinSock2.h>
 #include <Windows.h>
 #include <crtdbg.h>
+#include <thread>
+#include <mutex>
 using namespace std;
 
 #pragma comment(lib, "ws2_32.lib")
@@ -53,6 +55,69 @@ long getFileLength(FILE *f);
 // Please notices that
 // This function may makes empty element.
 vector<string> splitLines(const char *data, char spl = '\n', bool firstonly = false, char filter = '\r');
+
+template <typename TKey, typename TValue>
+class t_safe_table;
+
+// Prepare for threading.
+template <typename Ty>
+class t_safe {
+public:
+	template <typename TKey, typename TValue>
+	friend map<TKey,TValue>& t_safe_table<TKey,TValue>::unsafe_get();
+	t_safe() {
+
+	}
+	Ty& get() {
+		while (true) {
+			try {
+				m.lock();
+				return this->data;
+			}
+			catch (...) {
+				// A fail lock causes exception
+			}
+		}
+	}
+	bool try_lock() {
+		return m.try_lock();
+	}
+	void unlock() {
+		m.unlock;
+	}
+private:
+	Ty data;
+	mutex m;
+};
+
+template <typename TKey, typename TValue>
+class t_safe_table {
+public:
+	using mapdata = map<TKey, TValue>;
+	t_safe_table() {
+	
+	}
+	size_t size() {
+		return v.get().size();
+	}
+	bool count(TKey member) {
+		return v.get().count(member);
+	}
+	TValue& operator [](TKey value) {
+		return v.get()[value];
+	}
+	mapdata& unsafe_get() {
+		return v.data;
+	}
+	bool try_lock() {
+		return v.try_lock();
+	}
+	void unlock() {
+		v.unlock();
+	}
+private:
+	t_safe<mapdata> v;
+};
 
 // Pre-declaration
 class sscoket;
