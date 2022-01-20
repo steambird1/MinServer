@@ -177,8 +177,7 @@ bool operator == (const bytes& a, const bytes& b);
 bool operator == (const bytes& a, char b);
 bool operator == (const bytes& a, string b);
 
-// Some declaration problem makes us want to say fuck
-#define RCV_DEFAULT 4096
+#define RCV_DEFAULT 8192
 
 #pragma region(SSocket Extended Types)
 struct path_info {
@@ -219,6 +218,9 @@ struct http_recv {
 };
 
 struct http_send {
+	bool raw_sending = false;
+	bytes raw_send;				// Raw sending, not through toSender()-like
+
 	string proto_ver;			// The same as http_recv
 	int codeid;					// e.g. 200. HTTP codes.
 	string code_info;			// e.g. 200 OK; 404 Not Found...
@@ -249,7 +251,7 @@ public:
 
 	class acceptor {
 	public:
-		acceptor(SOCKET a, sockaddr_in sa, int recv_buf);
+		acceptor(SOCKET a, sockaddr_in sa, int recv_buf = RCV_DEFAULT);
 		void receive(http_recv &h);
 		bool sends(http_send& sender);
 		void end_accept();
@@ -274,7 +276,7 @@ public:
 	bool listens(int backlog = 5);
 	THREAD_DEPRECATE("accepts() with function objects.")
 	bool accepts();
-	bool accepts(function<http_send(http_recv&, bytes&)> acceptor, function<void(void)> runner = []() {});
+	bool accepts(function<http_send(http_recv&, bytes&, const char*)> acceptor, function<void(void)> runner = []() {});
 	bool vaild();
 	THREAD_DEPRECATE("accepts()")
 	bool accept_vaild();

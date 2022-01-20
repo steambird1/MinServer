@@ -516,6 +516,9 @@ void bytes::release()
 
  bool ssocket::sends(http_send& sender)
  {
+	 if (sender.raw_sending) {
+		 return this->sends(sender.raw_send);
+	 }
 	 bytes b = sender.proto_ver + " " + to_string(sender.codeid) + " " + sender.code_info + "\n";
 	 sender.attr["Content-Length"] = to_string(sender.content.length());
 	 //	 for (auto i = attr.begin(); i != attr.end(); i++)

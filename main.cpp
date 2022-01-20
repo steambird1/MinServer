@@ -34,7 +34,7 @@ string redirect_path = "$redirect.txt";
 int default_join_g = -1;
 
 // Allocate ONCE
-char buf4[4096], buf5[4096];
+thread_local char buf4[4096], buf5[4096];
 
 int portz = 80;
 
@@ -140,7 +140,7 @@ string CReadLine(FILE *f) {
 	return tmp;
 }
 
-char buf[MAX_PATH],buf2[100];
+thread_local char buf[MAX_PATH],buf2[100];
 set<string> pub_fn;
 
 // First: path
@@ -473,8 +473,10 @@ bool operator < (vis_info x, vis_info y) {
 }
 
 int aldr = 0;	// Count of assiocation loaded
+bool failure = false;
+bool downgraded = false, al_cause = false;
 
-void stat() {
+void m_stat() {
 	system("cls");
 	cout << "Server Status" << endl;
 	printf("Assiocations loaded: %d\n\n", aldr);
@@ -515,6 +517,9 @@ void stat() {
 		lat--;
 	}
 	printf("\n");
+	cout << endl << "* Listening at port " << portz << " *" << endl;
+
+if (al_cause) cout << endl << "* Auto-release runned" << endl;
 }
 
 bool auto_release = true;
@@ -524,10 +529,10 @@ int max_recesuive = 50;
 
 // To same memory, use once:
 http_recv hinfo;
-vector<post_info> post_infolist;			// In file writes WOULD NOT SEND AS POST STANDARD
+thread_local vector<post_info> post_infolist;			// In file writes WOULD NOT SEND AS POST STANDARD
 http_send sndinfo;
 const set<string> operations = { "file_operate", "auth_workspace", "uploader", "caller" };
-path_info path_pinfo;
+thread_local path_info path_pinfo;
 
 #pragma region(preparations)
 const bytes not_found = not_found_c;
@@ -543,7 +548,7 @@ cc_str ec200_redirect = redirect.c_str();
 
 bytes send_temp = bytes();
 
-void normalSender(ssocket &s, string path, string external, int recesuive = 0) {
+void normalSender(string path, string external, int recesuive = 0, nullable<bytes&> prev = nullptr) {
 	if (recesuive > max_recesuive) {
 		sndinfo.codeid = 500;
 		sndinfo.code_info = "Internal Server Error";
@@ -609,7 +614,7 @@ void normalSender(ssocket &s, string path, string external, int recesuive = 0) {
 					}
 					else {
 						// Proceed as another
-						normalSender(s, vs[1], external, recesuive + 1);
+						normalSender(vs[1], external, recesuive + 1);
 						fclose_m(fr);
 						return;
 					}
@@ -762,7 +767,7 @@ void normalSender(ssocket &s, string path, string external, int recesuive = 0) {
 					s_prep->cal_lib = { uidctrl::request, uidctrl::vaild, uidctrl::uidof, uidctrl::release, c_user_auth, file_operator::release, c_file_open, c_memory_usage, c_utoken_usage, c_ftoken_usage, c_ip_health, user_groups::insert, user_groups::remove, c_ug_query, c_uo_mod, c_uo_chperm, c_uo_exists, ec403, ec404, ec501, ec200_ok, ec200_redirect };
 					s_prep->mc_lib = { memory_manager::allocate, memory_manager::release };
 					s_prep->m_error = dll_err;
-					bytes q = s.get_prev();
+					bytes q = prev.obj();
 					cc_str stc = q.toCharArray();
 					q.release();
 					send_info sc;
@@ -973,7 +978,7 @@ int main(int argc, char* argv[]) {
 		exit(1);
 	}
 	cout << "Loading assiocation..." << endl;
-	bool failure = false;
+	
 	FILE *fa = fopen(assiocate_path.c_str(), "r");
 	if (fa != NULL) {
 		while (!feof(fa)) {
@@ -1001,36 +1006,12 @@ int main(int argc, char* argv[]) {
 	}
 	cout << "* Listening started at port " << portz << " *" << endl;
 	bytes bs;
-	bool downgraded = false, al_cause = false;
 	//volatile char leak_detector[] = { "TESTtestTESTtestTESTtestTESTtestTESTtest" };
 	
-	// End
-	while (true) {
-		if (!no_data_screen) 
-		{
-			stat();
-			cout << endl << "* Listening at port " << portz << " *" << endl;
-		}
-#if MINSERVER_DEBUG == 4
-		cout << "Press any key to exit and view memory state" << endl;
-		if (_kbhit()) {
-			break;
-		}
-#endif
-		if (al_cause) cout << endl << "* Auto-release runned" << endl;
-		if (c_ftoken_usage() <= 0.0 || c_utoken_usage() <= 0.0) downgraded = true;
-		s.accepts();
-		if (!s.accept_vaild()) {
-			s.end_accept();
-			continue;
-		}
-		hinfo.content.release();
-		s.receive(hinfo);
+	s.accepts([&](http_recv &hinfo, bytes &raw, const char *p_addr) -> http_send {
 		post_infolist.clear();
-		visit[s.get_paddr()]++;	// Now suite with DLLs
-//		cout_d << "Receiver receives:" << endl_d << endl_d;
-//		cout_d << s.get_prev().toString() << endl_d;
-//		cout_d << "End" << endl_d;
+		visit[s.get_paddr()]++;
+		if (c_ftoken_usage() <= 0.0 || c_utoken_usage() <= 0.0) downgraded = true;
 		string path = hinfo.path, rpath;
 		path_pinfo = hinfo.toPaths();
 
@@ -1061,7 +1042,7 @@ int main(int argc, char* argv[]) {
 				sndinfo.proto_ver = hinfo.proto_ver;
 				goto sendup;
 			}
-			
+
 		}
 
 		if (path_pinfo.path.size() == 1 && operations.count(path_pinfo.path[0])) {
@@ -1103,14 +1084,14 @@ int main(int argc, char* argv[]) {
 							string msg = "";
 							tr = 0 - tr;
 							switch (tr) {
-								case 400:
-									msg = "Permission denied";
-									break;
-								case 500:
-									msg = "Internal server error";
-									break;
-								default:
-									break;
+							case 400:
+								msg = "Permission denied";
+								break;
+							case 500:
+								msg = "Internal server error";
+								break;
+							default:
+								break;
 							}
 							sndinfo.codeid = tr;
 							sndinfo.code_info = msg;
@@ -1119,7 +1100,7 @@ int main(int argc, char* argv[]) {
 							sndinfo.content = to_string(tr);
 						}
 						// End...
-						
+
 					}
 				}
 				else if (op == "close") {
@@ -1149,13 +1130,13 @@ int main(int argc, char* argv[]) {
 							// At the end of file
 							//file_operator::release(tk);
 						}
-						
+
 					}
 					else {
 						sndinfo.codeid = 400;
 						sndinfo.code_info = "Bad request";
 					}
-					
+
 				}
 				else if (op == "write") {
 					// Write line
@@ -1177,7 +1158,7 @@ int main(int argc, char* argv[]) {
 						sndinfo.codeid = 400;
 						sndinfo.code_info = "Bad request";
 					}
-					
+
 				}
 				else if (op == "eof") {
 					int tk = atoi(path_pinfo.exts["token"].c_str());
@@ -1307,7 +1288,7 @@ int main(int argc, char* argv[]) {
 						sndinfo.code_info = "Forbidden";
 					}
 
-					
+
 				}
 				else if (op == "create") {
 					// Create user...
@@ -1319,7 +1300,7 @@ int main(int argc, char* argv[]) {
 						chto = user_operator::allocnew();
 						sndinfo.content = to_string(chto);
 					}
-					
+
 					string upasswd = path_pinfo.exts["passwd"];				// Changing to
 					//MD5 upass_m = MD5(upasswd);
 					bool state = false;
@@ -1339,74 +1320,15 @@ int main(int argc, char* argv[]) {
 							user_operator::moduser(chto, upasswd);
 						}
 					}
-					/*FILE *fd = fopen(user_data_path.c_str(), "r");
-					while (!feof(fd)) {
-						int u;
-						fscanf(fd, "%d %*s", &u);
-						if (u == chto) {
-							state = true;
-							break;
-						}
-					}
-					fclose_m(fd);
-
-					if (state) {
-						int loggon = uidctrl::uidof(atoi(path_pinfo.exts["token"].c_str()));
-						if (loggon == chto) {
-							string dest = makeTemp();
-							FILE *fd = fopen(user_data_path.c_str(), "r"), *de = fopen(dest.c_str(), "w");
-							while (!feof(fd)) {
-								// buf uses begin
-								int u;
-								fscanf(fd, "%d %s", &u, buf);
-								if (u == chto) {
-									fprintf(de, "%d %s\n", u, upass_m.toString().c_str());
-								}
-								else {
-									fprintf(de, "%d %s\n", u, buf);
-								}
-								// buf uses end
-							}
-							fclose_m(fd);
-							fclose_m(de);
-							CopyFile(dest.c_str(), user_data_path.c_str(), FALSE);
-						}
-					}
-					else {
-						FILE *f = fopen(user_data_path.c_str(), "a+");
-						// Check for user-states and create
-						fprintf(f, "%d %s\n", chto, upass_m.toString().c_str());
-						fclose_m(f);
-						user_groups::insert(chto, default_join_g);
-					}
-					// End
-					//fclose_m(f);*/
+					
 				}
 				else {
-				sndinfo.codeid = 501;
-				sndinfo.code_info = "Not Implemented";
-				sndinfo.content = bytes(not_supported);
+					sndinfo.codeid = 501;
+					sndinfo.code_info = "Not Implemented";
+					sndinfo.content = bytes(not_supported);
 				}
-
-				/*
-				
-				Groups-join and Groups-query can't be implemented or
-				it'll be meaningless.
-				
-				*/
-
-				// End of codes
-				// Remove that:
-				//sndinfo.codeid = 501;
-				//sndinfo.code_info = "Not Implemented";
-				//sndinfo.content = not_supported;
 			}
 			else if (path_pinfo.path[0] == "uploader") {
-
-				/*sndinfo.codeid = 501;
-				sndinfo.code_info = "Not Implemented";
-				sndinfo.content = not_supported;
-				*/
 
 				post_infolist = hinfo.toPost();
 				int uids = 0;
@@ -1416,34 +1338,34 @@ int main(int argc, char* argv[]) {
 				}
 
 				bool flag = false;
-					for (auto &i : post_infolist) {
-						// Knowledges: https://blog.csdn.net/devil_2009/article/details/8013356
-						disp_info d = i.toDispInfo();
-						int t = file_operator::open(uids,sRemovingQuotes(d.attr["name"]), "wb");
-						if (t < 0) {
-							sndinfo.codeid = -t;
-//							sndinfo.code_info = "Internal server error";
-							flag = true;
-							break;
-						}
-						i.saveContent(file_token[t]);
-						file_operator::release(t);
+				for (auto &i : post_infolist) {
+					// Knowledges: https://blog.csdn.net/devil_2009/article/details/8013356
+					disp_info d = i.toDispInfo();
+					int t = file_operator::open(uids, sRemovingQuotes(d.attr["name"]), "wb");
+					if (t < 0) {
+						sndinfo.codeid = -t;
+						//							sndinfo.code_info = "Internal server error";
+						flag = true;
+						break;
 					}
+					i.saveContent(file_token[t]);
+					file_operator::release(t);
+				}
 
-					if (!flag) {
-						// buf4 and buf5 uses begin
-						memset(buf4, 0, sizeof(buf4));
-						if (path_pinfo.exts.count("jumpto")) {
-							sprintf(buf4, redirect.c_str(), path_pinfo.exts["jumpto"].c_str(), encodeBytes(path_pinfo.exts["jumpto"]).c_str());
-						}
-						sprintf(buf5, ok.c_str(), buf4);
-						sndinfo.content = buf5;
-						// buf4 and buf5 uses end
+				if (!flag) {
+					// buf4 and buf5 uses begin
+					memset(buf4, 0, sizeof(buf4));
+					if (path_pinfo.exts.count("jumpto")) {
+						sprintf(buf4, redirect.c_str(), path_pinfo.exts["jumpto"].c_str(), encodeBytes(path_pinfo.exts["jumpto"]).c_str());
 					}
-					
+					sprintf(buf5, ok.c_str(), buf4);
+					sndinfo.content = buf5;
+					// buf4 and buf5 uses end
+				}
+
 			}
 			else if (path_pinfo.path[0] == "caller") {
-			string md = path_pinfo.exts["module"];
+				string md = path_pinfo.exts["module"];
 				HINSTANCE h = LoadLibrary(sCurrDir(decodeHTMLBytes(md).toString()).c_str());
 				d_func df = (d_func)GetProcAddress(h, "ServerMain");	// So uses as: const char* ServerMain(const char *receive)
 				if (df == NULL) {
@@ -1469,31 +1391,33 @@ int main(int argc, char* argv[]) {
 					cout_d << "Trans back: " << endl_d;
 					cout_d << b.toCharArray() << endl_d;
 					cout_d << "End" << endl_d;
-					s.sends(bq);
+					//s.sends(bq);
 					delete[] tc;
 					b.release();
-					bq.release();
-					goto after_sentup;
+					//bq.release();
+					sndinfo.raw_sending = true;
+					sndinfo.raw_send = move(bq);
+					return move(sndinfo);
 				}
-}
-sendup: s.sends(sndinfo);
-bs.release();
-after_sentup: s.end_accept();
-s.release_prev();
+			}
+		sendup: return move(sndinfo);// s.sends(sndinfo);
+		//	bs.release();
+		//after_sentup: s.end_accept();
+		//	s.release_prev();
 		}
 		else {
-		//...
-		auto t = resolveMinorPath(hinfo.path);
-		normalSender(s, t.first, t.second);
+			//...
+			auto t = resolveMinorPath(hinfo.path);
+			normalSender(s, t.first, t.second);
 		}
 		sndinfo.content.release();
 		hinfo.release();
-	/*sendup: bs = sndinfo.toSender();
-		s.sends(bs);
-		bs.release();
-	 after_sentup: s.end_accept();
-		s.release_prev();*/
-	}
+		/*sendup: bs = sndinfo.toSender();
+			s.sends(bs);
+			bs.release();
+		 after_sentup: s.end_accept();
+			s.release_prev();*/
+	}, m_stat);
 
 	WSACleanup();
 	s.end();

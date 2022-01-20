@@ -252,6 +252,31 @@ string sRemovingQuotes(string s) {
 	return t;
 }
 
+// Some magic for saving memory...
+template <typename Ty>
+class nullable {
+public:
+	nullable() {
+
+	}
+	nullable(nullptr_t ptr) {
+		this->nul = true;
+	}
+	operator Ty&() {
+		return obj();
+	}
+	Ty& obj() {
+		return this->val;
+	}
+	nullable operator = (nullptr_t ptr) {
+		this->nul = true;
+		return *this;
+	}
+private:
+	Ty val;
+	bool nul;
+};
+
 #define fclose_m(file_ptr) do { fclose(file_ptr); file_ptr = NULL; } while (false)
 
 // Uses for debug:
