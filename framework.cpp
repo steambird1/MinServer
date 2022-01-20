@@ -853,9 +853,78 @@ void bytes::release()
 	 return u;
  }
 
- ssocket::acceptor::acceptor(SOCKET a, sockaddr_in sa)
+ ssocket::acceptor::acceptor(SOCKET a, sockaddr_in sa, int recv_buf)
  {
 	 this->ace = a;
 	 this->acc = sa;
 	 this->acc_errored = (a == INVALID_SOCKET);
+	 this->rcbsz = recv_buf;
+	 this->recv_buf = new char[recv_buf];
+ }
+
+ void ssocket::acceptor::receive(http_recv & h)
+ {
+	 this->prev_recv.clear();	// May be unsafe ?
+	 bytes b = raw_receive();
+	 this->prev_recv += b;
+	 //b = bytes();				// Re-initalize
+
+	 // Getting 1st line (surely can use string
+	 // that will not contains '\0')
+	 string s = b.toString();
+	 vector<string> lf = splitLines(s.c_str());
+	 if (lf.size() < 1)
+		 return;
+	 // 1st line for informations
+	 vector<string> firstinf = splitLines(lf[0].c_str(), ' ');
+	 // [HTTP/?.?] [GET...] [/]
+	 if (firstinf.size() < 3)
+		 return;
+	 h.proto_ver = firstinf[2];
+	 h.process = firstinf[0];
+	 h.path = resolveHTTPSymbols(firstinf[1]);
+	 vector<string>::iterator i;
+	 size_t pos = lf[0].length();
+	 while (b[pos] == '\r' || b[pos] == '\n') pos++;
+	 printf_d("\n");
+	 for (i = lf.begin() + 1; i != lf.end(); i++) {
+		 if (i->empty()) {
+			 printf_d("Content receive started from line previous: %s\n", (i - 1)->c_str());
+			 break;
+		 }
+		 vector<string> af = splitLines(i->c_str(), ':', true);
+		 if (af.size() < 2)
+			 return;
+		 h.attr[af[0]] = af[1];
+		 pos += i->length();
+		 while (b[pos] == '\r' || b[pos] == '\n') pos++;
+	 }
+	 if (!h.attr.count("Content-Length"))
+	 {
+		 b.release();
+		 return;
+	 }
+	 int l = atoi(h.attr["Content-Length"].c_str());
+	 int lres = 0;
+	 for (size_t i = pos; i < min(l + pos, b.length()); i++) {
+		 h.content += b[i];
+		 lres++;
+		 //printf("{%d->%d}%d ",i,l+pos,b[i]);								// debugging
+		 printf_d("%c", b[i]);
+	 }
+	 // To save memory
+	 int r = 0;
+	 for (int i = 0; i < l - lres; i += r) {
+		 r = recv(this->ace, this->recv_buf, sizeof(char)*this->rcbsz, 0);
+		 if (r > 0) {
+			 h.content.add(this->recv_buf, r);
+			 this->prev_recv.add(this->recv_buf, r);
+		 }
+	 }
+	 // As for non-external document promises full
+	 /*
+	 FILE *f = fopen("promise.gif", "wb");
+	 fwrite(h.content.toCharArray(), sizeof(char), h.content.length(), f);
+	 fclose(f);*/
+	 b.release();
  }

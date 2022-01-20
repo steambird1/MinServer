@@ -249,7 +249,7 @@ public:
 
 	class acceptor {
 	public:
-		acceptor(SOCKET a, sockaddr_in sa);
+		acceptor(SOCKET a, sockaddr_in sa, int recv_buf);
 		void receive(http_recv &h);
 		bool sends(http_send& sender);
 		void end_accept();
@@ -258,6 +258,7 @@ public:
 		void release_prev();
 		const char* get_paddr();
 	private:
+		bytes raw_receive();
 		SOCKET ace;
 		sockaddr_in acc;
 		bytes prev_recv;
