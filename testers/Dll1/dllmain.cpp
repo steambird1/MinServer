@@ -3,6 +3,7 @@
 #define _CRT_SECURE_NO_WARNINGS
 #include "../../c_framework.h"
 #include <cstdio>
+#include <cstdlib>
 #include <cstring>
 using namespace std;
 
@@ -10,7 +11,9 @@ using namespace std;
 extern "C" {
 #endif
 	__declspec(dllexport) send_info ServerMain(const char *data, sdata *sdata) {
-		char t[] = { "/cc.html (Here is content, AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA)" };
+		char t[] = { "/cc.html (Here is content, AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA)\nAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\nAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\nAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\nAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" };
+		// In try calling
+		system("pause");
 		send_para s = {};
 		s.clen = strlen(t);
 		s.content = (char*)sdata->mc_lib.m_alloc(sizeof(char)*s.clen + 5);

@@ -6,6 +6,7 @@
 #include <map>
 #include <string>
 #include <cstdlib>
+//#include "file_object.h"
 #define MINSERVER_DEBUG 0
 #if MINSERVER_DEBUG == 4
 #include "debugs.h"
@@ -13,10 +14,10 @@
 //#include "c_framework.h"
 using namespace std;
 
-BOOL FindFirstFileExists(LPCTSTR lpPath, DWORD dwFilter)
+BOOL FindFirstFileExists(LPCSTR lpPath, DWORD dwFilter)
 {
 	WIN32_FIND_DATA fd;
-	HANDLE hFind = FindFirstFile(lpPath, &fd);
+	HANDLE hFind = FindFirstFileA(lpPath, &fd);
 	BOOL bFilter = (FALSE == dwFilter) ? TRUE : fd.dwFileAttributes & dwFilter;
 	BOOL RetValue = ((hFind != INVALID_HANDLE_VALUE) && bFilter) ? TRUE : FALSE;
 	FindClose(hFind);
@@ -24,7 +25,7 @@ BOOL FindFirstFileExists(LPCTSTR lpPath, DWORD dwFilter)
 }
 
 // Is file exists?
-BOOL FilePathExists(LPCTSTR lpPath)
+BOOL FilePathExists(LPCSTR lpPath)
 {
 	return FindFirstFileExists(lpPath, FALSE) && (!FindFirstFileExists(lpPath, FILE_ATTRIBUTE_DIRECTORY));
 }
@@ -51,6 +52,7 @@ int getSize(string filename) {
 bytes readAll(string cwtemp) {
 	int cws = getSize(cwtemp);
 	FILE *rs = fopen(cwtemp.c_str(), "rb"); // not 'r'
+	//auto rs = file_object(cwtemp, "rb");
 	fseek(rs, 0, SEEK_SET); // to head
 	char *sending = new char[cws + 10];
 	memset(sending, 0, sizeof(sending));
@@ -76,7 +78,6 @@ string getExt(string cwtemp) {
 // Default ones
 vector<string> defiles = { "", "index.html","index.htm" };
 map<string, string> ctypes = { {".apk", "application/vnd.android"},  {".html","text/html"}, {".htm", "text/html"}, {".ico","image/ico"}, {".jpg", "image/jpg"}, {".jpeg", "image/jpeg"}, {".png", "image/apng"}, {".txt","text/plain"}, {".css", "text/css"}, {".js", "application/x-javascript"}, {".mp3", "audio/mpeg"}, {".wav", "audio/wav"}, {".mp4", "video/mpeg"} };
-
 
 string defaultType = "text/plain";
 

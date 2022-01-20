@@ -31,6 +31,7 @@ string public_file_path = "$public.txt";
 string group_path = "$groups.txt";
 string assiocate_path = "$assiocate.txt";
 string redirect_path = "$redirect.txt";
+string dll_path = "$dlls.txt";
 int default_join_g = -1;
 
 // Allocate ONCE
@@ -351,6 +352,7 @@ public:
 	static int open(int suid, string filename, string operate) {
 		if (filename[0] == '\\' || filename[0] == '/') filename.erase(filename.begin());
 //		filename = sCurrDir(filename);	// Or out of box
+		filename = decodeHTMLBytes(filename);
 		set<int> ug = user_groups::query(suid);
 		FILE *f = fopen(perm_data_path.c_str(), "r");
 		bool flag3 = false;
@@ -762,7 +764,7 @@ void normalSender(ssocket &s, string path, string external, int recesuive = 0) {
 					s_prep->cal_lib = { uidctrl::request, uidctrl::vaild, uidctrl::uidof, uidctrl::release, c_user_auth, file_operator::release, c_file_open, c_memory_usage, c_utoken_usage, c_ftoken_usage, c_ip_health, user_groups::insert, user_groups::remove, c_ug_query, c_uo_mod, c_uo_chperm, c_uo_exists, ec403, ec404, ec501, ec200_ok, ec200_redirect };
 					s_prep->mc_lib = { memory_manager::allocate, memory_manager::release };
 					s_prep->m_error = dll_err;
-					bytes q = s.get_prev();
+					bytes &q = s.get_prev();
 					cc_str stc = q.toCharArray();
 					q.release();
 					send_info sc;
@@ -866,6 +868,10 @@ int main(int argc, char* argv[]) {
 		}
 		else if (it == "--root-file") {
 			defiles.push_back(argv[i + 1]);
+			i++;
+		}
+		else if (it == "--dll-table") {
+			dll_path = argv[i + 1];
 			i++;
 		}
 		else if (it == "--no-display") {
@@ -1125,7 +1131,7 @@ int main(int argc, char* argv[]) {
 				else if (op == "close") {
 					// Close file
 					// (Release handles)
-					int tk = atoi(path_pinfo.exts["token"].c_str());
+					int tk = atoi(decodeHTMLBytes(path_pinfo.exts["token"]).toCharArray());
 					if (!file_operator::release(tk)) {
 						sndinfo.codeid = 400;
 						sndinfo.code_info = "Bad request";
@@ -1206,7 +1212,7 @@ int main(int argc, char* argv[]) {
 				// Codes...
 				if (op == "check") {
 					int uid_got = atoi(path_pinfo.exts["request"].c_str());
-					string passwd = path_pinfo.exts["passwd"];
+					string passwd = decodeHTMLBytes(path_pinfo.exts["passwd"]).toString();
 					MD5 pass_m = MD5(passwd);
 					FILE *f = fopen(user_data_path.c_str(), "r");
 					if (f != NULL) {
@@ -1242,7 +1248,7 @@ int main(int argc, char* argv[]) {
 					uidctrl::release(token_got);
 				}
 				else if (op == "chown") {
-					string filename = path_pinfo.exts["file"];
+					string filename = decodeHTMLBytes(path_pinfo.exts["file"]).toString();
 					int token = atoi(path_pinfo.exts["token"].c_str());
 					int chto = atoi(path_pinfo.exts["touid"].c_str());
 					FILE *f = fopen(perm_data_path.c_str(), "r");
@@ -1271,7 +1277,7 @@ int main(int argc, char* argv[]) {
 					}
 				}
 				else if (op == "chperm") {
-					string filename = path_pinfo.exts["file"];
+					string filename = decodeHTMLBytes(path_pinfo.exts["file"]).toString();
 					int token = atoi(path_pinfo.exts["token"].c_str());	// Should be owner
 					int chid = atoi(path_pinfo.exts["touid"].c_str());
 					int chto = atoi(path_pinfo.exts["toperm"].c_str());
@@ -1320,7 +1326,7 @@ int main(int argc, char* argv[]) {
 						sndinfo.content = to_string(chto);
 					}
 					
-					string upasswd = path_pinfo.exts["passwd"];				// Changing to
+					string upasswd = decodeHTMLBytes(path_pinfo.exts["passwd"]).toString();				// Changing to
 					//MD5 upass_m = MD5(upasswd);
 					bool state = false;
 					if (user_operator::quser(chto).empty()) {
@@ -1443,8 +1449,29 @@ int main(int argc, char* argv[]) {
 					
 			}
 			else if (path_pinfo.path[0] == "caller") {
-			string md = path_pinfo.exts["module"];
-				HINSTANCE h = LoadLibrary(sCurrDir(decodeHTMLBytes(md).toString()).c_str());
+			string md = decodeHTMLBytes(path_pinfo.exts["module"]).toString();
+			string fs = sCurrDir(md);
+			// First of all search
+			FILE *fq = fopen(dll_path.c_str(), "r");
+			bool flag = false;
+			if (fq != NULL) {
+				while (!feof(fq)) {
+					// buf uses begin
+					fgets(buf, MAX_PATH, fq);
+					if (sRemovingEOL(buf) == md) {
+						flag = true;
+						break;
+					}
+					// buf uses end
+				}
+				fclose_m(fq);
+			}
+			if (!flag) {
+				sndinfo.codeid = 403;
+				sndinfo.code_info = "Forbidden";
+				goto sendup;
+			}
+				HINSTANCE h = LoadLibrary(fs.c_str());
 				d_func df = (d_func)GetProcAddress(h, "ServerMain");	// So uses as: const char* ServerMain(const char *receive)
 				if (df == NULL) {
 					FreeLibrary(h);

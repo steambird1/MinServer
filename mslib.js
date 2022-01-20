@@ -208,3 +208,16 @@ function toJSDictionary(mins_dict_obj) {
     }
     return res;
 }
+
+function translateHTMLChar(hchar) {
+    var res = "";
+    var i = 0;
+    for (; i < hchar.length; i++) {
+        if (hchar[i] == "%") {
+            res += String.fromCharCode(parseInt(hchar[i + 1] + hchar[i + 2], 16));
+            i += 2;
+        } else {
+            res += hchar[i];
+        }
+    }
+}
