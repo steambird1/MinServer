@@ -1,6 +1,9 @@
 #include "framework.h"
 #include <crtdbg.h>
 
+// I love C++ ...
+thread_local vector<__t_safe*> __t_safe::tstable;
+
  bytes::bytes()
 {
 	clear();
@@ -300,6 +303,7 @@ void bytes::release()
  bool ssocket::accepts(function<http_send(http_recv&, bytes&, const char*)> accept_f, function<void(void)> runner)
  {
 	 while (true) {
+		 runner();
 		 int acsz = sizeof(this->acc);
 		 this->ace = accept(this->s, (SOCKADDR*)&this->acc, &acsz);
 		 this->acc_errored = (this->ace == INVALID_SOCKET);
@@ -316,7 +320,6 @@ void bytes::release()
 			 __t_safe::auto_release_thread();
 		 });
 		 t.detach();
-		 runner();
 	 }
 	 return false;
  }
@@ -1000,4 +1003,27 @@ void bytes::release()
 	 }
 	 else
 		 return bytes();
+ }
+
+ void __t_safe::lock()
+ {
+		 tstable.push_back(this);
+		 m.lock();
+ }
+
+ bool __t_safe::try_lock()
+ {
+	 return m.try_lock();
+ }
+
+ void __t_safe::unlock()
+ {
+	 m.unlock();
+ }
+
+ void __t_safe::auto_release_thread()
+ {
+	 for (auto &i : tstable) {
+		 i->unlock();
+	 }
  }

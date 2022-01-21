@@ -64,26 +64,15 @@ class t_safe_table;
 
 class __t_safe {
 public:
-	virtual void lock() {
-		tstable.push_back(this);
-		m.lock();
-	}
-	virtual bool try_lock() {
-		return m.try_lock();
-	}
-	virtual void unlock() {
-		m.unlock();
-	}
-	static void auto_release_thread() {
-		for (auto &i : tstable) {
-			i->unlock();
-		}
-	}
+	virtual void lock();
+	virtual bool try_lock();
+	virtual void unlock();
+	static void auto_release_thread();
 private:
 	static thread_local vector<__t_safe*> tstable;
 	mutex m;
 };
-thread_local vector<__t_safe*> __t_safe::tstable;
+//thread_local vector<__t_safe*> __t_safe::tstable;
 
 // Prepare for threading.
 template <typename Ty>
@@ -140,6 +129,8 @@ public:
 private:
 	t_safe<mapdata> v;
 };
+
+
 
 // Pre-declaration
 class sscoket;
