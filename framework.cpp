@@ -932,3 +932,72 @@ void bytes::release()
 	 fclose(f);*/
 	 b.release();
  }
+
+ bool ssocket::acceptor::sends(bytes & sender)
+ {
+	 const char* dc = sender.toCharArray();
+	 bool t = (send(this->ace, dc, sender.length(), 0) != SOCKET_ERROR);
+	 delete[] dc; //?
+	 return t;
+ }
+
+ bool ssocket::acceptor::sends(http_send & sender)
+ {
+	 if (sender.raw_sending) {
+		 return this->sends(sender.raw_send);
+	 }
+	 bytes b = sender.proto_ver + " " + to_string(sender.codeid) + " " + sender.code_info + "\n";
+	 sender.attr["Content-Length"] = to_string(sender.content.length());
+	 //	 for (auto i = attr.begin(); i != attr.end(); i++)
+	 //		 b += (i->first + ": " + i->second) + "\n";
+	 for (auto &i : sender.attr) {
+		 b += (i.first + ": " + i.second + "\n");
+	 }
+	 b += '\n';
+	 b += sender.content;
+	 const char *d = b.toCharArray();
+	 bool t = (send(this->ace, d, b.length(), 0) != SOCKET_ERROR);
+	 delete[] d;
+	 b.release();
+	 return t;
+ }
+
+ void ssocket::acceptor::end_accept()
+ {
+	 this->acc_errored = true;
+	 closesocket(this->ace);
+ }
+
+ bool ssocket::acceptor::accept_vaild()
+ {
+	 return !this->acc_errored;
+ }
+
+ bytes & ssocket::acceptor::get_prev()
+ {
+	 return this->prev_recv;
+ }
+
+ void ssocket::acceptor::release_prev()
+ {
+	 this->prev_recv.release();
+ }
+
+ const char * ssocket::acceptor::get_paddr()
+ {
+	 return inet_ntoa(this->acc.sin_addr);
+ }
+
+ bytes ssocket::acceptor::raw_receive()
+ {
+	 int ret = recv(this->ace, this->recv_buf, sizeof(char)*this->rcbsz, 0);
+	 this->last_receive = ret;
+	 if (ret > 0) {
+		 bytes b;
+		 b.add(this->recv_buf, ret);
+		 printf_d("Receive: Received data:\n%s\n==END==\n", b.toCharArray());
+		 return move(b);
+	 }
+	 else
+		 return bytes();
+ }

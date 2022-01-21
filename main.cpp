@@ -614,9 +614,9 @@ http_send normalSender(string path, string external, bytes& prev, int recesuive 
 					}
 					else {
 						// Proceed as another
-						normalSender(vs[1], external, prev, recesuive + 1);
+						http_send s = move(normalSender(vs[1], external, prev, recesuive + 1));
 						fclose_m(fr);
-						return;
+						return move(s);
 					}
 				}
 				

@@ -272,6 +272,7 @@ public:
 	public:
 		acceptor(SOCKET a, sockaddr_in sa, int recv_buf = RCV_DEFAULT);
 		void receive(http_recv &h);
+		bool sends(bytes& sender);
 		bool sends(http_send& sender);
 		void end_accept();
 		bool accept_vaild();
@@ -304,7 +305,6 @@ public:
 	http_recv receive();		// Before call this call accepts().
 	THREAD_DEPRECATE("accepts() with given paramaters")
 	void receive(http_recv &h); // To save memory
-	THREAD_DEPRECATE("accepts() with given paramaters")
 	bool sends(bytes& data);
 	THREAD_DEPRECATE("accepts() with given paramaters")
 	bool sends(http_send& sender);
