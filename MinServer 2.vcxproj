@@ -126,12 +126,14 @@
     <ClCompile Include="framework.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="md5.cpp" />
+    <ClCompile Include="safe_memalloc.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="c_framework.h" />
     <ClInclude Include="debugs.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="md5.h" />
+    <ClInclude Include="safe_memalloc.h" />
     <ClInclude Include="util.h" />
   </ItemGroup>
   <ItemGroup>

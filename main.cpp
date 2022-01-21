@@ -811,6 +811,7 @@ int main(int argc, char* argv[]) {
 	_CrtSetReportMode(_CRT_WARN, _CRTDBG_MODE_FILE);
 	_CrtSetReportFile(_CRT_WARN, logHandle);
 #endif
+	ts_malloc::init();
 	//cout << "Running in directory: " << sCurrDir("example") << endl;
 	const char *cbt = new char[60];
 	int tbuf = RCV_DEFAULT;

@@ -14,6 +14,7 @@
 #include <crtdbg.h>
 #include <thread>
 #include <mutex>
+#include "safe_memalloc.h"
 using namespace std;
 
 #pragma comment(lib, "ws2_32.lib")

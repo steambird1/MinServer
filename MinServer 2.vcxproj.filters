@@ -31,6 +31,9 @@
     <ClCompile Include="md5.cpp">
       <Filter>头文件</Filter>
     </ClCompile>
+    <ClCompile Include="safe_memalloc.cpp">
+      <Filter>头文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="framework.h">
@@ -46,6 +49,9 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="debugs.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="safe_memalloc.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
