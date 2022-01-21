@@ -65,24 +65,25 @@ class t_safe_table;
 class __t_safe {
 public:
 	virtual void lock() {
+		ts.push_back(this);
 		m.lock();
 	}
 	virtual bool try_lock() {
 		return m.try_lock();
 	}
 	virtual void unlock() {
-		m.unlock;
+		m.unlock();
 	}
 	static void auto_release_thread() {
 		for (auto &i : ts) {
-			i.unlock();
+			i->unlock();
 		}
 	}
 private:
-	static thread_local vector<__t_safe&> ts;
+	static thread_local vector<__t_safe*> ts;
 	mutex m;
 };
-thread_local vector<__t_safe&> __t_safe::ts;
+thread_local vector<__t_safe*> __t_safe::ts;
 
 // Prepare for threading.
 template <typename Ty>
