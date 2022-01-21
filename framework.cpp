@@ -297,7 +297,7 @@ void bytes::release()
 	 return this->ace != INVALID_SOCKET;
  }
 
- bool ssocket::accepts(function<http_send(http_recv&, bytes&)> accept_f, function<void(void)> runner)
+ bool ssocket::accepts(function<http_send(http_recv&, bytes&, const char*)> accept_f, function<void(void)> runner)
  {
 	 while (true) {
 		 int acsz = sizeof(this->acc);
@@ -309,10 +309,11 @@ void bytes::release()
 		 thread t = thread([&]() {
 			 http_recv h;
 			 p.receive(h);
-			 http_send s = move(accept_f(h, p.get_prev()));
+			 http_send s = move(accept_f(h, p.get_prev(), p.get_paddr()));
 			 p.sends(s);
 			 h.release();
 			 s.content.release();
+			 __t_safe::auto_release_thread();
 		 });
 		 t.detach();
 		 runner();

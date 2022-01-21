@@ -62,9 +62,31 @@ vector<string> splitLines(const char *data, char spl = '\n', bool firstonly = fa
 template <typename TKey, typename TValue>
 class t_safe_table;
 
+class __t_safe {
+public:
+	virtual void lock() {
+		m.lock();
+	}
+	virtual bool try_lock() {
+		return m.try_lock();
+	}
+	virtual void unlock() {
+		m.unlock;
+	}
+	static void auto_release_thread() {
+		for (auto &i : ts) {
+			i.unlock();
+		}
+	}
+private:
+	static thread_local vector<__t_safe&> ts;
+	mutex m;
+};
+thread_local vector<__t_safe&> __t_safe::ts;
+
 // Prepare for threading.
 template <typename Ty>
-class t_safe {
+class t_safe : public __t_safe {
 public:
 	template <typename TKey, typename TValue>
 	friend map<TKey,TValue>& t_safe_table<TKey,TValue>::unsafe_get();
@@ -82,15 +104,8 @@ public:
 			}
 		}
 	}
-	bool try_lock() {
-		return m.try_lock();
-	}
-	void unlock() {
-		m.unlock;
-	}
 private:
 	Ty data;
-	mutex m;
 };
 
 template <typename TKey, typename TValue>
@@ -108,6 +123,9 @@ public:
 	}
 	TValue& operator [](TKey value) {
 		return v.get()[value];
+	}
+	operator __t_safe&() {
+		return this->v;
 	}
 	mapdata& unsafe_get() {
 		return v.data;

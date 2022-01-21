@@ -548,7 +548,7 @@ cc_str ec200_redirect = redirect.c_str();
 
 bytes send_temp = bytes();
 
-void normalSender(string path, string external, int recesuive = 0, nullable<bytes&> prev = nullptr) {
+http_send normalSender(string path, string external, bytes& prev, int recesuive = 0) {
 	if (recesuive > max_recesuive) {
 		sndinfo.codeid = 500;
 		sndinfo.code_info = "Internal Server Error";
@@ -614,7 +614,7 @@ void normalSender(string path, string external, int recesuive = 0, nullable<byte
 					}
 					else {
 						// Proceed as another
-						normalSender(vs[1], external, recesuive + 1);
+						normalSender(vs[1], external, prev, recesuive + 1);
 						fclose_m(fr);
 						return;
 					}
@@ -767,7 +767,7 @@ void normalSender(string path, string external, int recesuive = 0, nullable<byte
 					s_prep->cal_lib = { uidctrl::request, uidctrl::vaild, uidctrl::uidof, uidctrl::release, c_user_auth, file_operator::release, c_file_open, c_memory_usage, c_utoken_usage, c_ftoken_usage, c_ip_health, user_groups::insert, user_groups::remove, c_ug_query, c_uo_mod, c_uo_chperm, c_uo_exists, ec403, ec404, ec501, ec200_ok, ec200_redirect };
 					s_prep->mc_lib = { memory_manager::allocate, memory_manager::release };
 					s_prep->m_error = dll_err;
-					bytes q = prev.obj();
+					bytes q = prev;
 					cc_str stc = q.toCharArray();
 					q.release();
 					send_info sc;
@@ -777,9 +777,12 @@ void normalSender(string path, string external, int recesuive = 0, nullable<byte
 					//sndinfo.content.add(sc.cdata, sc.len);
 					bytes b;
 					b.add(sc.cdata, sc.len);
-					s.sends(b);
-					b.release();
-					goto after_sentup;
+					sndinfo.raw_send = move(b);
+					sndinfo.raw_sending = true;
+					goto sendup;
+					//s.sends(b);
+					//b.release();
+					//goto after_sentup;
 				}
 				else {
 					FILE *f = fopen(rpath.c_str(), "rb");
@@ -797,10 +800,7 @@ void normalSender(string path, string external, int recesuive = 0, nullable<byte
 		sndinfo.code_info = "Forbidden";
 		sndinfo.content = bytes(no_perm);
 	}
-sendup: s.sends(sndinfo);
-sndinfo.content.release();
-after_sentup: s.end_accept();
-s.release_prev();
+sendup: return move(sndinfo);
 	// Doesn't need to send in the end
 }
 
@@ -1408,10 +1408,10 @@ int main(int argc, char* argv[]) {
 		else {
 			//...
 			auto t = resolveMinorPath(hinfo.path);
-			normalSender(s, t.first, t.second);
+			return move(normalSender(t.first, t.second, raw));
 		}
-		sndinfo.content.release();
-		hinfo.release();
+		//sndinfo.content.release();
+		//hinfo.release();
 		/*sendup: bs = sndinfo.toSender();
 			s.sends(bs);
 			bs.release();
