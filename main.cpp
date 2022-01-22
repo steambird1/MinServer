@@ -6,7 +6,7 @@
 #include <psapi.h>
 #define _CP_DEFINED
 #include "c_framework.h"
-//#include "c_framework.h"
+#include "safe_memalloc.h"
 // For MSVC:
 #ifdef _MSC_VER
 #include <utility>
@@ -86,7 +86,8 @@ public:
 	static void* allocate(size_t size) {
 		void *ptr = nullptr;
 		try {
-			ptr = (void*) new char[size];
+			//ptr = (void*) new char[size];
+			ptr = malloc_ts(size);
 		} catch (...) {
 			return nullptr;
 		}
@@ -109,7 +110,7 @@ public:
 		else {
 			dll_mem -= ptr_mem[ptr];
 			ptr_mem.erase(ptr);
-			delete[] ptr;
+			free_ts(ptr);
 		}
 	}
 private:
@@ -729,7 +730,7 @@ http_send normalSender(string path, string external, bytes& prev, int recesuive 
 
 							// Print
 							cout_d << "Allocated length for buf: " << t + 20 << endl_d;
-							char *buf = new char[t + 20];	// Also added ua/pa spaces
+							char *buf = (char*)ts_malloc::alloc(t+20);	// Also added ua/pa spaces
 							//      Buffer|Template|Args -->
 							sprintf(buf, s.c_str(), hinfo.process.c_str(), hinfo.proto_ver.c_str(), hp.first.c_str(), ha.c_str(), ua.c_str(), pa.c_str());	// Fails here, but why?
 							//cout << "Builtin scripts: " << endl << buf << endl << "== END ==" << endl;
@@ -743,7 +744,8 @@ http_send normalSender(string path, string external, bytes& prev, int recesuive 
 							// End
 							fprintf(fr, "\n</script>");
 
-							delete[] buf;
+							//delete[] buf;
+							ts_malloc::free(buf);
 							continue;
 						}
 					}
@@ -762,7 +764,7 @@ http_send normalSender(string path, string external, bytes& prev, int recesuive 
 				// First of all scan for existing assiocation
 				string ex = getExt(rpath);	// Get extension, surely contains '.'.
 				if (acaller.count(ex)) {
-					asdata *s_prep = new asdata;	// Memory leak before here
+					asdata *s_prep = (asdata*)ts_malloc::alloc(sizeof(asdata));	// Memory leak before here
 					// To be updated:
 					s_prep->cal_lib = { uidctrl::request, uidctrl::vaild, uidctrl::uidof, uidctrl::release, c_user_auth, file_operator::release, c_file_open, c_memory_usage, c_utoken_usage, c_ftoken_usage, c_ip_health, user_groups::insert, user_groups::remove, c_ug_query, c_uo_mod, c_uo_chperm, c_uo_exists, ec403, ec404, ec501, ec200_ok, ec200_redirect };
 					s_prep->mc_lib = { memory_manager::allocate, memory_manager::release };
@@ -773,7 +775,7 @@ http_send normalSender(string path, string external, bytes& prev, int recesuive 
 					send_info sc;
 					sc = acaller[ex](stc, rpath.c_str(), s_prep);
 					//delete s_prep;
-					delete[] stc;
+					ts_malloc::free((void*)stc);
 					//sndinfo.content.add(sc.cdata, sc.len);
 					bytes b;
 					b.add(sc.cdata, sc.len);
@@ -813,11 +815,11 @@ int main(int argc, char* argv[]) {
 #endif
 	ts_malloc::init();
 	//cout << "Running in directory: " << sCurrDir("example") << endl;
-	const char *cbt = new char[60];
+	const char *cbt = (char*)ts_malloc::alloc(60 * sizeof(char));
 	int tbuf = RCV_DEFAULT;
 //	cbt = c_boundary("text/html; boundary=------BoundaryInformationDataHereAAABBBCCCDDDEEEFFFGGG");
 //	cout_d << "C-Boundary tester:" << cbt << endl_d;
-	dll_err = new int;
+	dll_err = (int*)ts_malloc::alloc(sizeof(int));
 	
 	for (int i = 1; i < argc; i++) {
 		string it = argv[i];
@@ -1393,7 +1395,7 @@ int main(int argc, char* argv[]) {
 					cout_d << b.toCharArray() << endl_d;
 					cout_d << "End" << endl_d;
 					//s.sends(bq);
-					delete[] tc;
+					ts_malloc::free((void*)tc);
 					b.release();
 					//bq.release();
 					sndinfo.raw_sending = true;

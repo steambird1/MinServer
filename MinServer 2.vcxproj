@@ -130,6 +130,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="c_framework.h" />
+    <ClInclude Include="c_safe_memalloc.h" />
     <ClInclude Include="debugs.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="md5.h" />

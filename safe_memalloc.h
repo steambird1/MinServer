@@ -22,43 +22,19 @@ public:
 		int response;	// Point to responsed memory space
 	};
 
-	static void init() {
-		resp.clear();
-		thread t = thread(server);
-		t.detach();
-	}
+	static void init();
 
 	// Server to launch
-	static void server() {
-		while (true) {
-			while (!req.empty()) {
-				request *q = req.front();
-				req.pop();
-				switch (q->met) {
-				case ts_malloc::request::method::alloc:
-					size_t s = *((size_t*)q->data);
-					int r = get_free();
-					resp[r] = (void*) new char[s];
-					q->response = r;
-					break;
-				case ts_malloc::request::method::free:
-					delete[] q->data;
-				default:
-					throw bad_function_call();
-				}
-			}
-			this_thread::yield();
-		}
-	}
+	static void server();
 
+	// Why do I have to put them here? --- Seemed to be because C doesn't support that
 	// Raw require. you'll need it.
 	static void require(request *r) {
 		req.push(r);
 	}
 
-	static void* get_resp(int id) {
-		return resp[id];
-	}
+	// Get allocated memory from a repiled request
+	static void* get_resp(int id);
 
 	// Require for alloc or free:
 	// They'll wait.
@@ -81,29 +57,11 @@ public:
 	
 private:
 
-	static int random_s(void) {
-		static bool firstrun = true;
-		if (firstrun) {
-			srand(time(NULL));
-			firstrun = false;
-		}
-		return rand();
-	}
+	static int random_s(void);
 
-	static int get_free() {
-#ifndef _SMAL_NOT_LIMITED_
-		if (resp.size() > MAX_ALLOC) {
-			throw bad_alloc();
-		}
-#endif
-
-		int r;
-		do {
-			r = random_s();
-		} while (resp.count(r));
-		return r;
-	}
+	static int get_free();
 
 	static queue<request*> req;
 	static map<int, void*> resp;
+	static map<void*, int> rel;
 };

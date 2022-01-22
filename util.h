@@ -52,7 +52,7 @@ bytes readAll(string cwtemp) {
 	int cws = getSize(cwtemp);
 	FILE *rs = fopen(cwtemp.c_str(), "rb"); // not 'r'
 	fseek(rs, 0, SEEK_SET); // to head
-	char *sending = new char[cws + 10];
+	char *sending = (char*)ts_malloc::alloc(cws + 10);
 	memset(sending, 0, sizeof(sending));
 	fread(sending, sizeof(char), cws, rs);
 	sending[cws] = '\0';
@@ -287,11 +287,10 @@ private:
 #define endl_d endl
 #define MINSERVER_EXT_DEBUG 1
 int no_data_screen = 1;
-#define heap_test() do {char *c = new char[2]; delete[] c; } while (false)
+#define heap_test() __noop
 #else
 #if MINSERVER_DEBUG == 2 || MINSERVER_DEBUG == 3 || MINSERVER_DEBUG == 4
-// To make sure there is no memory leak or cause c0000374
-#define heap_test() do {char *c = new char[2]; delete[] c; } while (false)
+#define heap_test() __noop
 #else
 #define heap_test() __noop
 #endif
@@ -311,22 +310,3 @@ null_stream& operator << (null_stream &origin, Ty other) {
 #define endl_d nullptr
 int no_data_screen = 0;
 #endif
-
-/*
-#define delete __delete_helper <<
-
-#pragma push_macro("delete")
-#undef delete
-
-class __delete {
-	__delete() {
-
-	}
-} __delete_helper;
-
-void operator << (__delete dobj, void *block) {
-	delete block;
-}
-
-#pragma pop_macro("delete")
-*/

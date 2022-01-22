@@ -20,39 +20,54 @@
     <Filter Include="Documents">
       <UniqueIdentifier>{c89b2057-b5c1-44ac-999f-9c2f93646f59}</UniqueIdentifier>
     </Filter>
+    <Filter Include="头文件\safe_memalloc">
+      <UniqueIdentifier>{7f59fb9a-6842-49f1-b639-e96f792d8ce4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\networks">
+      <UniqueIdentifier>{be718f92-411d-434e-880d-2af0b29ca207}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\debugger">
+      <UniqueIdentifier>{202bc96b-926d-4e1b-9cf2-78ee132a66a8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\md5">
+      <UniqueIdentifier>{96671e2b-e6ac-405f-9b4a-5c5e142ea1e5}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="framework.cpp">
-      <Filter>头文件</Filter>
-    </ClCompile>
     <ClCompile Include="main.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="md5.cpp">
-      <Filter>头文件</Filter>
-    </ClCompile>
     <ClCompile Include="safe_memalloc.cpp">
-      <Filter>头文件</Filter>
+      <Filter>头文件\safe_memalloc</Filter>
+    </ClCompile>
+    <ClCompile Include="framework.cpp">
+      <Filter>头文件\networks</Filter>
+    </ClCompile>
+    <ClCompile Include="md5.cpp">
+      <Filter>头文件\md5</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="framework.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="util.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="md5.h">
-      <Filter>头文件</Filter>
+    <ClInclude Include="safe_memalloc.h">
+      <Filter>头文件\safe_memalloc</Filter>
+    </ClInclude>
+    <ClInclude Include="framework.h">
+      <Filter>头文件\networks</Filter>
     </ClInclude>
     <ClInclude Include="c_framework.h">
-      <Filter>头文件</Filter>
+      <Filter>头文件\networks</Filter>
     </ClInclude>
     <ClInclude Include="debugs.h">
-      <Filter>头文件</Filter>
+      <Filter>头文件\debugger</Filter>
     </ClInclude>
-    <ClInclude Include="safe_memalloc.h">
-      <Filter>头文件</Filter>
+    <ClInclude Include="md5.h">
+      <Filter>头文件\md5</Filter>
+    </ClInclude>
+    <ClInclude Include="c_safe_memalloc.h">
+      <Filter>头文件\safe_memalloc</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

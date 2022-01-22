@@ -3,16 +3,15 @@
 // This is DLL (C compile rules) Framework for MinServer external DLL.
 // Notice: Don't forgot to FREE MEMORY SPACE using given library.
 
-extern "C" {
-
-#ifndef _CRT_SECURE_NO_WARNINGS
 #define _CRT_SECURE_NO_WARNINGS
-#endif
 
 #include <cstdio>
 #include <cstring>
 #include <windows.h>
 #include <yvals.h>
+#include "safe_memalloc.h"
+
+extern "C" {
 	using namespace std;
 
 #if ! __BOOL_DEFINED
@@ -210,15 +209,16 @@ extern "C" {
 		return tmp;
 	}
 
-	bool c_bstrcmp(const char *wl, const char *bound) {
-		char *wp = new char[90], *bounp = new char[90], *wt, *bount;
+	bool c_bstrcmp(const char *wl, const char *bound, mem_alloc mallocer) {
+		char *wp = (char*)mallocer(90), *bounp = (char*)mallocer(90), *wt, *bount;
 		strcpy(wp, wl);
 		strcpy(bounp, bound);
 		wt = wp; bount = bounp;
 		while (*wt == '-') wt++;
 		while (*bount == '-') bount++;
 		int res = (strcmp(wt, bount));
-		delete[] wp, bounp;
+		ts_malloc::free(wp);
+		ts_malloc::free(bounp);
 		return res;	// res == 0 -> OK
 	}
 
@@ -250,7 +250,7 @@ extern "C" {
 					clptr = 0;
 					state = false;
 				}
-				else if (lptr < 90 && (c_bstrcmp(ldata, boundary) == 0)) {
+				else if (lptr < 90 && (c_bstrcmp(ldata, boundary, mallocer) == 0)) {
 					// Another boundary start
 					if (!errored) {
 						cptr++;
@@ -265,7 +265,7 @@ extern "C" {
 				else {
 					char lp = ldata[lptr - 2];
 					ldata[lptr - 2] = '\0';
-					if (lptr < 90 && (c_bstrcmp(ldata, boundary) == 0)) {
+					if (lptr < 90 && (c_bstrcmp(ldata, boundary, mallocer) == 0)) {
 						break;
 					}
 					else {

@@ -47,7 +47,7 @@ thread_local vector<__t_safe*> __t_safe::tstable;
 void bytes::release()
  {
 	if (this->byte_space != nullptr && this->len) {
-		delete[] this->byte_space;
+		ts_malloc::free(this->byte_space);
 		this->byte_space = nullptr;
 	 }
 	 this->len = 0;
@@ -109,7 +109,7 @@ void bytes::release()
 	//return this->byte_space;
 	 if (this->len <= 0)
 		 return "";
-	 char *memspec = new char[this->len + 2];
+	 char *memspec = (char*)ts_malloc::alloc(this->len + 2);
 	 memset(memspec, 0, sizeof(char)*this->len);
 	 memspec[this->len] = char(0);
 	 memcpy(memspec, this->byte_space, sizeof(char)*this->len);
@@ -163,16 +163,16 @@ void bytes::release()
 		return;
 	char *bs_old = nullptr;
 	if (this->len) {
-		bs_old = new char[this->len + 1];
+		bs_old = (char*)ts_malloc::alloc(this->len + 1);
 		memcpy(bs_old, this->byte_space, sizeof(char)*this->len);
-		delete[] this->byte_space;		// Release old pointer, after copied
+		ts_malloc::free(this->byte_space);		// Release old pointer, after copied
 	}
 	//release();
-	this->byte_space = new char[sz+2];
+	this->byte_space = (char*)ts_malloc::alloc(sz + 1);
 	memset(this->byte_space, 0, sizeof(char)*sz);
 	if (this->len) {
 		memcpy(byte_space, bs_old, sizeof(char)*this->len);
-		delete[] bs_old;
+		ts_malloc::free(bs_old);
 	}
 	this->byte_space[sz] = char(0);
 	this->len = sz;
@@ -513,7 +513,7 @@ void bytes::release()
  {
 	 const char* dc = data.toCharArray();
 	 bool t = (send(this->ace,dc, data.length(), 0) != SOCKET_ERROR);
-	 delete[] dc; //?
+	 ts_malloc::free((void*)dc);
 	 //data.release();	// It's a copy now
 	 return t;
  }
@@ -534,7 +534,7 @@ void bytes::release()
 	 b += sender.content;
 	 const char *d = b.toCharArray();
 	 bool t = (send(this->ace, d, b.length(), 0) != SOCKET_ERROR);
-	 delete[] d;
+	 ts_malloc::free((void*)d);
 	 b.release();
 	 return t;
  }
@@ -576,7 +576,7 @@ void bytes::release()
 		 initalized = true;
 	 }
 	 this->s = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-	 this->recv_buf = new char[rcvsz];
+	 this->recv_buf = (char*)ts_malloc::alloc(rcvsz);
 	 this->rcbsz = rcvsz;
 	 memset(this->recv_buf, 0, sizeof(this->recv_buf));
  }
@@ -840,11 +840,11 @@ void bytes::release()
  void http_send::loadContent(FILE *hnd)
  {
 	 long len = getFileLength(hnd);
-	 char *c = new char[len + 1];
+	 char *c = (char*)ts_malloc::alloc(len + 1);
 	 fread(c, sizeof(char), len, hnd);
 	 this->content.clear();
 	 this->content.add(c, len);
-	 delete[] c;
+	 ts_malloc::free(c);
  }
 
  int hex2dec(string s) {
@@ -866,7 +866,7 @@ void bytes::release()
 	 this->acc = sa;
 	 this->acc_errored = (a == INVALID_SOCKET);
 	 this->rcbsz = recv_buf;
-	 this->recv_buf = new char[recv_buf];
+	 this->recv_buf = (char*)ts_malloc::alloc(recv_buf);
  }
 
  void ssocket::acceptor::receive(http_recv & h)
@@ -940,7 +940,7 @@ void bytes::release()
  {
 	 const char* dc = sender.toCharArray();
 	 bool t = (send(this->ace, dc, sender.length(), 0) != SOCKET_ERROR);
-	 delete[] dc; //?
+	 ts_malloc::free((void*)dc);
 	 return t;
  }
 
@@ -960,7 +960,7 @@ void bytes::release()
 	 b += sender.content;
 	 const char *d = b.toCharArray();
 	 bool t = (send(this->ace, d, b.length(), 0) != SOCKET_ERROR);
-	 delete[] d;
+	 ts_malloc::free((void*)d);
 	 b.release();
 	 return t;
  }
