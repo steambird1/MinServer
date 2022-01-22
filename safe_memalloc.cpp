@@ -2,7 +2,9 @@
 
 void ts_malloc::init()
 {
-	resp.clear();
+	if (initalized) return;
+	initalized = true;
+	//resp.clear();
 	thread t = thread(server);
 	t.detach();
 }
@@ -10,6 +12,7 @@ void ts_malloc::init()
 void ts_malloc::server()
 {
 	while (true) {
+		self_lock();
 		while (!req.empty()) {
 			request *q = req.front();
 			req.pop();
@@ -31,13 +34,17 @@ void ts_malloc::server()
 				throw bad_function_call();
 			}
 		}
+		m.unlock();
 		this_thread::yield();
 	}
 }
 
 void * ts_malloc::get_resp(int id)
 {
-	return resp[id];
+	self_lock();
+	void *res = resp[id];
+	m.unlock();
+	return res;
 }
 
 int ts_malloc::random_s(void)
@@ -65,6 +72,25 @@ int ts_malloc::get_free()
 	return r;
 }
 
+void ts_malloc::self_lock()
+{
+	/*while (!m.try_lock()) {
+		// Just for better debug
+		this_thread::yield();
+	}*/	// "Trylock not supported"
+	while (true) {
+		try {
+			m.lock();
+		}
+		catch (...) {
+			//...
+		}
+		this_thread::yield();
+	}
+}
+
 queue<ts_malloc::request*> ts_malloc::req;
 map<int, void*> ts_malloc::resp;
 map<void*, int> ts_malloc::rel;
+bool ts_malloc::initalized;
+mutex ts_malloc::m;

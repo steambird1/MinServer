@@ -5,6 +5,7 @@
 #include <map>
 #include <cstdlib>
 #include <ctime>
+#include <mutex>
 using namespace std;
 
 #define MAX_ALLOC 16384
@@ -30,6 +31,9 @@ public:
 	// Why do I have to put them here? --- Seemed to be because C doesn't support that
 	// Raw require. you'll need it.
 	static void require(request *r) {
+		if (!initalized) {
+			init();
+		}
 		req.push(r);
 	}
 
@@ -39,28 +43,34 @@ public:
 	// Require for alloc or free:
 	// They'll wait.
 	static void* alloc(size_t size) {
+		self_lock();
 		request r;
 		r.met = request::method::alloc;
 		r.data = (void*)&size;
 		r.response = -1;
 		require(&r);
+		m.unlock();
 		while (r.response < 0) this_thread::yield();
 		return get_resp(r.response);
 	}
 
 	static void free(void *ptr) {
+		self_lock();
 		request r;
 		r.met = request::method::free;
 		r.data = ptr;
 		require(&r);
+		m.unlock();
 	}
 	
 private:
-
+	static mutex m;
 	static int random_s(void);
 
 	static int get_free();
+	static void self_lock();
 
+	static bool initalized;
 	static queue<request*> req;
 	static map<int, void*> resp;
 	static map<void*, int> rel;

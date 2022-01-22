@@ -9,7 +9,6 @@
 #include <cstring>
 #include <windows.h>
 #include <yvals.h>
-#include "safe_memalloc.h"
 
 extern "C" {
 	using namespace std;
@@ -217,8 +216,6 @@ extern "C" {
 		while (*wt == '-') wt++;
 		while (*bount == '-') bount++;
 		int res = (strcmp(wt, bount));
-		ts_malloc::free(wp);
-		ts_malloc::free(bounp);
 		return res;	// res == 0 -> OK
 	}
 

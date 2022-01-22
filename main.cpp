@@ -7,6 +7,7 @@
 #define _CP_DEFINED
 #include "c_framework.h"
 #include "safe_memalloc.h"
+#include "c_safe_memalloc.h"
 // For MSVC:
 #ifdef _MSC_VER
 #include <utility>
