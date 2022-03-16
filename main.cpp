@@ -32,6 +32,7 @@ string group_path = "$groups.txt";
 string assiocate_path = "$assiocate.txt";
 string redirect_path = "$redirect.txt";
 string dll_path = "$dlls.txt";
+string ban_path = "$bans.txt";
 int default_join_g = -1;
 
 // Allocate ONCE
@@ -475,6 +476,7 @@ bool operator < (vis_info x, vis_info y) {
 }
 
 int aldr = 0;	// Count of assiocation loaded
+set<string> bans;
 
 void stat() {
 	system("cls");
@@ -513,7 +515,11 @@ void stat() {
 	int lat = 5;
 	for (auto &i : vp) {
 		if (lat <= 0) break;
-		printf("%15s		%4d (%.2lf %%)\n", i.ip.c_str(), i.vis, double(i.vis) / double(tot) * 100.0);
+		printf("%15s		%4d (%.2lf %%)", i.ip.c_str(), i.vis, double(i.vis) / double(tot) * 100.0);
+		if (bans.count(i.ip)) {
+			printf(" [Banned]");
+		}
+		printf("\n");
 		lat--;
 	}
 	printf("\n");
@@ -874,6 +880,10 @@ int main(int argc, char* argv[]) {
 			dll_path = argv[i + 1];
 			i++;
 		}
+		else if (it == "--ban-table") {
+			ban_path = argv[i + 1];
+			i++;
+		}
 		else if (it == "--no-display") {
 			no_data_screen = 1;
 		}
@@ -1008,7 +1018,16 @@ int main(int argc, char* argv[]) {
 		}
 		fclose(fa);
 	}
-	
+	FILE *fb = fopen(ban_path.c_str(), "r");
+	if (fb != NULL) {
+		while (!feof(fb)) {
+			// buf2 uses begin
+			fgets(buf2, 100, fb);
+			bans.insert(sRemovingEOL(buf2));
+			// buf2 uses end
+		}
+		fclose(fb);
+	}
 	if (failure) {
 		system("pause");	// Press any key to continue . . .
 	}
@@ -1040,7 +1059,8 @@ int main(int argc, char* argv[]) {
 		hinfo.content.release();
 		s.receive(hinfo);
 		post_infolist.clear();
-		visit[s.get_paddr()]++;	// Now suite with DLLs
+		string sp = s.get_paddr();
+		visit[sp]++;	// Now suite with DLLs
 //		cout_d << "Receiver receives:" << endl_d << endl_d;
 //		cout_d << s.get_prev().toString() << endl_d;
 //		cout_d << "End" << endl_d;
@@ -1075,6 +1095,13 @@ int main(int argc, char* argv[]) {
 				goto sendup;
 			}
 			
+		}
+
+		if (bans.count(sp)) {
+			sndinfo.codeid = 403;
+			sndinfo.code_info = "Forbidden";
+			sndinfo.content = no_perm_d;
+			goto sendup;
 		}
 
 		if (path_pinfo.path.size() == 1 && operations.count(path_pinfo.path[0])) {
