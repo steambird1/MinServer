@@ -1,6 +1,6 @@
 #include "ApplicationLauncher.h"
 
-APPLICATIONLAUNCHER_API send_info AssiocateMain(cc_str received, cc_str path, asdata *as) {
+extern "C" APPLICATIONLAUNCHER_API send_info AssiocateMain(cc_str received, cc_str path, asdata *as) {
 	static const char sendup[] = { "HTTP/1.1 200 OK\nContent-Type: text/plain\nContent-Length: %d\n\n%s" };
 	char tmp[300], res[32], fdest[100], cdest[200];
 	// Writes down.

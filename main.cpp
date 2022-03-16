@@ -993,7 +993,14 @@ int main(int argc, char* argv[]) {
 			}
 			else {
 				as_func df = (as_func)GetProcAddress(h, "AssiocateMain");
-				acaller[buf2] = df;
+				if (df == NULL) {
+					FreeLibrary(h);
+					cout << "Unable to assiocate: " << buf2 << " for " << buf << endl;
+					failure = true;
+				}
+				else {
+					acaller[buf2] = df;
+				}
 				aldr++;
 				// Seemed to be not able to free
 			}
