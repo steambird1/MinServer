@@ -11,6 +11,8 @@ Options are:
 	--users-table		Set where user table is (Default: $users.txt).
 	--public-table		Set where published-file table is (Can be visited directly or as a 403, Default: $public.txt).
 	--groups-table		Set where group-file table is (Default: $groups.txt).
+	--dll-table			Set what DLLs can be runned by caller (Default: $dlls.txt).
+	--ban-table			Set what IPs will be banned (Default: $bans.txt).
 	--port				Set the port that server will listen.
 	--buffer			Set the buffer size for basic information (header).
 	--no-display		Set that server will not refresh information on console.
