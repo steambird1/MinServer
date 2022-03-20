@@ -113,11 +113,11 @@ extern "C" {
 #define _CP_DEFINED
 
 	typedef struct _c_pair {
-		c_str key, value;
+		char key[128], value[512];
 	} c_pair;
 
 	typedef struct _recv_info {
-		c_str proto, method, path;
+		char proto[16], method[8], path[MAX_PATH];
 		struct {
 			int len;
 			c_pair *param;
@@ -146,9 +146,6 @@ extern "C" {
 	recv_info c_resolve(const char *req, mem_alloc mallocer) {
 		char buf[64];
 		recv_info res = {};
-		res.method = (char*)callocer(8, sizeof(char));
-		res.path = (char*)callocer(MAX_PATH, sizeof(char));
-		res.proto = (char*)callocer(16, sizeof(char));
 		res.attr.len = 0;
 		int ptr = 0, r_ptr = 0, sr_ptr, sr_len = 0, r_len = strlen(req);
 		// Get first-line information
@@ -166,10 +163,10 @@ extern "C" {
 		r_ptr = sr_ptr;
 		res.attr.len = sr_len;
 		res.attr.param = (c_pair*)callocer(sr_len + 1, sizeof(c_pair));
-		for (int i = 0; i < sr_len; i++) {
-			res.attr.param[i].key = (char*)callocer(128, sizeof(char));
-			res.attr.param[i].value = (char*)callocer(512, sizeof(char));
-		}
+		//for (int i = 0; i < sr_len; i++) {
+			//res.attr.param[i].key = (char*)callocer(128, sizeof(char));
+			//res.attr.param[i].value = (char*)callocer(512, sizeof(char));
+		//}
 		bool mode = false;
 		int mode_len = 0, cur_len = 0, cont_len = 0;
 		while ((!(req[r_ptr] == '\n' && (req[r_ptr - 1] == '\n' || req[r_ptr - 2] == '\n'))) && r_ptr < r_len) {
@@ -206,7 +203,7 @@ extern "C" {
 	const char* c_boundary(const char *ctypes, mem_alloc mallocer) {
 		int sl = strlen(ctypes);
 		int bs = 0, pt = 0;
-		char *tmp = (char*)callocer(60, sizeof(char));	// Boundary in usually 60
+		char tmp[70];	// Boundary in usually 60
 		for (int i = 0; i < sl; i++) {
 			if (bs == 2) {
 				tmp[pt++] = ctypes[i];
@@ -242,10 +239,6 @@ extern "C" {
 		res.data.param = (struct _single_cpost_info*)callocer(read_count, sizeof(struct _single_cpost_info));
 		for (int i = 0; i < read_count; i++) {
 			res.data.param[i].attr.param = (c_pair*)callocer(para_count, sizeof(c_pair));
-			for (int j = 0; j < para_count; j++) {
-				res.data.param[i].attr.param[j].key = (char*)callocer(64, sizeof(char));
-				res.data.param[i].attr.param[j].value = (char*)callocer(128, sizeof(char));
-			}
 			res.data.param[i].content = (char*)callocer(read_buffer, sizeof(char));
 		}
 		//}
