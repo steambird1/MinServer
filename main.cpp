@@ -105,8 +105,9 @@ public:
 		
 		if (ptr != nullptr) {
 			dll_mem += size;
-			ptr_mem[ptr] = size;
+			// To make sure "I'm going to use it"?
 			memset(ptr, 0, sizeof(char)*size);
+			ptr_mem[ptr] = size;
 		}
 		else {
 			setDLLError(2);
