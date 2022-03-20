@@ -35,6 +35,16 @@ string dll_path = "$dlls.txt";
 string ban_path = "$bans.txt";
 int default_join_g = -1;
 
+// Use for C framework
+cc_str c_perm_data_path;// = "$permission.txt";
+cc_str c_user_data_path;// = "$users.txt";
+cc_str c_public_file_path;// = "$public.txt";
+cc_str c_group_path;// = "$groups.txt";
+cc_str c_assiocate_path;// = "$assiocate.txt";
+cc_str c_redirect_path; // = "$redirect.txt";
+cc_str c_dll_path;// = "$dlls.txt";
+cc_str c_ban_path;// = "$bans.txt";
+
 // Allocate ONCE
 char buf4[4096], buf5[4096];
 
@@ -104,6 +114,10 @@ public:
 		return ptr;
 	}
 	static void release(void *ptr) {
+		/*
+		setDLLError(-1);
+		return;
+		*/
 		if (!ptr_mem.count(ptr)) {
 			// Bad free
 			setDLLError(1);
@@ -116,6 +130,7 @@ public:
 	}
 private:
 	static size_t dll_mem;
+	// Unused for now:
 	static map<void*, size_t> ptr_mem;//Count memory usage.
 };
 // Allocate memory for it
@@ -658,9 +673,7 @@ void normalSender(ssocket &s, string path, string external, int recesuive = 0) {
 			// You can see this as a bulitin text/html assiocation
 			if (sndinfo.attr["Content-Type"] == "text/html") {
 				// Insert script
-				cout_d << "Inserting script ..." << endl_d;
 				string dest = makeTemp();
-				cout_d << "Tempatory file: " << dest << endl_d;
 				//CopyFile(rpath.c_str(), dest.c_str(), FALSE);
 				// Simply resolve <head> or <body>.
 				string qu = "";
@@ -767,14 +780,14 @@ void normalSender(ssocket &s, string path, string external, int recesuive = 0) {
 				if (acaller.count(ex)) {
 					asdata *s_prep = new asdata;	// Memory leak before here
 					// To be updated:
-					s_prep->cal_lib = { uidctrl::request, uidctrl::vaild, uidctrl::uidof, uidctrl::release, c_user_auth, file_operator::release, c_file_open, c_memory_usage, c_utoken_usage, c_ftoken_usage, c_ip_health, user_groups::insert, user_groups::remove, c_ug_query, c_uo_mod, c_uo_chperm, c_uo_exists, ec403, ec404, ec501, ec200_ok, ec200_redirect };
+					s_prep->cal_lib = { uidctrl::request, uidctrl::vaild, uidctrl::uidof, uidctrl::release, c_user_auth, file_operator::release, c_file_open, c_memory_usage, c_utoken_usage, c_ftoken_usage, c_ip_health, user_groups::insert, user_groups::remove, c_ug_query, c_uo_mod, c_uo_chperm, c_uo_exists, ec403, ec404, ec501, ec200_ok, ec200_redirect, c_perm_data_path, c_user_data_path, c_public_file_path, c_group_path, c_assiocate_path, c_redirect_path, c_dll_path, c_ban_path };
 					s_prep->mc_lib = { memory_manager::allocate, memory_manager::release };
 					s_prep->m_error = dll_err;
 					bytes &q = s.get_prev();
 					cc_str stc = q.toCharArray();
 					q.release();
 					send_info sc;
-					sc = acaller[ex](stc, rpath.c_str(), s_prep);
+					acaller[ex](stc, rpath.c_str(), s_prep, &sc);
 					//delete s_prep;
 					delete[] stc;
 					//sndinfo.content.add(sc.cdata, sc.len);
@@ -1036,6 +1049,33 @@ int main(int argc, char* argv[]) {
 	bool downgraded = false, al_cause = false;
 	//volatile char leak_detector[] = { "TESTtestTESTtestTESTtestTESTtestTESTtest" };
 	
+	/*
+	Initalizes:
+	string perm_data_path = "$permission.txt";
+string user_data_path = "$users.txt";
+string public_file_path = "$public.txt";
+string group_path = "$groups.txt";
+string assiocate_path = "$assiocate.txt";
+string redirect_path = "$redirect.txt";
+string dll_path = "$dlls.txt";
+string ban_path = "$bans.txt";
+	*/
+#pragma region(C Initalizer)
+
+#define __initalizer_0(var) c_##var = var.c_str()
+	__initalizer_0(perm_data_path);
+	__initalizer_0(user_data_path);
+	__initalizer_0(group_path);
+	__initalizer_0(assiocate_path);
+	__initalizer_0(redirect_path);
+	__initalizer_0(dll_path);
+	__initalizer_0(ban_path);
+
+#ifdef __initalizer_0
+#undef __initalizer_0
+#endif
+
+#pragma endregion
 	// End
 	while (true) {
 		if (!no_data_screen) 
@@ -1516,15 +1556,14 @@ int main(int argc, char* argv[]) {
 				else {
 					//sdata *s_prep = new sdata;
 					sdata s_prep;
-					// To be updated:
-					s_prep.cal_lib = { uidctrl::request, uidctrl::vaild, uidctrl::uidof, uidctrl::release, c_user_auth, file_operator::release, c_file_open, c_memory_usage, c_utoken_usage, c_ftoken_usage, c_ip_health, user_groups::insert, user_groups::remove, c_ug_query, c_uo_mod, c_uo_chperm, c_uo_exists, ec403, ec404, ec501, ec200_ok, ec200_redirect };
+					s_prep.cal_lib = { uidctrl::request, uidctrl::vaild, uidctrl::uidof, uidctrl::release, c_user_auth, file_operator::release, c_file_open, c_memory_usage, c_utoken_usage, c_ftoken_usage, c_ip_health, user_groups::insert, user_groups::remove, c_ug_query, c_uo_mod, c_uo_chperm, c_uo_exists, ec403, ec404, ec501, ec200_ok, ec200_redirect, c_perm_data_path, c_user_data_path, c_public_file_path, c_group_path, c_assiocate_path, c_redirect_path, c_dll_path, c_ban_path };
 					s_prep.mc_lib = { memory_manager::allocate, memory_manager::release };
 					s_prep.m_error = dll_err;
 					bytes b = move(s.get_prev());
 					const char *tc = b.toCharArray();	//***Here uses too much memory***
 					b.release();
 					send_info ds;
-					ds = df(tc, &s_prep);
+					ds = df(tc, &s_prep, nullptr);
 					bytes bq;
 					bq.add(ds.cdata, ds.len);	// Leaks somewhere. Probably here.
 					cout_d << "Trans back: " << endl_d;

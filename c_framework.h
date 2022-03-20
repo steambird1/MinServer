@@ -73,8 +73,16 @@ extern "C" {
 		uoperator_mod_func uop_mod;		// Automaticly decides
 		uoperator_chg_perm uop_chp;		// Automaticly changing to '-1' means changing owner
 		uoperator_exists_func uop_exists;
-		// New updates:
 		cc_str e403, e404, e501, e200_ok, e200_redirect;	// IDs
+		// New updates:
+		cc_str perm_data_path;// = "$permission.txt";
+		cc_str user_data_path;// = "$users.txt";
+		cc_str public_file_path;// = "$public.txt";
+		cc_str group_path;// = "$groups.txt";
+		cc_str assiocate_path;// = "$assiocate.txt";
+		cc_str redirect_path;// = "$redirect.txt";
+		cc_str dll_path;// = "$dlls.txt";
+		cc_str ban_path;// = "$bans.txt";
 	} callers;
 	
 	typedef void*(*mem_alloc)(size_t);
@@ -95,8 +103,9 @@ extern "C" {
 		int len;
 		cc_str cdata;
 	} send_info;
-	typedef send_info(*d_func)(cc_str, sdata*);
-	typedef send_info(*as_func)(cc_str, cc_str, asdata*);	// Assiocated caller. asdata* currently NULL. another one is file content
+	// Return value now not used
+	typedef send_info(*d_func)(cc_str, sdata*, void*);
+	typedef send_info(*as_func)(cc_str, cc_str, asdata*, void*);	// Assiocated caller. asdata* currently NULL. another one is file content
 #endif
 
 	// By this way, Intellisense can read them and we can edit them
@@ -316,7 +325,6 @@ extern "C" {
 
 	}
 
-	// Here's to be implemented.
 	typedef struct _send_para {
 		c_pair *cp;
 		int cp_len;				// Attributes

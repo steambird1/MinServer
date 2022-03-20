@@ -8,10 +8,10 @@
 #define mmalloc(...) as->mc_lib.m_alloc(__VA_ARGS__)
 #define mfree(...) as->mc_lib.m_free(__VA_ARGS__)
 
-extern "C" __declspec(dllexport) send_info AssiocateMain(cc_str receive, cc_str file_path, asdata *as) {
+extern "C" __declspec(dllexport) send_info AssiocateMain(cc_str receive, cc_str file_path, asdata *as, void *out) {
 	HINSTANCE h = LoadLibraryA(file_path);
 	d_func df = (d_func)GetProcAddress(h, "ServerMain");
-	//const char error[] = { "Requested DLL can't be runned" };
+	const char error[] = { "Requested DLL can't be runned" };
 	char et[2000] = { "Requested DLL can't be runned\n" };
 	//char *et = (char*)mmalloc(2500 * sizeof(char));
 	//fprintf(et, "Requested DLL can't be runned");
@@ -27,10 +27,12 @@ extern "C" __declspec(dllexport) send_info AssiocateMain(cc_str receive, cc_str 
 		//et[t + pp] = '\0';
 		tmp = (char*)mmalloc(sizeof(char) * (strlen(et) + strlen(sendup) + 50));
 		sprintf(tmp, sendup, strlen(et), et);
-		return { (int)strlen(tmp), tmp };
-		//return { (int)strlen(error), error };
+		//(*out) = { (int)strlen(tmp), tmp };
+		return { (int)strlen(error), error };
 	}
 	else {
-		return df(receive, as);
+		send_info z;
+		z = df(receive, as, nullptr);
+		return z;
 	}
 }
