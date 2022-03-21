@@ -143,6 +143,9 @@ extern "C" {
 
 #define callocer(count, objsize) (mallocer(count*objsize))
 
+	// These libraries may causes memory problem.
+	// Don't use them now!
+
 	recv_info c_resolve(const char *req, mem_alloc mallocer) {
 		char buf[64];
 		recv_info res = {};
