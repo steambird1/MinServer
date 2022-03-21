@@ -13,7 +13,17 @@ Specify:
 
 
 extern "C" FILESEARCHER_API send_info ServerMain(const char *data, sdata *sdata, void *out) {
-	recv_info rc = c_resolve(data, sdata->mc_lib.m_alloc);
+//	recv_info rc = c_resolve(data, sdata->mc_lib.m_alloc);
+	// What will happen if we not use c_resolve?
+	// Get raw path just from data, not caring about data remaining
+	char path[MAX_PATH * 3];
+	int res = 0, pptr = 0; // Path in the middle.
+	for (const char *i = data; (*i) != '\n' && res <= 1; i++) {
+		char ir = (*i);
+		if (ir == ' ') res++;
+		else if (res == 1) path[pptr++] = ir;
+	}
+	path[pptr] = '\0';
 	static const char sendup[] = { "HTTP/1.1 %d %s\nContent-Type: text/plain\nContent-Length: %d\n\n%s" };
 	// Get keys first
 	int utoken = 0;
@@ -24,14 +34,14 @@ extern "C" FILESEARCHER_API send_info ServerMain(const char *data, sdata *sdata,
 	int nextrec = 0, bp = 0;
 	char buf2[100];
 #define bpclr() do { memset(buf2, 0, sizeof(buf2)); bp = 0; } while (false)
-	for (size_t i = 0; i < strlen(rc.path); i++) {
+	for (size_t i = 0; i < strlen(path); i++) {
 		if (flag) {
-			if (rc.path[i] == '=') {
+			if (path[i] == '=') {
 				if (strcmp(buf2, "utoken")) nextrec = 1;
 				else if (strcmp(buf2, "fname")) nextrec = 2;
 				bpclr();
 			}
-			else if (rc.path[i] == '&') {
+			else if (path[i] == '&') {
 				switch (nextrec) {
 				case 1:
 					utoken = atoi(buf2);
@@ -44,11 +54,11 @@ extern "C" FILESEARCHER_API send_info ServerMain(const char *data, sdata *sdata,
 				bpclr();
 			}
 			else {
-				buf2[bp++] = rc.path[i];
+				buf2[bp++] = path[i];
 			}
 
 		}
-		if (rc.path[i] == '?') flag = true;
+		if (path[i] == '?') flag = true;
 	}
 #ifdef bpclr
 #undef bpclr
