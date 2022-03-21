@@ -106,8 +106,9 @@ public:
 		if (ptr != nullptr) {
 			dll_mem += size;
 			// To make sure "I'm going to use it"?
-			memset(ptr, 0, sizeof(char)*size);
+			//Memset moved to debug
 			ptr_mem[ptr] = size;
+			memset(ptr, 0, sizeof(char)*size);
 		}
 		else {
 			setDLLError(2);
@@ -1105,7 +1106,7 @@ string ban_path = "$bans.txt";
 //		cout_d << "Receiver receives:" << endl_d << endl_d;
 //		cout_d << s.get_prev().toString() << endl_d;
 //		cout_d << "End" << endl_d;
-		string path = hinfo.path, rpath;
+		string path = hinfo.path.toString(), rpath;
 		path_pinfo = hinfo.toPaths();
 
 		sndinfo.codeid = 200;
@@ -1560,7 +1561,7 @@ string ban_path = "$bans.txt";
 					s_prep.cal_lib = { uidctrl::request, uidctrl::vaild, uidctrl::uidof, uidctrl::release, c_user_auth, file_operator::release, c_file_open, c_memory_usage, c_utoken_usage, c_ftoken_usage, c_ip_health, user_groups::insert, user_groups::remove, c_ug_query, c_uo_mod, c_uo_chperm, c_uo_exists, ec403, ec404, ec501, ec200_ok, ec200_redirect, c_perm_data_path, c_user_data_path, c_public_file_path, c_group_path, c_assiocate_path, c_redirect_path, c_dll_path, c_ban_path };
 					s_prep.mc_lib = { memory_manager::allocate, memory_manager::release };
 					s_prep.m_error = dll_err;
-					bytes b = move(s.get_prev());
+					bytes b = s.get_prev();
 					const char *tc = b.toCharArray();	//***Here uses too much memory***
 					b.release();
 					send_info ds;
