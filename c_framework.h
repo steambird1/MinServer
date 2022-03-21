@@ -163,10 +163,10 @@ extern "C" {
 		r_ptr = sr_ptr;
 		res.attr.len = sr_len;
 		res.attr.param = (c_pair*)callocer(sr_len + 1, sizeof(c_pair));
-		//for (int i = 0; i < sr_len; i++) {
-			//res.attr.param[i].key = (char*)callocer(128, sizeof(char));
-			//res.attr.param[i].value = (char*)callocer(512, sizeof(char));
-		//}
+		for (int i = 0; i < sr_len; i++) {
+			memset(res.attr.param[i].key, 0, sizeof(char) * 127);
+			memset(res.attr.param[i].value, 0, sizeof(char) * 511);
+		}
 		bool mode = false;
 		int mode_len = 0, cur_len = 0, cont_len = 0;
 		while ((!(req[r_ptr] == '\n' && (req[r_ptr - 1] == '\n' || req[r_ptr - 2] == '\n'))) && r_ptr < r_len) {

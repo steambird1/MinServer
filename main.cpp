@@ -1547,7 +1547,7 @@ string ban_path = "$bans.txt";
 				goto sendup;
 			}
 				HINSTANCE h = LoadLibrary(fs.c_str());
-				d_func df = (d_func)GetProcAddress(h, "ServerMain");	// So uses as: const char* ServerMain(const char *receive)
+				d_func df = (d_func)GetProcAddress(h, "ServerMain");
 				if (df == NULL) {
 					FreeLibrary(h);
 					cout << "Warning: Error " << GetLastError() << " while loading ServerMain() of library " << md << endl;
@@ -1560,7 +1560,7 @@ string ban_path = "$bans.txt";
 					s_prep.cal_lib = { uidctrl::request, uidctrl::vaild, uidctrl::uidof, uidctrl::release, c_user_auth, file_operator::release, c_file_open, c_memory_usage, c_utoken_usage, c_ftoken_usage, c_ip_health, user_groups::insert, user_groups::remove, c_ug_query, c_uo_mod, c_uo_chperm, c_uo_exists, ec403, ec404, ec501, ec200_ok, ec200_redirect, c_perm_data_path, c_user_data_path, c_public_file_path, c_group_path, c_assiocate_path, c_redirect_path, c_dll_path, c_ban_path };
 					s_prep.mc_lib = { memory_manager::allocate, memory_manager::release };
 					s_prep.m_error = dll_err;
-					bytes b = move(s.get_prev());
+					bytes &b = s.get_prev();
 					const char *tc = b.toCharArray();	//***Here uses too much memory***
 					b.release();
 					send_info ds;
@@ -1574,6 +1574,7 @@ string ban_path = "$bans.txt";
 					delete[] tc;
 					b.release();
 					bq.release();
+					FreeLibrary(h);
 					goto after_sentup;
 				}
 }

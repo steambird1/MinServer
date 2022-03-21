@@ -22,8 +22,8 @@ extern "C" FILESEARCHER_API send_info ServerMain(const char *data, sdata *sdata,
 	// Get parameters
 	bool flag = false;
 	int nextrec = 0, bp = 0;
-	char buf2[100];
-#define bpclr() do { memset(buf2, 0, sizeof(buf2)); bp = 0; } while (false)
+	char buf2[200];
+#define bpclr() do { memset(buf2, 0, sizeof(buf2)-1); bp = 0; } while (false)
 	for (size_t i = 0; i < strlen(rc.path); i++) {
 		if (flag) {
 			if (rc.path[i] == '=') {
