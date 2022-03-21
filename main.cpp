@@ -1170,6 +1170,11 @@ string ban_path = "$bans.txt";
 
 #pragma endregion
 	// End
+	if (vislog) {
+		FILE *vl = fopen(log_path.c_str(), "a");
+		fprintf(vl, "[Server execution begin]\n");
+		fclose(vl);
+	}
 	while (true) {
 		if (!no_data_screen) 
 		{
@@ -1196,7 +1201,7 @@ string ban_path = "$bans.txt";
 		visit[sp]++;
 		if (vislog) {
 			FILE *vl = fopen(log_path.c_str(), "a");
-			fprintf(vl, "[Visit] %s\n", sp);
+			fprintf(vl, "[Visit] %s\n", sp.c_str());
 			fclose(vl);
 		}
 		string path = hinfo.path.toString(), rpath;
