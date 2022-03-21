@@ -83,6 +83,7 @@ extern "C" {
 		cc_str redirect_path;// = "$redirect.txt";
 		cc_str dll_path;// = "$dlls.txt";
 		cc_str ban_path;// = "$bans.txt";
+		cc_str log_path;
 	} callers;
 	
 	typedef void*(*mem_alloc)(size_t);

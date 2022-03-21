@@ -33,6 +33,7 @@ string assiocate_path = "$assiocate.txt";
 string redirect_path = "$redirect.txt";
 string dll_path = "$dlls.txt";
 string ban_path = "$bans.txt";
+string log_path = "$log.txt";
 int default_join_g = -1;
 
 // Use for C framework
@@ -44,6 +45,7 @@ cc_str c_assiocate_path;// = "$assiocate.txt";
 cc_str c_redirect_path; // = "$redirect.txt";
 cc_str c_dll_path;// = "$dlls.txt";
 cc_str c_ban_path;// = "$bans.txt";
+cc_str c_log_path;
 
 // Allocate ONCE
 char buf4[4096], buf5[4096];
@@ -859,7 +861,7 @@ void normalSender(ssocket &s, string path, string external, int recesuive = 0) {
 				if (acaller.count(ex)) {
 					asdata *s_prep = new asdata;	// Memory leak before here
 					// To be updated:
-					s_prep->cal_lib = { uidctrl::request, uidctrl::vaild, uidctrl::uidof, uidctrl::release, c_user_auth, file_operator::release, c_file_open, c_memory_usage, c_utoken_usage, c_ftoken_usage, c_ip_health, user_groups::insert, user_groups::remove, c_ug_query, c_uo_mod, c_uo_chperm, c_uo_exists, ec403, ec404, ec501, ec200_ok, ec200_redirect, c_perm_data_path, c_user_data_path, c_public_file_path, c_group_path, c_assiocate_path, c_redirect_path, c_dll_path, c_ban_path };
+					s_prep->cal_lib = { uidctrl::request, uidctrl::vaild, uidctrl::uidof, uidctrl::release, c_user_auth, file_operator::release, c_file_open, c_memory_usage, c_utoken_usage, c_ftoken_usage, c_ip_health, user_groups::insert, user_groups::remove, c_ug_query, c_uo_mod, c_uo_chperm, c_uo_exists, ec403, ec404, ec501, ec200_ok, ec200_redirect, c_perm_data_path, c_user_data_path, c_public_file_path, c_group_path, c_assiocate_path, c_redirect_path, c_dll_path, c_ban_path, c_log_path };
 					s_prep->mc_lib = { memory_manager::allocate, memory_manager::release };
 					s_prep->m_error = dll_err;
 					c_recv_info rc = move(getMyReceiver(hinfo));
@@ -901,6 +903,8 @@ after_sentup: s.end_accept();
 s.release_prev();
 	// Doesn't need to send in the end
 }
+
+bool vislog = true;
 
 int main(int argc, char* argv[]) {
 #if MINSERVER_DEBUG == 4
@@ -992,6 +996,12 @@ int main(int argc, char* argv[]) {
 		else if (it == "--buffer") {
 			tbuf = atoi(argv[i + 1]);
 			i++;
+		}
+		else if (it == "--log-target") {
+			log_path = argv[i + 1];
+			i++;
+		} else if (it == "--no-visit-log") {
+			vislog = false;
 		}
 		else if (it == "--user-group") {
 			// User-group operations
@@ -1152,6 +1162,7 @@ string ban_path = "$bans.txt";
 	__initalizer_0(redirect_path);
 	__initalizer_0(dll_path);
 	__initalizer_0(ban_path);
+	__initalizer_0(log_path);
 
 #ifdef __initalizer_0
 #undef __initalizer_0
@@ -1183,6 +1194,11 @@ string ban_path = "$bans.txt";
 		post_infolist.clear();
 		string sp = s.get_paddr();
 		visit[sp]++;
+		if (vislog) {
+			FILE *vl = fopen(log_path.c_str(), "a");
+			fprintf(vl, "[Visit] %s\n", sp);
+			fclose(vl);
+		}
 		string path = hinfo.path.toString(), rpath;
 		path_pinfo = hinfo.toPaths();
 
@@ -1635,7 +1651,7 @@ string ban_path = "$bans.txt";
 				else {
 					//sdata *s_prep = new sdata;
 					sdata s_prep;
-					s_prep.cal_lib = { uidctrl::request, uidctrl::vaild, uidctrl::uidof, uidctrl::release, c_user_auth, file_operator::release, c_file_open, c_memory_usage, c_utoken_usage, c_ftoken_usage, c_ip_health, user_groups::insert, user_groups::remove, c_ug_query, c_uo_mod, c_uo_chperm, c_uo_exists, ec403, ec404, ec501, ec200_ok, ec200_redirect, c_perm_data_path, c_user_data_path, c_public_file_path, c_group_path, c_assiocate_path, c_redirect_path, c_dll_path, c_ban_path };
+					s_prep.cal_lib = { uidctrl::request, uidctrl::vaild, uidctrl::uidof, uidctrl::release, c_user_auth, file_operator::release, c_file_open, c_memory_usage, c_utoken_usage, c_ftoken_usage, c_ip_health, user_groups::insert, user_groups::remove, c_ug_query, c_uo_mod, c_uo_chperm, c_uo_exists, ec403, ec404, ec501, ec200_ok, ec200_redirect, c_perm_data_path, c_user_data_path, c_public_file_path, c_group_path, c_assiocate_path, c_redirect_path, c_dll_path, c_ban_path, c_log_path };
 					s_prep.mc_lib = { memory_manager::allocate, memory_manager::release };
 					s_prep.m_error = dll_err;
 					

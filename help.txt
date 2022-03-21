@@ -20,6 +20,8 @@ Options are:
 	--no-auto-release	Set that server will not release file tokens when downgraded because of file token. [Not suggested, may causes server down]
 	--redirect-table	Set that what paths will be redirected to others.
 	--max-recesuive		Set the max recesuive depth of redirection. (Note: Too big number may causes 403 at first instead of expected 500)
+	--log-target		Set where will the log (mainly about visiting) write to (Default: $log.txt)
+	--no-visit-log		Set that there will be no visit log.
 
 Executable options are:
 	--user-operate		User operations.
