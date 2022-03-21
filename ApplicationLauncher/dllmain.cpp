@@ -9,7 +9,7 @@ extern "C" APPLICATIONLAUNCHER_API send_info AssiocateMain(cc_str received, cc_s
 	sprintf(fdest, "%s\\%s", getenv("temp"), res);
 	FILE *fd = fopen(fdest, "wb");
 	// Resolve the size.
-	recv_info rc = c_resolve(received, as->mc_lib.m_alloc);
+	c_recv_info rc = *(as->rcv);
 	// Find content length
 	int cl = 0;
 	for (size_t i = 0; i < rc.attr.len; i++) {

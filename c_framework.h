@@ -88,15 +88,48 @@ extern "C" {
 	typedef void*(*mem_alloc)(size_t);
 	typedef void(*mem_free)(void*);
 	
+	typedef struct _c_pair {
+		//char key[128], value[512];
+		cc_str key, value;
+	} c_pair;
+
 	typedef struct _mem_callers {
 		mem_alloc m_alloc;
 		mem_free m_free;
 	} mem_callers;
 
+	struct _single_cpost_info {
+		struct {
+			int len;
+			c_pair *param;
+		} attr;
+		int cs_len;				// Content length
+		cc_str content;
+	};
+
+	typedef struct _cpost_info {
+		//		struct {
+		int len;
+		struct _single_cpost_info *param;
+		c_str boundary;
+		//		} data;
+	} c_post_info;
+
+	typedef struct _recv_info {
+		cc_str proto, method, path;
+		struct {
+			int len;
+			c_pair *param;
+		} attr;
+		cc_str content;
+		c_post_info posts;
+	} c_recv_info;
+
 	typedef struct _sdata {
 		callers cal_lib;
 		mem_callers mc_lib;
 		int *m_error;
+		c_recv_info *rcv;
 	} sdata, asdata;
 
 	typedef struct _send_info {
@@ -105,47 +138,14 @@ extern "C" {
 	} send_info;
 	// Return value now not used
 	typedef send_info(*d_func)(cc_str, sdata*, void*);
-	typedef send_info(*as_func)(cc_str, cc_str, asdata*, void*);	// Assiocated caller. asdata* currently NULL. another one is file content
+	typedef send_info(*as_func)(cc_str, cc_str, asdata*, void*);
 #endif
 
 	// By this way, Intellisense can read them and we can edit them
-#if !defined(_CP_DEFINED) || defined(__INTELLISENSE__)
-#define _CP_DEFINED
 
-	typedef struct _c_pair {
-		char key[128], value[512];
-	} c_pair;
-
-	typedef struct _recv_info {
-		char proto[16], method[8], path[MAX_PATH];
-		struct {
-			int len;
-			c_pair *param;
-		} attr;
-		c_str content;
-	} recv_info;
-
-	struct _single_cpost_info {
-		struct {
-			int len;
-			c_pair *param;
-		} attr;
-		int cs_len;
-		c_str content;
-	};
-
-	typedef struct _cpost_info {
-		struct {
-			int len;
-			struct _single_cpost_info *param;
-		} data;
-	} cpost_info;
-
-#define callocer(count, objsize) (mallocer(count*objsize))
-
-	// These libraries may causes memory problem.
-	// Don't use them now!
-
+	// These libraries really causes memory problem.
+	// Don't use them now! Use sdata/asdata instead.
+	/*
 	recv_info c_resolve(const char *req, mem_alloc mallocer) {
 		char buf[64];
 		recv_info res = {};
@@ -321,6 +321,7 @@ extern "C" {
 		return res;
 
 	}
+	*/
 
 	typedef struct _send_para {
 		c_pair *cp;
@@ -350,7 +351,6 @@ extern "C" {
 		memcpy(res + res_p, sp.content, sizeof(char) * sp.clen);
 		return { pre_len, res };
 	}
-
-#endif
+	
 	
 }

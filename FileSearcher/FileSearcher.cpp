@@ -7,7 +7,7 @@ using namespace std;
 
 /*
 Specify:
-1. utoken=
+1. utoken= (Reserved)
 2. fname=
 */
 
@@ -28,7 +28,7 @@ extern "C" FILESEARCHER_API send_info ServerMain(const char *data, sdata *sdata,
 	// Get keys first
 	int utoken = 0;
 	bool usesub = false;
-	char *subname;
+	char *subname = nullptr;
 	// Get parameters
 	bool flag = false;
 	int nextrec = 0, bp = 0;
@@ -37,8 +37,9 @@ extern "C" FILESEARCHER_API send_info ServerMain(const char *data, sdata *sdata,
 	for (size_t i = 0; i < strlen(path); i++) {
 		if (flag) {
 			if (path[i] == '=') {
-				if (strcmp(buf2, "utoken")) nextrec = 1;
-				else if (strcmp(buf2, "fname")) nextrec = 2;
+				if (strcmp(buf2, "utoken") == 0) nextrec = 1;
+				else if (strcmp(buf2, "fname") == 0) nextrec = 2;
+				else nextrec = 0;
 				bpclr();
 			}
 			else if (path[i] == '&') {
@@ -47,10 +48,12 @@ extern "C" FILESEARCHER_API send_info ServerMain(const char *data, sdata *sdata,
 					utoken = atoi(buf2);
 					break;
 				case 2:
+					usesub = true;
 					subname = (char*)sdata->mc_lib.m_alloc(bp);
 					strcpy(subname, buf2);
 					break;
 				}
+				nextrec = 0;
 				bpclr();
 			}
 			else {
@@ -59,6 +62,18 @@ extern "C" FILESEARCHER_API send_info ServerMain(const char *data, sdata *sdata,
 
 		}
 		if (path[i] == '?') flag = true;
+	}
+	if (nextrec) {
+		switch (nextrec) {
+		case 1:
+			utoken = atoi(buf2);
+			break;
+		case 2:
+			usesub = true;
+			subname = (char*)sdata->mc_lib.m_alloc(bp);
+			strcpy(subname, buf2);
+			break;
+		}
 	}
 #ifdef bpclr
 #undef bpclr
@@ -81,6 +96,9 @@ extern "C" FILESEARCHER_API send_info ServerMain(const char *data, sdata *sdata,
 		wtmp = (char*)sdata->mc_lib.m_alloc(le + pt + 40);
 		memset(wtmp, 0, sizeof(wtmp));
 		for (size_t i = 0; i < pt; i++) {
+			if (usesub) {
+				if (strstr(rtmp[i], subname) == NULL) continue;
+			}
 			sprintf(wtmp, "%s\n%s", wtmp, rtmp[i]);
 //			sdata->mc_lib.m_free(rtmp[i]);
 		}
