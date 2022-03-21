@@ -153,6 +153,9 @@ extern "C" {
 			buf[ptr++] = req[r_ptr++];
 		}
 		r_ptr++;	// EOL remains
+		memset(res.method, 0, sizeof(char) * 7);
+		memset(res.proto, 0, sizeof(char) * 15);
+		memset(res.path, 0, (sizeof(char) * MAX_PATH) - 1);
 		sscanf(buf, "%s %s %s", res.method, res.path, res.proto);	// buf now occupied
 		sr_ptr = r_ptr;
 		while ((!(req[r_ptr] == '\n' && (req[r_ptr - 1] == '\n' || req[r_ptr - 2] == '\n'))) && r_ptr < r_len) {
@@ -234,14 +237,12 @@ extern "C" {
 		// End
 
 		cpost_info res;
-		//for (int i = 0; i < read_count; i++) {
 		res.data.len = 0;
 		res.data.param = (struct _single_cpost_info*)callocer(read_count, sizeof(struct _single_cpost_info));
 		for (int i = 0; i < read_count; i++) {
 			res.data.param[i].attr.param = (c_pair*)callocer(para_count, sizeof(c_pair));
 			res.data.param[i].content = (char*)callocer(read_buffer, sizeof(char));
 		}
-		//}
 		char ldata[1024] = {};
 		int lptr = 0, cptr = -1, cparam = 0, clptr = 0;	// Start in 0
 		int state = -1, astate = false, errored = false;
