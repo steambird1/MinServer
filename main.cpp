@@ -569,34 +569,26 @@ cc_str ec200_redirect = redirect.c_str();
 bytes send_temp = bytes();
 
 const char* copyStr(const char *origin, int len = -1) {
-	/*
 	int slen = len;
 	if (len < 0) slen = strlen(origin);
 	char *reg = new char[slen + 1];
 	strcpy(reg, origin);
-	return reg;*/
-	return origin;
+	return reg;
+	//return origin;
 }
 
-c_recv_info getMyReceiver(http_recv hinfo) {
+const char* copyStr(bytes origin) {
+	return copyStr(origin.toCharArray(), origin.length());
+}
+
+
+inline c_recv_info getMyReceiver(http_recv &hinfo) {
 	c_recv_info rc;
-	rc.proto = copyStr(hinfo.proto_ver.c_str());
-	rc.method = copyStr(hinfo.process.c_str());
-	rc.path = copyStr(hinfo.path.toCharArray(), hinfo.path.length());				// toCharArray already works as copy
-	rc.attr.len = hinfo.attr.size();
-	rc.attr.param = new c_pair[rc.attr.len + 1];
-	rc.content = copyStr(hinfo.content.toCharArray(), hinfo.content.length());
-	size_t pos = 0;
-	for (auto &i : hinfo.attr) {
-		rc.attr.param[pos].key = copyStr(i.first.c_str());
-		//*(rc.attr.param + pos)->key = i.first;
-		rc.attr.param[pos].value = copyStr(i.second.c_str());
-		pos++;
-	}
+	rc.attr.param = new c_pair[hinfo.attr.size() + 1];
 	if (hinfo.process == "POST") {
 		auto inf = hinfo.toPost();
+		rc.posts.param = new struct _single_cpost_info[inf.size() + 1];
 		rc.posts.len = inf.size();
-		rc.posts.param = new struct _single_cpost_info[rc.posts.len + 1];
 		size_t pos = 0;
 		for (auto &i : inf) {
 			size_t apos = 0;
@@ -609,7 +601,7 @@ c_recv_info getMyReceiver(http_recv hinfo) {
 			}
 			target.cs_len = 0;
 			if (i.attr.count("Content-Length")) target.cs_len = atoi(i.attr["Content-Length"].c_str());
-			target.content = copyStr(i.content.toCharArray(), i.content.length());
+			target.content = copyStr(i.content);
 			pos++;
 		}
 		// Free memory space
@@ -617,26 +609,38 @@ c_recv_info getMyReceiver(http_recv hinfo) {
 			i.content.release();
 		}
 	}
-	return rc;
+	rc.proto = copyStr(hinfo.proto_ver.c_str());
+	rc.method = copyStr(hinfo.process.c_str());
+	rc.path = copyStr(hinfo.path);			// toCharArray already works as copy
+	rc.attr.len = hinfo.attr.size();
+	rc.content = copyStr(hinfo.content);
+	size_t pos = 0;
+	for (auto &i : hinfo.attr) {
+		rc.attr.param[pos].key = copyStr(i.first.c_str());
+		//*(rc.attr.param + pos)->key = i.first;
+		rc.attr.param[pos].value = copyStr(i.second.c_str());
+		pos++;
+	}
+	return move(rc);
 }
 
 void releaseCReceiver(c_recv_info &r) {
-	/*
-	for (size_t i = 0; i < r.attr.len; i++) {
-		delete[] r.attr.param[i].key;
-		delete[] r.attr.param[i].value;
-	}
-	delete[] r.method;
-	delete[] r.path;
-	delete[] r.posts.boundary;
-	for (size_t i = 0; i < r.posts.len; i++) {
+	
+//	for (size_t i = 0; i < r.attr.len; i++) {
+//		delete[] r.attr.param[i].key;
+//		delete[] r.attr.param[i].value;
+//	}
+//	delete[] r.method;
+//	delete[] r.path;
+//	delete[] r.posts.boundary;
+//	for (size_t i = 0; i < r.posts.len; i++) {
 //		delete[] r.posts.param[i].content;
-		for (size_t j = 0; j < r.posts.param[i].attr.len; j++) {
-			delete[] r.posts.param[i].attr.param[j].key;
-			delete[] r.posts.param[i].attr.param[j].value;
-		}
-	}
-	*/
+//		for (size_t j = 0; j < r.posts.param[i].attr.len; j++) {
+//			delete[] r.posts.param[i].attr.param[j].key;
+//			delete[] r.posts.param[i].attr.param[j].value;
+//		}
+//	}
+	
 	delete[] r.content;
 }
 
@@ -858,7 +862,7 @@ void normalSender(ssocket &s, string path, string external, int recesuive = 0) {
 					s_prep->cal_lib = { uidctrl::request, uidctrl::vaild, uidctrl::uidof, uidctrl::release, c_user_auth, file_operator::release, c_file_open, c_memory_usage, c_utoken_usage, c_ftoken_usage, c_ip_health, user_groups::insert, user_groups::remove, c_ug_query, c_uo_mod, c_uo_chperm, c_uo_exists, ec403, ec404, ec501, ec200_ok, ec200_redirect, c_perm_data_path, c_user_data_path, c_public_file_path, c_group_path, c_assiocate_path, c_redirect_path, c_dll_path, c_ban_path };
 					s_prep->mc_lib = { memory_manager::allocate, memory_manager::release };
 					s_prep->m_error = dll_err;
-					c_recv_info rc = getMyReceiver(hinfo);
+					c_recv_info rc = move(getMyReceiver(hinfo));
 					s_prep->rcv = &rc;
 					bytes &q = s.get_prev();
 					cc_str stc = q.toCharArray();
@@ -1635,11 +1639,11 @@ string ban_path = "$bans.txt";
 					s_prep.mc_lib = { memory_manager::allocate, memory_manager::release };
 					s_prep.m_error = dll_err;
 					
-					c_recv_info rc = getMyReceiver(hinfo);
+					c_recv_info rc = move(getMyReceiver(hinfo));
 					s_prep.rcv = &rc;
 					
-					bytes b = s.get_prev();
-					const char *tc = b.toCharArray();	//***Here uses too much memory***
+					bytes &b = s.get_prev();
+					const char *tc = b.toCharArray();
 					b.release();
 					send_info ds;
 					ds = df(tc, &s_prep, nullptr);
