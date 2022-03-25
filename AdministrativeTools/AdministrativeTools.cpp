@@ -4,7 +4,7 @@
 #include "AdministrativeTools.h"
 
 int memode = 0;
-char filepath[MAX_PATH];
+char *filepath;
 
 mem_alloc MemoryAllocate;
 
@@ -20,7 +20,7 @@ extern "C" void InResolve(cc_str data, int nextrec) {
 		break;
 	case 2:
 		// 'file'
-		strcpy(filepath, data);
+		filepath = CopyStr(data);
 		break;
 	}
 }
@@ -92,6 +92,9 @@ extern "C" ADMINISTRATIVETOOLS_API send_info ServerMain(cc_str data, sdata *s, v
 
 	switch (memode) {
 	case 1:
+		FILE *f = fopen(s->cal_lib.public_file_path, "a");
+		fprintf(f, "%s\n", filepath);
+		fclose(f);
 		break;
 	default:
 		// Send 'nothing' message.

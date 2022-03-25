@@ -88,6 +88,8 @@ extern "C" {
 	
 	typedef void*(*mem_alloc)(size_t);
 	typedef void(*mem_free)(void*);
+
+	typedef cc_str(*md5_caller)(cc_str);
 	
 	typedef struct _c_pair {
 		//char key[128], value[512];
@@ -98,6 +100,10 @@ extern "C" {
 		mem_alloc m_alloc;
 		mem_free m_free;
 	} mem_callers;
+
+	typedef struct _ext_callers {
+		md5_caller md5;
+	} ext_callers;
 
 	struct _single_cpost_info {
 		struct {
@@ -131,6 +137,7 @@ extern "C" {
 		mem_callers mc_lib;
 		int *m_error;
 		c_recv_info *rcv;
+		ext_callers ext_lib;
 	} sdata, asdata;
 
 	typedef struct _send_info {

@@ -94,6 +94,17 @@ void setDLLError(int err) {
 	(*dll_err) = err;
 }
 
+// MD5 supporting.
+class quick_md5 {
+public:
+	static string get(string source) {
+		return MD5(source).toString();
+	}
+	static cc_str c_get(cc_str source) {
+		return get(source).c_str();
+	}
+};
+
 // Preparing for DLL manager.
 class memory_manager {
 public:
@@ -611,6 +622,9 @@ inline c_recv_info getMyReceiver(http_recv &hinfo) {
 			i.content.release();
 		}
 	}
+	else {
+		rc.posts.len = 0;
+	}
 	rc.proto = copyStr(hinfo.proto_ver.c_str());
 	rc.method = copyStr(hinfo.process.c_str());
 	rc.path = copyStr(hinfo.path);			// toCharArray already works as copy
@@ -635,13 +649,13 @@ void releaseCReceiver(c_recv_info &r) {
 //	delete[] r.method;
 //	delete[] r.path;
 //	delete[] r.posts.boundary;
-//	for (size_t i = 0; i < r.posts.len; i++) {
-//		delete[] r.posts.param[i].content;
+	for (size_t i = 0; i < r.posts.len; i++) {
+		delete[] r.posts.param[i].content;
 //		for (size_t j = 0; j < r.posts.param[i].attr.len; j++) {
 //			delete[] r.posts.param[i].attr.param[j].key;
 //			delete[] r.posts.param[i].attr.param[j].value;
 //		}
-//	}
+	}
 	
 	delete[] r.content;
 }
@@ -860,7 +874,7 @@ void normalSender(ssocket &s, string path, string external, int recesuive = 0) {
 				string ex = getExt(rpath);	// Get extension, surely contains '.'.
 				if (acaller.count(ex)) {
 					asdata *s_prep = new asdata;	// Memory leak before here
-					// To be updated:
+					s_prep->ext_lib = { quick_md5::c_get };
 					s_prep->cal_lib = { uidctrl::request, uidctrl::vaild, uidctrl::uidof, uidctrl::release, c_user_auth, file_operator::release, c_file_open, c_memory_usage, c_utoken_usage, c_ftoken_usage, c_ip_health, user_groups::insert, user_groups::remove, c_ug_query, c_uo_mod, c_uo_chperm, c_uo_exists, ec403, ec404, ec501, ec200_ok, ec200_redirect, c_perm_data_path, c_user_data_path, c_public_file_path, c_group_path, c_assiocate_path, c_redirect_path, c_dll_path, c_ban_path, c_log_path };
 					s_prep->mc_lib = { memory_manager::allocate, memory_manager::release };
 					s_prep->m_error = dll_err;
@@ -1659,6 +1673,7 @@ string ban_path = "$bans.txt";
 					s_prep.cal_lib = { uidctrl::request, uidctrl::vaild, uidctrl::uidof, uidctrl::release, c_user_auth, file_operator::release, c_file_open, c_memory_usage, c_utoken_usage, c_ftoken_usage, c_ip_health, user_groups::insert, user_groups::remove, c_ug_query, c_uo_mod, c_uo_chperm, c_uo_exists, ec403, ec404, ec501, ec200_ok, ec200_redirect, c_perm_data_path, c_user_data_path, c_public_file_path, c_group_path, c_assiocate_path, c_redirect_path, c_dll_path, c_ban_path, c_log_path };
 					s_prep.mc_lib = { memory_manager::allocate, memory_manager::release };
 					s_prep.m_error = dll_err;
+					s_prep.ext_lib = { quick_md5::c_get };
 					
 					c_recv_info rc = move(getMyReceiver(hinfo));
 					s_prep.rcv = &rc;
