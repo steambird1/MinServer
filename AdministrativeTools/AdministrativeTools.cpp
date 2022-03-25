@@ -12,6 +12,13 @@ extern "C" bool StringEqual(cc_str a, cc_str b) {
 	return strcmp(a, b) == 0;
 }
 
+extern "C" c_str CopyStr(cc_str target, int len = -1) {
+	if (len < 0) len = strlen(target);
+	c_str res = (char*)MemoryAllocate(len+1);
+	strcpy(res, target);
+	return res;
+}
+
 extern "C" void InResolve(cc_str data, int nextrec) {
 	switch (nextrec) {
 	case 1:
@@ -23,13 +30,6 @@ extern "C" void InResolve(cc_str data, int nextrec) {
 		filepath = CopyStr(data);
 		break;
 	}
-}
-
-extern "C" c_str CopyStr(cc_str target, int len = -1) {
-	if (len < 0) len = strlen(target);
-	c_str res = (char*)MemoryAllocate(len+1);
-	strcpy(res, target);
-	return res;
 }
 
 extern "C" ADMINISTRATIVETOOLS_API send_info ServerMain(cc_str data, sdata *s, void *out) {
@@ -89,10 +89,11 @@ extern "C" ADMINISTRATIVETOOLS_API send_info ServerMain(cc_str data, sdata *s, v
 #pragma endregion
 
 	send_info se;
+	FILE *f = nullptr;
 
 	switch (memode) {
 	case 1:
-		FILE *f = fopen(s->cal_lib.public_file_path, "a");
+		f = fopen(s->cal_lib.public_file_path, "a");
 		fprintf(f, "%s\n", filepath);
 		fclose(f);
 		break;
