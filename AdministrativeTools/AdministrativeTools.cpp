@@ -6,22 +6,43 @@
 int memode = 0;
 char filepath[MAX_PATH];
 
+mem_alloc MemoryAllocate;
+
+extern "C" bool StringEqual(cc_str a, cc_str b) {
+	return strcmp(a, b) == 0;
+}
+
 extern "C" void InResolve(cc_str data, int nextrec) {
 	switch (nextrec) {
 	case 1:
 		// Method
+		if (StringEqual(data, "publish")) memode = 1;
 		break;
 	case 2:
 		// 'file'
+		strcpy(filepath, data);
 		break;
 	}
 }
 
-ADMINISTRATIVETOOLS_API extern "C" send_info ServerMain(cc_str data, sdata *s, void *out) {
+extern "C" c_str CopyStr(cc_str target, int len = -1) {
+	if (len < 0) len = strlen(target);
+	c_str res = (char*)MemoryAllocate(len+1);
+	strcpy(res, target);
+	return res;
+}
+
+extern "C" ADMINISTRATIVETOOLS_API send_info ServerMain(cc_str data, sdata *s, void *out) {
+	MemoryAllocate = s->mc_lib.m_alloc;
 	/*
 	Supported method=
 	1. publish,	file=...
 	*/
+	////////////////////////////////////////
+	// Sendup constant
+	static const char sendup[] = { "HTTP/1.1 %d %s\nContent-Type: text/plain\nContent-Length: %d\n\n%s" };
+	static const char badoper[] = { "Operation not exist" };
+#pragma region(Resolver)
 	// Resolver from filesearcher
 	char path[MAX_PATH * 3];
 	int res = 0, pptr = 0; // Path in the middle.
@@ -31,9 +52,6 @@ ADMINISTRATIVETOOLS_API extern "C" send_info ServerMain(cc_str data, sdata *s, v
 		else if (res == 1) path[pptr++] = ir;
 	}
 	path[pptr] = '\0';
-	////////////////////////////////////////
-	// Sendup constant
-	static const char sendup[] = { "HTTP/1.1 %d %s\nContent-Type: text/plain\nContent-Length: %d\n\n%s" };
 	////////////////////////////////////////
 	// Get keys first
 	// Get parameters
@@ -67,4 +85,22 @@ ADMINISTRATIVETOOLS_API extern "C" send_info ServerMain(cc_str data, sdata *s, v
 #ifdef bpclr
 #undef bpclr
 #endif
+	// End of resolving
+#pragma endregion
+
+	send_info se;
+
+	switch (memode) {
+	case 1:
+		break;
+	default:
+		// Send 'nothing' message.
+		char *tmp = (char*)s->mc_lib.m_alloc(sizeof(char)*(strlen(sendup) + strlen(badoper) + 20));
+		sprintf(tmp, sendup, 200, "OK", strlen(badoper), badoper);
+		se.cdata = CopyStr(tmp);
+		se.len = strlen(tmp);
+		s->mc_lib.m_free(tmp);
+	}
+
+	return se;
 }
