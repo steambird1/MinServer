@@ -8,12 +8,13 @@ The "MinServer 1", or the older version of MinServer, is [here](https://github.c
 ## Background
 On Nov 2021, I decided to make a server application that easy to build and run, and it'll support file operation and user authorize/register in JavaScript to run directly on HTML page.
 So that's it :)
+(At that time I don't know ASP.NET and I think it's too difficult to understand how PHP runs.)
 
 ## Install
 You just need to extract files in latest release and just run `MinServer 2.exe` or compile it by yourself using Visual Studio 2017 or newer.
 (Note: There may be some test projects like 'Tester DLL'. You don't need to use it but you can test your server by them.)
 
-There are some help in `help.txt`. You can also read them by running `MinServer 2.exe --help`.
+There are some help in `help.txt` and the wiki. You can also read them by running `"MinServer 2.exe" --help`.
 
 ## Use
 ### Basics Use
@@ -28,7 +29,9 @@ Visitors can only visit **paths** you specified in the file (and please notices 
 After adding filenames you can try visiting your page again, and you'll see your own page.
 
 ### Advanced Use
-MinServer is able to do file operation, user authorize in JavaScript and DLL extension in "C++ in `extern C`". To learn more about them, see Wiki (*Maybe implementing*).
+MinServer is able to do file operation, user authorize in JavaScript.
+Also, The function **be extended** by DLL extension in "C++ in `extern C`".
+To learn more about them, see Wiki (*Maybe implementing*).
 
 ## How to help with me (us ?)
 Just add Issues and Pull Requests.
