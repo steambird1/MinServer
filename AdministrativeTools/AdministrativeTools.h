@@ -9,3 +9,5 @@
 #else
 #define ADMINISTRATIVETOOLS_API __declspec(dllimport)
 #endif
+
+#include "../c_framework.h"
