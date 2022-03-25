@@ -300,3 +300,4 @@ __pycache__/
 /test.vbs
 /write.exe
 /$log.txt
+/$admtool_password.txt

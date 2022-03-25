@@ -1177,6 +1177,7 @@ string ban_path = "$bans.txt";
 	__initalizer_0(dll_path);
 	__initalizer_0(ban_path);
 	__initalizer_0(log_path);
+	__initalizer_0(public_file_path);
 
 #ifdef __initalizer_0
 #undef __initalizer_0

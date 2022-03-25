@@ -3,10 +3,14 @@
 
 #include "AdministrativeTools.h"
 
+static const char PasswordFilePath[] = { "$admtool_password.txt" };
+
 int memode = 0;
-char *filepath;
+char *filepath, mdbuf[128];
+bool auth_success = false;
 
 mem_alloc MemoryAllocate;
+md5_caller MD5Calcutor;
 
 extern "C" bool StringEqual(cc_str a, cc_str b) {
 	return strcmp(a, b) == 0;
@@ -29,19 +33,36 @@ extern "C" void InResolve(cc_str data, int nextrec) {
 		// 'file'
 		filepath = CopyStr(data);
 		break;
+	case 3:
+		// 'password'
+		// Make auth.
+		FILE *f = fopen(PasswordFilePath, "r");
+		char test[120];
+		GetCurrentDirectoryA(120, test);
+		if (f != NULL) {
+			fgets(mdbuf, 128, f);
+			if (mdbuf[strlen(mdbuf) - 1] == '\n') mdbuf[strlen(mdbuf) - 1] = '\0';
+			if (StringEqual(MD5Calcutor(data), mdbuf)) auth_success = true;
+		}
 	}
 }
 
 extern "C" ADMINISTRATIVETOOLS_API send_info ServerMain(cc_str data, sdata *s, void *out) {
+#pragma region(Function Share)
 	MemoryAllocate = s->mc_lib.m_alloc;
+	MD5Calcutor = s->ext_lib.md5;
+#pragma endregion
 	/*
 	Supported method=
 	1. publish,	file=...
 	*/
-	////////////////////////////////////////
-	// Sendup constant
+#pragma region(Constants)
 	static const char sendup[] = { "HTTP/1.1 %d %s\nContent-Type: text/plain\nContent-Length: %d\n\n%s" };
 	static const char badoper[] = { "Operation not exist" };
+	static const char success[] = { "Operation completed successfully" };
+	static const char noauth[] = { "Please login first" };
+#pragma endregion
+	
 #pragma region(Resolver)
 	// Resolver from filesearcher
 	char path[MAX_PATH * 3];
@@ -64,12 +85,14 @@ extern "C" ADMINISTRATIVETOOLS_API send_info ServerMain(cc_str data, sdata *s, v
 			if (path[i] == '=') {
 				if (strcmp(buf2, "method") == 0) nextrec = 1;
 				else if (strcmp(buf2, "file") == 0) nextrec = 2;
+				else if (strcmp(buf2, "password") == 0) nextrec = 3;
 				else nextrec = 0;
 				bpclr();
 			}
 			else if (path[i] == '&') {
 				// switch nextrec to do...
 				InResolve(buf2, nextrec);
+				bpclr();
 			}
 			else {
 				buf2[bp++] = path[i];
@@ -88,23 +111,35 @@ extern "C" ADMINISTRATIVETOOLS_API send_info ServerMain(cc_str data, sdata *s, v
 	// End of resolving
 #pragma endregion
 
+	char *tmp = nullptr;
 	send_info se;
 	FILE *f = nullptr;
+
+	if (!auth_success) {
+		tmp = (char*)s->mc_lib.m_alloc(sizeof(char)*(strlen(sendup) + strlen(noauth) + 20));
+		sprintf(tmp, sendup, 200, "OK", strlen(noauth), noauth);
+		goto dsend;
+	}
 
 	switch (memode) {
 	case 1:
 		f = fopen(s->cal_lib.public_file_path, "a");
 		fprintf(f, "%s\n", filepath);
 		fclose(f);
+		// Send 'success' message.
+		tmp = (char*)s->mc_lib.m_alloc(sizeof(char)*(strlen(sendup) + strlen(success) + 20));
+		sprintf(tmp, sendup, 200, "OK", strlen(success), success);
 		break;
 	default:
 		// Send 'nothing' message.
-		char *tmp = (char*)s->mc_lib.m_alloc(sizeof(char)*(strlen(sendup) + strlen(badoper) + 20));
-		sprintf(tmp, sendup, 200, "OK", strlen(badoper), badoper);
-		se.cdata = CopyStr(tmp);
-		se.len = strlen(tmp);
-		s->mc_lib.m_free(tmp);
+		tmp = (char*)s->mc_lib.m_alloc(sizeof(char)*(strlen(sendup) + strlen(badoper) + 50));
+		sprintf(tmp, sendup, 500, "Not Implemented", strlen(badoper), badoper);
 	}
+
+	// Default sender
+	dsend: se.cdata = CopyStr(tmp);
+	se.len = strlen(tmp);
+	s->mc_lib.m_free(tmp);
 
 	return se;
 }
