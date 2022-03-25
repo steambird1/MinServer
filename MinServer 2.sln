@@ -16,6 +16,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ApplicationLauncher", "Appl
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FileSearcher", "FileSearcher\FileSearcher.vcxproj", "{E45FB16D-9733-424F-B792-EFCF431B0115}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AdministrativeTools", "AdministrativeTools\AdministrativeTools.vcxproj", "{D22F4FB1-E1A8-4519-A9EF-F17E08599214}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -56,6 +58,14 @@ Global
 		{E45FB16D-9733-424F-B792-EFCF431B0115}.Release|x64.Build.0 = Release|x64
 		{E45FB16D-9733-424F-B792-EFCF431B0115}.Release|x86.ActiveCfg = Release|Win32
 		{E45FB16D-9733-424F-B792-EFCF431B0115}.Release|x86.Build.0 = Release|Win32
+		{D22F4FB1-E1A8-4519-A9EF-F17E08599214}.Debug|x64.ActiveCfg = Debug|x64
+		{D22F4FB1-E1A8-4519-A9EF-F17E08599214}.Debug|x64.Build.0 = Debug|x64
+		{D22F4FB1-E1A8-4519-A9EF-F17E08599214}.Debug|x86.ActiveCfg = Debug|Win32
+		{D22F4FB1-E1A8-4519-A9EF-F17E08599214}.Debug|x86.Build.0 = Debug|Win32
+		{D22F4FB1-E1A8-4519-A9EF-F17E08599214}.Release|x64.ActiveCfg = Release|x64
+		{D22F4FB1-E1A8-4519-A9EF-F17E08599214}.Release|x64.Build.0 = Release|x64
+		{D22F4FB1-E1A8-4519-A9EF-F17E08599214}.Release|x86.ActiveCfg = Release|Win32
+		{D22F4FB1-E1A8-4519-A9EF-F17E08599214}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
