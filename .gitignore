@@ -302,3 +302,4 @@ __pycache__/
 /$log.txt
 /$admtool_password.txt
 *.dll
+/$admtool_alwaysallow.txt
