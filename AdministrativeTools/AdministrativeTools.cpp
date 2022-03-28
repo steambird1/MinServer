@@ -5,6 +5,9 @@
 
 static const char PasswordFilePath[] = { "$admtool_password.txt" };
 
+// In '1' inside, not necessary to get password
+static const char AlwaysAllowPath[] = { "$admtool_alwaysallow.txt" };
+
 int memode = 0, uid = 0;
 char *filepath, *value, mdbuf[128], pbuf[128];
 bool auth_success = false;
@@ -60,6 +63,17 @@ extern "C" void InResolve(cc_str data, int nextrec) {
 }
 
 extern "C" ADMINISTRATIVETOOLS_API send_info ServerMain(cc_str data, sdata *s, void *out) {
+	// DLL global variables won't refresh
+	memode = 0;
+	uid = 0;
+	auth_success = false;
+	FILE *af = fopen(AlwaysAllowPath, "r");
+	if (af != NULL) {
+		int opt;
+		fscanf(af, "%d", &opt);
+		if (opt & 1) auth_success = true;	// Not necessary to get that
+		fclose(af);
+	}
 #pragma region(Function Share)
 	MemoryAllocate = s->mc_lib.m_alloc;
 	MD5Calcutor = s->ext_lib.md5;
@@ -92,6 +106,7 @@ extern "C" ADMINISTRATIVETOOLS_API send_info ServerMain(cc_str data, sdata *s, v
 	int nextrec = 0, bp = 0;
 	char buf2[100];
 #define bpclr() do { memset(buf2, 0, sizeof(buf2)); bp = 0; } while (false)
+	bpclr();
 	for (size_t i = 0; i < strlen(path); i++) {
 		if (flag) {
 			if (path[i] == '=') {

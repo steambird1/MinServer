@@ -301,3 +301,4 @@ __pycache__/
 /write.exe
 /$log.txt
 /$admtool_password.txt
+*.dll
