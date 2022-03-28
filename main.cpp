@@ -101,7 +101,12 @@ public:
 		return MD5(source).toString();
 	}
 	static cc_str c_get(cc_str source) {
-		return get(source).c_str();
+		//return get(source).c_str();
+		// To make a new memory space.
+		string tmp = get(source);
+		char *res = new char[tmp.length() + 1];
+		strcpy(res, tmp.c_str());
+		return res;
 	}
 };
 
