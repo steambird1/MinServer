@@ -5,8 +5,8 @@
 
 static const char PasswordFilePath[] = { "$admtool_password.txt" };
 
-int memode = 0;
-char *filepath, mdbuf[128];
+int memode = 0, uid = 0;
+char *filepath, *value, mdbuf[128];
 bool auth_success = false;
 
 mem_alloc MemoryAllocate;
@@ -24,10 +24,13 @@ extern "C" c_str CopyStr(cc_str target, int len = -1) {
 }
 
 extern "C" void InResolve(cc_str data, int nextrec) {
+	FILE *f = nullptr;
 	switch (nextrec) {
 	case 1:
 		// Method
 		if (StringEqual(data, "publish")) memode = 1;
+		else if (StringEqual(data, "setown")) memode = 2;
+		else if (StringEqual(data, "md5")) memode = 3;
 		break;
 	case 2:
 		// 'file'
@@ -36,7 +39,7 @@ extern "C" void InResolve(cc_str data, int nextrec) {
 	case 3:
 		// 'password'
 		// Make auth.
-		FILE *f = fopen(PasswordFilePath, "r");
+		f = fopen(PasswordFilePath, "r");
 		char test[120];
 		GetCurrentDirectoryA(120, test);
 		if (f != NULL) {
@@ -44,6 +47,14 @@ extern "C" void InResolve(cc_str data, int nextrec) {
 			if (mdbuf[strlen(mdbuf) - 1] == '\n') mdbuf[strlen(mdbuf) - 1] = '\0';
 			if (StringEqual(MD5Calcutor(data), mdbuf)) auth_success = true;
 		}
+		break;
+	case 4:
+		// 'uid'
+		uid = atoi(data);
+		break;
+	case 5:
+		// 'value'
+		value = CopyStr(data);
 	}
 }
 
@@ -86,6 +97,8 @@ extern "C" ADMINISTRATIVETOOLS_API send_info ServerMain(cc_str data, sdata *s, v
 				if (strcmp(buf2, "method") == 0) nextrec = 1;
 				else if (strcmp(buf2, "file") == 0) nextrec = 2;
 				else if (strcmp(buf2, "password") == 0) nextrec = 3;
+				else if (strcmp(buf2, "uid") == 0) nextrec = 4;
+				else if (strcmp(buf2, "value") == 0) nextrec = 5;
 				else nextrec = 0;
 				bpclr();
 			}
@@ -126,15 +139,26 @@ extern "C" ADMINISTRATIVETOOLS_API send_info ServerMain(cc_str data, sdata *s, v
 		f = fopen(s->cal_lib.public_file_path, "a");
 		fprintf(f, "%s\n", filepath);
 		fclose(f);
-		// Send 'success' message.
-		tmp = (char*)s->mc_lib.m_alloc(sizeof(char)*(strlen(sendup) + strlen(success) + 20));
-		sprintf(tmp, sendup, 200, "OK", strlen(success), success);
+		goto success;
+	case 2:
+		s->cal_lib.uop_chp(filepath, uid, -1);
+		goto success;
+	case 3:
+		tmp = (char*)s->mc_lib.m_alloc(sizeof(char)*(strlen(sendup) + 80));
+		strcpy(mdbuf, MD5Calcutor(value));
+		sprintf(tmp, sendup, 200, "OK", strlen(mdbuf), mdbuf);
 		break;
 	default:
 		// Send 'nothing' message.
 		tmp = (char*)s->mc_lib.m_alloc(sizeof(char)*(strlen(sendup) + strlen(badoper) + 50));
 		sprintf(tmp, sendup, 500, "Not Implemented", strlen(badoper), badoper);
 	}
+
+	goto dsend;
+
+	// Send 'success'
+	success: tmp = (char*)s->mc_lib.m_alloc(sizeof(char)*(strlen(sendup) + strlen(success) + 20));
+	sprintf(tmp, sendup, 200, "OK", strlen(success), success);
 
 	// Default sender
 	dsend: se.cdata = CopyStr(tmp);
