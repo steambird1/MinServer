@@ -727,7 +727,7 @@ void bytes::release()
 		 }
 		 else tmp += c[i];
 	 }
-	 t.erase(t.begin());		// Erase first unused information
+	 if (t.size()) t.erase(t.begin());		// Erase first unused information
 	 //p.content += tmp;
 	 t.push_back(p);
 	 return t;

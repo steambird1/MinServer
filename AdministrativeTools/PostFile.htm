@@ -1,0 +1,33 @@
+<HTML>
+<HEAD>
+<META NAME="GENERATOR" Content="Microsoft Visual Studio">
+<TITLE></TITLE>
+</HEAD>
+<BODY>
+
+    <script>
+        function poster() {
+            document.getElementById("postform").action = "http://" + document.getElementById("ipaddr").value + "/uploader";
+            document.getElementById("inputter").name = document.getElementById("filename").value;
+            document.getElementById("postform").submit();
+            alert("Operation completed successfully")
+        }
+    </script>
+
+    <h1>Upload file</h1>
+    <h2>Step 1. Input IP Address of MinServer</h2>
+    <input type="text" id="ipaddr" value="" />
+
+    <br />
+    <h2>Step 2. Input file name</h2>
+    <input type="text" id="filename" value="" />
+
+    <!-- Just a example. Please replace it to your IP. -->
+    <form action="http://localhost/uploader" method="post" id="postform" enctype="multipart/form-data" >
+        <input type="file" id="inputter" name="test.html" />
+    </form>
+
+    <button onclick="poster();">Submit</button>
+
+</BODY>
+</HTML>
