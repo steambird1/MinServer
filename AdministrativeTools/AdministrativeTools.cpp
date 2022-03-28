@@ -6,7 +6,7 @@
 static const char PasswordFilePath[] = { "$admtool_password.txt" };
 
 int memode = 0, uid = 0;
-char *filepath, *value, mdbuf[128];
+char *filepath, *value, mdbuf[128], pbuf[128];
 bool auth_success = false;
 
 mem_alloc MemoryAllocate;
@@ -45,7 +45,8 @@ extern "C" void InResolve(cc_str data, int nextrec) {
 		if (f != NULL) {
 			fgets(mdbuf, 128, f);
 			if (mdbuf[strlen(mdbuf) - 1] == '\n') mdbuf[strlen(mdbuf) - 1] = '\0';
-			if (StringEqual(MD5Calcutor(data), mdbuf)) auth_success = true;
+			strcpy(pbuf, MD5Calcutor(data));
+			if (StringEqual(pbuf, mdbuf)) auth_success = true;
 		}
 		break;
 	case 4:
@@ -71,7 +72,7 @@ extern "C" ADMINISTRATIVETOOLS_API send_info ServerMain(cc_str data, sdata *s, v
 	static const char sendup[] = { "HTTP/1.1 %d %s\nContent-Type: text/plain\nContent-Length: %d\n\n%s" };
 	static const char badoper[] = { "Operation not exist" };
 	static const char success[] = { "Operation completed successfully" };
-	static const char noauth[] = { "Please login first" };
+	static const char noauth[] = { "Please login first\nYour password MD5: %s" };
 #pragma endregion
 	
 #pragma region(Resolver)
@@ -129,8 +130,12 @@ extern "C" ADMINISTRATIVETOOLS_API send_info ServerMain(cc_str data, sdata *s, v
 	FILE *f = nullptr;
 
 	if (!auth_success) {
-		tmp = (char*)s->mc_lib.m_alloc(sizeof(char)*(strlen(sendup) + strlen(noauth) + 20));
-		sprintf(tmp, sendup, 200, "OK", strlen(noauth), noauth);
+		char *wtmp = nullptr;
+		wtmp = (char*)s->mc_lib.m_alloc(sizeof(char)*(strlen(noauth) + strlen(pbuf) + 20));
+		sprintf(wtmp, noauth, pbuf);
+		tmp = (char*)s->mc_lib.m_alloc(sizeof(char)*(strlen(sendup) + strlen(wtmp) + 20));
+		sprintf(tmp, sendup, 200, "OK", strlen(wtmp), wtmp);
+		s->mc_lib.m_free(wtmp);
 		goto dsend;
 	}
 
