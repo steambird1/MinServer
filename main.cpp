@@ -850,7 +850,7 @@ void normalSender(ssocket &s, string path, string external, int recesuive = 0) {
 							cout_d << "Allocated length for buf: " << t + 20 << endl_d;
 							char *buf = new char[t + 20];	// Also added ua/pa spaces
 							//      Buffer|Template|Args -->
-							sprintf(buf, s.c_str(), hinfo.process.c_str(), hinfo.proto_ver.c_str(), hp.first.c_str(), ha.c_str(), ua.c_str(), pa.c_str(), curr_ip.length());
+							sprintf(buf, s.c_str(), hinfo.process.c_str(), hinfo.proto_ver.c_str(), hp.first.c_str(), ha.c_str(), ua.c_str(), pa.c_str(), curr_ip.c_str());
 							//cout << "Builtin scripts: " << endl << buf << endl << "== END ==" << endl;
 							fprintf(fr, "// Args\n%s\n", buf);
 							// End
