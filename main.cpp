@@ -665,6 +665,7 @@ void releaseCReceiver(c_recv_info &r) {
 	delete[] r.content;
 }
 
+string curr_ip = "";
 
 void normalSender(ssocket &s, string path, string external, int recesuive = 0) {
 	if (recesuive > max_recesuive) {
@@ -842,12 +843,14 @@ void normalSender(ssocket &s, string path, string external, int recesuive = 0) {
 
 							if (!ua.length()) ua = " ";	// To be not really empty ???
 							if (!pa.length()) pa = " ";
+							
+							t += curr_ip.length();
 
 							// Print
 							cout_d << "Allocated length for buf: " << t + 20 << endl_d;
 							char *buf = new char[t + 20];	// Also added ua/pa spaces
 							//      Buffer|Template|Args -->
-							sprintf(buf, s.c_str(), hinfo.process.c_str(), hinfo.proto_ver.c_str(), hp.first.c_str(), ha.c_str(), ua.c_str(), pa.c_str());	// Fails here, but why?
+							sprintf(buf, s.c_str(), hinfo.process.c_str(), hinfo.proto_ver.c_str(), hp.first.c_str(), ha.c_str(), ua.c_str(), pa.c_str(), curr_ip.length());
 							//cout << "Builtin scripts: " << endl << buf << endl << "== END ==" << endl;
 							fprintf(fr, "// Args\n%s\n", buf);
 							// End
@@ -1218,6 +1221,7 @@ string ban_path = "$bans.txt";
 		s.receive(hinfo);
 		post_infolist.clear();
 		string sp = s.get_paddr();
+		curr_ip = sp;
 		visit[sp]++;
 		if (vislog) {
 			FILE *vl = fopen(log_path.c_str(), "a");
