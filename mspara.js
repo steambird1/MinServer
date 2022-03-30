@@ -10,5 +10,6 @@ var pageinfo = {
     ],
     post_args: [
         %s
-    ]
+    ],
+    ip_address: "%s"
 };
