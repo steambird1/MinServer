@@ -123,7 +123,7 @@ const bytes no_perm_d = "<html><head><title>Forbidden - 403</title></head><body>
 bytes not_found_c = not_found_d, not_supported_c = not_supported_d, no_perm_c = no_perm_d;
 
 // !! It requires sprintf() with redirection information !!
-string ok = "<html><head><title>OK - 200</title></head><body><h1>OK</h1><p>Requested operation completed successfully.</p>%s<hr /><p>MinServer 2.0</p></body></html>";
+string ok = "<html><head><title>OK - 200</title></head><body><h1>OK</h1><p>Requested operation completed successfully.</p>%s<hr /><p>MinServer " MINSERVER_VER "</p></body></html>";
 // !! It requires sprintf() for the link and ENCODED LINK and sprintf to 'ok' !!
 string redirect = "<p>You are going to be redirect. If this page does not redirect automaticly, click <a href=\"%s\">here</a>.</p><script>window.location.href = \"%s\"</script>";
 
