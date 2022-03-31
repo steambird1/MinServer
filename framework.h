@@ -74,6 +74,7 @@ public:
 	bytes(char b);
 	bytes(const bytes &other);
 	~bytes();
+	void preallocate(size_t size);
 	void release();
 	void clear();
 	void fill(char c);
@@ -95,9 +96,9 @@ public:
 	// Fuck optimize
 	//~bytes() = delete;
 private:
-	void realloc(size_t sz);
+	void realloc(size_t sz, bool setlen = true);
 	char *byte_space;
-	size_t len;
+	size_t len, capacity = 0;
 };
 
 bytes operator + (const bytes& a, string v);

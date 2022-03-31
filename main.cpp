@@ -1219,6 +1219,9 @@ string ban_path = "$bans.txt";
 		}
 		hinfo.content.release();
 		s.receive(hinfo);
+		for (auto &i : post_infolist) {
+			i.content.release();
+		}
 		post_infolist.clear();
 		string sp = s.get_paddr();
 		curr_ip = sp;

@@ -41,20 +41,26 @@
 	 decst++;
  }
 
+ void bytes::preallocate(size_t size)
+ {
+	 realloc(size, false);
+ }
+
 void bytes::release()
  {
 	if (this->byte_space != nullptr && this->len) {
 		delete[] this->byte_space;
 		this->byte_space = nullptr;
 	 }
+	this->capacity = 0;
 	 this->len = 0;
  }
 
  void bytes::clear()
 {
-	this->byte_space = nullptr;
-	this->len = 0;
-	 //release();
+	 this->byte_space = nullptr;
+	 this->len = 0;
+	 this->capacity = 0;
 }
 
  void bytes::fill(char c)
@@ -67,7 +73,13 @@ void bytes::release()
  void bytes::add(const char * bytes, size_t sz)
 {
 	size_t tl = this->len;
+	// Debugger
+	//printf("Before allocate: capa=%d, len=%d\n", this->capacity, this->len);
+	// End
 	this->realloc(tl + sz);
+	// Debugger
+	//printf("After allocate: capa=%d, len=%d\n", this->capacity, this->len);
+	// End
 	memcpy(this->byte_space + tl, bytes, sizeof(char)*sz);
 }
 
@@ -78,7 +90,8 @@ void bytes::release()
 		 size_t target = pos + count;
 		 this->byte_space[i] = byte_space[target];
 	 }
-	 realloc(length() - count);
+	 //realloc(length() - count);
+	 this->len -= count;
  }
 
  void bytes::pop_back(size_t count)
@@ -154,9 +167,9 @@ void bytes::release()
 	 return toString();
  }
 
- void bytes::realloc(size_t sz)
+ void bytes::realloc(size_t sz, bool setlen)
 {
-	if (sz < this->len)
+	if (sz < this->capacity)
 		return;
 	char *bs_old = nullptr;
 	if (this->len) {
@@ -172,7 +185,8 @@ void bytes::release()
 		delete[] bs_old;
 	}
 	this->byte_space[sz] = char(0);
-	this->len = sz;
+	if (setlen) this->len = sz;
+	this->capacity = sz;
 }
 
  bytes operator+(const bytes& a, string v)
@@ -445,6 +459,7 @@ void bytes::release()
 		 return;
 	 }
 	 int l = atoi(h.attr["Content-Length"].c_str());
+	 h.content.preallocate(l);
 	 //for (; i != lf.end(); i++) {
 		 // Oh! We can't do that.
 		 //h.content += ((*i) + '\n');
@@ -702,8 +717,11 @@ void bytes::release()
 				 //if (p.content.length()) p.content.pop_back();
 				 t.push_back(p);
 				 p = post_info();
+				 p.content.preallocate(this->content.length());
 				 p.boundary = tmp.toString();
-				 tmp.clear();
+				 //tmp.clear();
+				 tmp.release();
+				 tmp.preallocate(this->content.length());
 				 continue;
 			 }
 			 else if (state == 1) {
