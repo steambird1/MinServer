@@ -14,6 +14,9 @@
 //#include "c_framework.h"
 using namespace std;
 
+// Didn't I save changes?
+#define MINSERVER_VER "2.3e"
+
 BOOL FindFirstFileExists(LPCSTR lpPath, DWORD dwFilter)
 {
 	WIN32_FIND_DATA fd;
@@ -113,9 +116,9 @@ string makeTemp(void) {
 	return s;
 }
 
-const bytes not_found_d = "<html><head><title>Page not found - 404</title></head><body><h1>404 Not found</h1><p>Requested page not found on this server.</p><hr /><p>MinServer 2.0</p></body></html>";
-const bytes not_supported_d = "<html><head><title>Not Implemented - 501</title></head><body><h1>501 Not Implemented</h1><p>Request not implemented by server.</p><hr /><p>MinServer 2.0</p></body></html>";
-const bytes no_perm_d = "<html><head><title>Forbidden - 403</title></head><body><h1>403 Forbidden</h1><p>You don't have permission to view this page. It might because:</p><ul><li>Your administrator doesn't give you the permission to view this page.</li><li>There are too many redirections.</li><li>Your IP is banned (if you can't view any page).</li></ul><hr /><p>MinServer 2.0</p></body></html>";
+const bytes not_found_d = "<html><head><title>Page not found - 404</title></head><body><h1>404 Not found</h1><p>Requested page not found on this server.</p><hr /><p>MinServer " MINSERVER_VER "</p></body></html>";
+const bytes not_supported_d = "<html><head><title>Not Implemented - 501</title></head><body><h1>501 Not Implemented</h1><p>Request not implemented by server.</p><hr /><p>MinServer " MINSERVER_VER "</p></body></html>";
+const bytes no_perm_d = "<html><head><title>Forbidden - 403</title></head><body><h1>403 Forbidden</h1><p>You don't have permission to view this page. It might because:</p><ul><li>Your administrator doesn't give you the permission to view this page.</li><li>There are too many redirections.</li><li>Your IP is banned (if you can't view any page).</li></ul><hr /><p>MinServer " MINSERVER_VER "</p></body></html>";
 
 bytes not_found_c = not_found_d, not_supported_c = not_supported_d, no_perm_c = no_perm_d;
 
