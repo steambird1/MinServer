@@ -46,8 +46,20 @@
 	 realloc(size, false);
  }
 
+ void bytes::shrink()
+ {
+	 const char *ca = this->toCharArray();
+	 size_t sl = this->len;
+	 this->release();
+	 //this->len = 0;
+	 //this->capacity = 0;
+	 //delete[] this->byte_space;
+	 this->add(ca, sl);
+ }
+
 void bytes::release()
  {
+	//this->shrink();
 	if (this->byte_space != nullptr && this->capacity) {
 		delete[] this->byte_space;
 		this->byte_space = nullptr;
@@ -59,7 +71,10 @@ void bytes::release()
  void bytes::clear()
 {
 //	 this->byte_space = nullptr;
-	 if (this->capacity) memset(this->byte_space, 0, sizeof(char)*this->capacity);
+	 if (this->capacity) {
+		 this->byte_space[0] = char(0);
+		 //memset(this->byte_space, 0, sizeof(char)*this->capacity);
+	 }
 	 this->len = 0;
 //	 this->capacity = 0;
 }
@@ -82,7 +97,6 @@ void bytes::release()
 	//printf("After allocate: capa=%d, len=%d\n", this->capacity, this->len);
 	// End
 	memcpy(this->byte_space + tl, bytes, sizeof(char)*sz);
-	this->len += sz;
 }
 
  void bytes::erase(size_t pos, size_t count)
@@ -171,9 +185,9 @@ void bytes::release()
 
  void bytes::realloc(size_t sz, bool setlen)
 {
-	if (sz < this->capacity)
-		return;
-	char *bs_old = nullptr;
+	 char *bs_old = nullptr;
+	 if (sz <= this->capacity)
+		 goto slens;
 	if (this->len) {
 		bs_old = new char[this->len + 1];
 		memcpy(bs_old, this->byte_space, sizeof(char)*this->len);
@@ -187,8 +201,8 @@ void bytes::release()
 		delete[] bs_old;
 	}
 	this->byte_space[sz] = char(0);
-	if (setlen) this->len = sz;
 	this->capacity = sz;
+	slens: if (setlen) this->len = sz;
 }
 
  bytes operator+(const bytes& a, string v)
@@ -422,12 +436,18 @@ void bytes::release()
 	 string s = b.toString();
 	 vector<string> lf = splitLines(s.c_str());
 	 if (lf.size() < 1)
+	 {
+		 b.release();
 		 return;
+	 }
 	 // 1st line for informations
 	 vector<string> firstinf = splitLines(lf[0].c_str(), ' ');
 	 // [HTTP/?.?] [GET...] [/]
 	 if (firstinf.size() < 3)
+	 {
+		 b.release();
 		 return;
+	 }
 	 h.proto_ver = firstinf[2];
 	 h.process = firstinf[0];
 	 h.path = resolveHTTPSymbols(firstinf[1]);
@@ -442,7 +462,10 @@ void bytes::release()
 		 }
 		 vector<string> af = splitLines(i->c_str(), ':', true);
 		 if (af.size() < 2)
+		 {
+			 b.release();
 			 return;
+		 }
 		 h.attr[af[0]] = af[1];
 		 pos += i->length();
 		 while (b[pos] == '\r' || b[pos] == '\n') pos++;
@@ -678,14 +701,16 @@ void bytes::release()
 	 }
  }
 
- vector<post_info>&& http_recv::toPost()
+void http_recv::toPost(vector<post_info> &t)
  {
 	 // Files may contains special things...
+	static const char cs[] = { '\n' };
 	 const char *c = this->content.toCharArray();
 	 size_t l = this->content.length();
 	 string ba = toCType().boundary;
 	 if (ba == "") {
-		 return vector<post_info>();
+		 delete[] c;
+		 return;
 	 }
 	 bytes tmp;
 	 tmp.preallocate(this->content.length());
@@ -693,7 +718,7 @@ void bytes::release()
 					// 1 -- Args.
 	
 	 post_info p;
-	 vector<post_info> t;
+	 p.content.preallocate(this->content.length());
 	 bool flag = true;
 	 for (size_t i = 0; i < l; i++) {
 		 if (c[i] == '\n') {
@@ -716,35 +741,39 @@ void bytes::release()
 			 if (s == ba && state == 0) {
 				 // Start boundary execution
 				 state = 1;
-				 // Clear too much end-lines
-				 //if (p.content.length()) p.content.pop_back();
 				 t.push_back(p);
-				 p = post_info();
-				 p.content.preallocate(this->content.length());
+				 //p.content.release();
+				 //p = post_info();
+				 //p.content.preallocate(this->content.length());
+				 p.attr.clear();
+				 p.content.clear();	// Let consider not allocate it once again
 				 p.boundary = tmp.toString();
-				 //tmp.clear();
-				 tmp.release();
-				 tmp.preallocate(this->content.length());
-				 continue;
+				 tmp.clear();
+				 goto cont;
 			 }
 			 else if (state == 1) {
 				 if (s == "") {
 					 state = 0;
 					 tmp.clear();
-					 continue;
+					 goto cont;
 				 }
 				 vector<string> s = splitLines(tmp.toCharArray(), ':', true, ' ');
 				 if (s.size() < 2)
-					 continue;				// Probably 'r'
+					 goto cont;				// Probably 'r'
 				 p.attr[s[0]] = s[1];
 				 tmp.clear();
-				 continue;
+				 goto cont;
 			 }
 			 else {
-				 p.content += (tmp + '\n');
+				 tmp.add(cs, 1);
+				 p.content += tmp;
 				 tmp.clear();
-				 continue;
+				 goto cont;
 			 }
+			 // In order to release string s
+			 cont: s.clear();
+			 s.shrink_to_fit();
+			 //printf("%d\n", s.capacity());
 		 }
 		 else tmp += c[i];
 	 }
@@ -752,7 +781,8 @@ void bytes::release()
 	 //p.content += tmp;
 	 tmp.release();
 	 t.push_back(p);
-	 return move(t);
+	 p.content.release();
+	 delete[] c;
  }
 
  map<string, string> contentTypes()
@@ -801,7 +831,9 @@ void bytes::release()
  // It requires open in write/append binary.
  void post_info::saveContent(FILE * hnd)
  {
-	 fwrite(this->content.toCharArray(), sizeof(char), this->content.length(), hnd);
+	 const char *c = this->content.toCharArray();
+	 fwrite(c, sizeof(char), this->content.length(), hnd);
+	 delete[] c;
  }
 
  disp_info post_info::toDispInfo()

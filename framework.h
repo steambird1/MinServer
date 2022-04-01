@@ -21,12 +21,12 @@ using namespace std;
 #define SEABIRD_NET_FRAMEWORK
 
 // Change if code changed.
-#define SEABIRD_NET_FRAMEWORK_VER 202201L
+#define SEABIRD_NET_FRAMEWORK_VER 202204L
 
 // Change if STRUCTURE or its PUBLIC BEHAIVOR changed.
 // Not include BUG (NOT FEATURE) FIXES.
 #define SEABIRD_NET_STRUCTURE_VER 2
-#define SEABIRD_NET_STRUCTURE_SUBVER 2
+#define SEABIRD_NET_STRUCTURE_SUBVER 3
 
 #define SEABIRD_NET_DEBUG 0
 #if SEABIRD_NET_DEBUG == 1
@@ -75,6 +75,7 @@ public:
 	bytes(const bytes &other);
 	~bytes();
 	void preallocate(size_t size);
+	void shrink();
 	void release();
 	void clear();
 	void fill(char c);
@@ -148,7 +149,7 @@ struct http_recv {
 	void release();
 	path_info toPaths();		// To split path
 	content_info toCType();		// To Content-Type information
-	vector<post_info>&& toPost();	// To POST informations
+	void toPost(vector<post_info> &t);	// To POST informations
 };
 
 struct http_send {

@@ -604,7 +604,9 @@ inline c_recv_info getMyReceiver(http_recv &hinfo) {
 	c_recv_info rc;
 	rc.attr.param = new c_pair[hinfo.attr.size() + 1];
 	if (hinfo.process == "POST") {
-		auto inf = hinfo.toPost();
+		//auto inf = hinfo.toPost();
+		vector<post_info> inf;
+		hinfo.toPost(inf);
 		rc.posts.param = new struct _single_cpost_info[inf.size() + 1];
 		rc.posts.len = inf.size();
 		size_t pos = 0;
@@ -674,7 +676,7 @@ void normalSender(ssocket &s, string path, string external, int recesuive = 0) {
 	}
 	// As the normal processor
 	if (hinfo.process == "POST")
-		post_infolist = hinfo.toPost(); // Can be safe only here
+		hinfo.toPost(post_infolist); // Can be safe only here
 	pair<string, string> m;
 	m.first = path;
 	m.second = external;
@@ -927,6 +929,13 @@ s.release_prev();
 }
 
 bool vislog = true;
+
+inline void postClear() {
+	for (auto &i : post_infolist) {
+		i.content.release();
+	}
+	post_infolist.clear();
+}
 
 int main(int argc, char* argv[]) {
 #if MINSERVER_DEBUG == 4
@@ -1219,10 +1228,7 @@ string ban_path = "$bans.txt";
 		}
 		hinfo.content.release();
 		s.receive(hinfo);
-		for (auto &i : post_infolist) {
-			i.content.release();
-		}
-		post_infolist.clear();
+		postClear();
 		string sp = s.get_paddr();
 		curr_ip = sp;
 		visit[sp]++;
@@ -1615,7 +1621,7 @@ string ban_path = "$bans.txt";
 				sndinfo.content = not_supported;
 				*/
 
-				post_infolist = hinfo.toPost();
+				hinfo.toPost(post_infolist);
 				int uids = 0;
 				if (path_pinfo.exts.count("utoken"))
 				{
@@ -1722,6 +1728,7 @@ s.release_prev();
 		sndinfo.content.release();
 		hinfo.release();
 		hinfo.content.release();
+		postClear();
 	/*sendup: bs = sndinfo.toSender();
 		s.sends(bs);
 		bs.release();
