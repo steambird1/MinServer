@@ -945,10 +945,17 @@ int main(int argc, char* argv[]) {
 	_CrtSetReportFile(_CRT_WARN, logHandle);
 #endif
 	//cout << "Running in directory: " << sCurrDir("example") << endl;
-	const char *cbt = new char[60];
+	
+	// Some of erase-tests.
+	/*bytes test = "abcdefghijklmn";
+	test.erase(1, 3);	// aef...n
+	test.pop_back(3);	// aefghijk
+	test.erase(1, 3);	// ahijk
+	cout << test.toString() << endl;
+	return 12;*/
+	// End. Seemes to be no problem ?
+
 	int tbuf = RCV_DEFAULT;
-//	cbt = c_boundary("text/html; boundary=------BoundaryInformationDataHereAAABBBCCCDDDEEEFFFGGG");
-//	cout_d << "C-Boundary tester:" << cbt << endl_d;
 	dll_err = new int;
 	
 	for (int i = 1; i < argc; i++) {

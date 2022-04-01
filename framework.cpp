@@ -105,8 +105,13 @@ void bytes::release()
 	 for (size_t i = pos; i < this->length(); i++) {
 		 size_t target = i + count;
 		 char torep = '\0';
-		 if (target < this->len) torep = byte_space[target];
-		 //printf("Erase move: %c [%d] -> %c [%d]\n", byte_space[i], i, torep, target);
+		 if (target < this->len) {
+			 torep = byte_space[target];
+		 }
+		 else {
+			 printf("Not getting in case of out-of-range: %d\n", target);
+		 }
+		 printf("Erase move: %c [%d] -> %c [%d]\n", byte_space[i], i, torep, target);
 		 this->byte_space[i] = torep;
 	 }
 	 //realloc(length() - count);
