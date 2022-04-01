@@ -712,11 +712,6 @@ void http_recv::toPost(vector<post_info> &t)
 	static const char cs[] = { '\n' };
 	 const char *c = this->content.toCharArray();
 	 size_t l = this->content.length();
-	 string ba = toCType().boundary;
-	 if (ba == "") {
-		 delete[] c;
-		 return;
-	 }
 	 bytes tmp;
 	 tmp.preallocate(this->content.length());
 	 int state = 0;	// 0 -- Normal data.
@@ -725,6 +720,12 @@ void http_recv::toPost(vector<post_info> &t)
 	 post_info p;
 	 p.content.preallocate(this->content.length());
 	 bool flag = true;
+	 auto tc = toCType();
+	 const string ba = tc.boundary;
+	 if (ba == "") {
+		 delete[] c;
+		 return;
+	 }
 	 for (size_t i = 0; i < l; i++) {
 		 if (c[i] == '\n') {
 			 // debug
@@ -737,7 +738,7 @@ void http_recv::toPost(vector<post_info> &t)
 			 // To proceed on if here is EOF.
 			 // debug begin
 #define s_shower()					printf("s:%s\n",s.toCharArray())
-			 s_shower();
+			 //s_shower();
 					 // debug end
 			 for (size_t i = 0; i < s.length(); i++) 
 				 if (s[i] == '\0') {
@@ -749,12 +750,13 @@ void http_recv::toPost(vector<post_info> &t)
 				 }
 			 while (s.length() && (s[s.length() - 1] == '\n' || s[s.length() - 1] == '\r')) s.pop_back();
 			 while (s.length() && s[0] == '-') {
-				 s_shower();
+				 //s_shower();
 				 s.erase(0);
 			 }
-			 // s.substr(s.length() - 2) == "--"
-			 s_shower();
+			 printf("End of erase\n");
+			 //s_shower();
 			 if (s.length() > 2 && s[s.length()-1] == '-' && s[s.length()-2] == '-') {
+				 s_shower();
 				 printf_d("EOB Checking...\n");
 				 //s = s.substr(0, s.length() - 2);
 				 s.pop_back();
@@ -764,6 +766,7 @@ void http_recv::toPost(vector<post_info> &t)
 			 }
 			 //printf_d("Debugger: s=\"%s\"\nDebugger:ba=\"%s\"\n", s.c_str(),ba.c_str());
 			 if (s == ba && state == 0) {
+				 s_shower();
 				 // Start boundary execution
 				 state = 1;
 				 t.push_back(p);
@@ -777,6 +780,7 @@ void http_recv::toPost(vector<post_info> &t)
 				 goto cont;
 			 }
 			 else if (state == 1) {
+				 s_shower();
 				 if (s.length() == 0) {
 					 state = 0;
 					 tmp.clear();
