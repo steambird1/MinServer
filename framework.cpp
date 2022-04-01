@@ -48,7 +48,7 @@
 
 void bytes::release()
  {
-	if (this->byte_space != nullptr && this->len) {
+	if (this->byte_space != nullptr && this->capacity) {
 		delete[] this->byte_space;
 		this->byte_space = nullptr;
 	 }
@@ -58,9 +58,10 @@ void bytes::release()
 
  void bytes::clear()
 {
-	 this->byte_space = nullptr;
+//	 this->byte_space = nullptr;
+	 if (this->capacity) memset(this->byte_space, 0, sizeof(char)*this->capacity);
 	 this->len = 0;
-	 this->capacity = 0;
+//	 this->capacity = 0;
 }
 
  void bytes::fill(char c)
@@ -748,6 +749,7 @@ void bytes::release()
 	 }
 	 if (t.size()) t.erase(t.begin());		// Erase first unused information
 	 //p.content += tmp;
+	 tmp.release();
 	 t.push_back(p);
 	 return move(t);
  }

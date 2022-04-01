@@ -1721,6 +1721,7 @@ s.release_prev();
 		}
 		sndinfo.content.release();
 		hinfo.release();
+		hinfo.content.release();
 	/*sendup: bs = sndinfo.toSender();
 		s.sends(bs);
 		bs.release();
