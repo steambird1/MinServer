@@ -101,10 +101,13 @@ void bytes::release()
 
  void bytes::erase(size_t pos, size_t count)
  {
-	 printf("Erase called");	// debugger !!
+	 //printf("Erase called\n");	// debugger !!
 	 for (size_t i = pos; i < this->length(); i++) {
-		 size_t target = pos + count;
-		 this->byte_space[i] = byte_space[target];
+		 size_t target = i + count;
+		 char torep = '\0';
+		 if (target < this->len) torep = byte_space[target];
+		 //printf("Erase move: %c [%d] -> %c [%d]\n", byte_space[i], i, torep, target);
+		 this->byte_space[i] = torep;
 	 }
 	 //realloc(length() - count);
 	 this->len -= count;
@@ -112,7 +115,9 @@ void bytes::release()
 
  void bytes::pop_back(size_t count)
  {
-	 erase(length() - count, count);
+	 //erase(length() - count, count);
+	 //this->byte_space[this->len - count] = char(0);
+	 this->len -= count;
  }
 
  char bytes::front()
@@ -726,14 +731,34 @@ void http_recv::toPost(vector<post_info> &t)
 			 printf_d("Debugger: state=%d, tmp: %s\n", state, tmp.toCharArray());
 			 // end
 			 bool wflag = false;
-			 string s = tmp.toString();
-			 //if (!s.empty()) s.pop_back();	// Here wasn't this kind of thing ('r').
+			 // Could I make it out of string?
+			 //string s = tmp.toString();
+			 bytes &s = tmp;
+			 // To proceed on if here is EOF.
+			 // debug begin
+#define s_shower()					printf("s:%s\n",s.toCharArray())
+			 s_shower();
+					 // debug end
+			 for (size_t i = 0; i < s.length(); i++) 
+				 if (s[i] == '\0') {
+					 s.erase(i, s.length() - i);
+					 // debug begin
+					 //printf("s:%s\n", s.toCharArray());
+					 // debug end
+					 break;
+				 }
 			 while (s.length() && (s[s.length() - 1] == '\n' || s[s.length() - 1] == '\r')) s.pop_back();
-			 while (s.length() && s[0] == '-') s.erase(s.begin());
-//			 while (s.length() && s[s.length() - 1] == '-') s.pop_back();
-			 if (s.length() > 2 && s.substr(s.length() - 2) == "--") {
+			 while (s.length() && s[0] == '-') {
+				 s_shower();
+				 s.erase(0);
+			 }
+			 // s.substr(s.length() - 2) == "--"
+			 s_shower();
+			 if (s.length() > 2 && s[s.length()-1] == '-' && s[s.length()-2] == '-') {
 				 printf_d("EOB Checking...\n");
-				 s = s.substr(0, s.length() - 2);
+				 //s = s.substr(0, s.length() - 2);
+				 s.pop_back();
+				 s.pop_back();
 				 printf_d("EOB Info: \"%s\"\nEO Bound: \"%s\"", s.c_str(), ba.c_str());
 				 if (s == ba) break;	// End of processing already
 			 }
@@ -752,7 +777,7 @@ void http_recv::toPost(vector<post_info> &t)
 				 goto cont;
 			 }
 			 else if (state == 1) {
-				 if (s == "") {
+				 if (s.length() == 0) {
 					 state = 0;
 					 tmp.clear();
 					 goto cont;
@@ -771,8 +796,7 @@ void http_recv::toPost(vector<post_info> &t)
 				 goto cont;
 			 }
 			 // In order to release string s
-			 cont: s.clear();
-			 s.shrink_to_fit();
+		 cont: continue;//s.clear();
 			 //printf("%d\n", s.capacity());
 		 }
 		 else tmp += c[i];
