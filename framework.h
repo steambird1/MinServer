@@ -148,7 +148,7 @@ struct http_recv {
 	void release();
 	path_info toPaths();		// To split path
 	content_info toCType();		// To Content-Type information
-	vector<post_info> toPost();	// To POST informations
+	vector<post_info>&& toPost();	// To POST informations
 };
 
 struct http_send {

@@ -567,7 +567,7 @@ int max_recesuive = 50;
 
 // To same memory, use once:
 http_recv hinfo;
-vector<post_info> post_infolist;			// In file writes WOULD NOT SEND AS POST STANDARD
+auto &&post_infolist = vector<post_info>();			// In file writes WOULD NOT SEND AS POST STANDARD
 http_send sndinfo;
 const set<string> operations = { "file_operate", "auth_workspace", "uploader", "caller" };
 path_info path_pinfo;

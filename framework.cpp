@@ -676,7 +676,7 @@ void bytes::release()
 	 }
  }
 
- vector<post_info> http_recv::toPost()
+ vector<post_info>&& http_recv::toPost()
  {
 	 // Files may contains special things...
 	 const char *c = this->content.toCharArray();
@@ -686,6 +686,7 @@ void bytes::release()
 		 return vector<post_info>();
 	 }
 	 bytes tmp;
+	 tmp.preallocate(this->content.length());
 	 int state = 0;	// 0 -- Normal data.
 					// 1 -- Args.
 	
@@ -748,7 +749,7 @@ void bytes::release()
 	 if (t.size()) t.erase(t.begin());		// Erase first unused information
 	 //p.content += tmp;
 	 t.push_back(p);
-	 return t;
+	 return move(t);
  }
 
  map<string, string> contentTypes()
