@@ -82,6 +82,7 @@ void bytes::release()
 	//printf("After allocate: capa=%d, len=%d\n", this->capacity, this->len);
 	// End
 	memcpy(this->byte_space + tl, bytes, sizeof(char)*sz);
+	this->len += sz;
 }
 
  void bytes::erase(size_t pos, size_t count)
