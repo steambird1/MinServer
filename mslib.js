@@ -187,12 +187,12 @@ function mslib() {
         } else {
             ider = "&id=" + uid;
         }
-        this.xhobject.send("GET", this.u_operate + "?operate=create" + ider + "&passwd=" + passwd, false);
+        this.xhobject.open("GET", this.u_operate + "?operate=create" + ider + "&passwd=" + passwd, false);
         this.xhobject.send(null);
         if (this.xhobject.status != 200) {
             throw new msexception("User exists and requires login", 2);
         }
-        if (ider == null) {
+        if (ider == "") {
             return this.xhobject.responseText;
         }
     }
