@@ -15,7 +15,7 @@
 using namespace std;
 
 // Didn't I save changes?
-#define MINSERVER_VER "2.3h"
+#define MINSERVER_VER "2.4"
 
 BOOL FindFirstFileExists(LPCSTR lpPath, DWORD dwFilter)
 {
@@ -148,6 +148,7 @@ public:
 		return true;
 	}
 	static int uidof(int token) {
+		if (!token_to_uid.count(token)) return -1;
 		return token_to_uid[token];
 	}
 	static void release(int token) {

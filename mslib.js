@@ -197,6 +197,26 @@ function mslib() {
         }
     }
 
+    this.file_query = function (token) {
+        this.xhobject.open("GET", this.f_operate + "?operate=query&token=" + token, false);
+        this.xhobject.send(null);
+        if (this.xhobject.status != 200) {
+            throw new msexception("Specified token not exist", 3);
+        } else {
+            return this.xhobject.responseText;
+        }
+    }
+
+    this.user_query = function (token) {
+        this.xhobject.open("GET", this.u_operate + "?operate=query&token=" + token, false);
+        this.xhobject.send(null);
+        if (this.xhobject.status != 200) {
+            throw new msexception("Specified token not exist", 3);
+        } else {
+            return this.xhobject.responseText;
+        }
+    }
+
 }
 
 // Some tools useful

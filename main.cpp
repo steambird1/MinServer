@@ -60,7 +60,7 @@ public:
 	file_structure(int nptr = 0) : read_ok(false), write_ok(false) {
 		// For map or fclose_m()
 	}
-	file_structure(const char *filename, const char *operate) {
+	file_structure(const char *filename, const char *operate) : name(filename) {
 		size_t sl = strlen(operate);
 		for (size_t i = 0; i < sl; i++) {
 			if (roks.count(operate[i])) this->read_ok = true;
@@ -73,7 +73,7 @@ public:
 			this->write_ok = false;
 		}
 	}
-	file_structure(FILE *obj, bool rok, bool wok) : place(obj), read_ok(rok), write_ok(wok) {}
+	file_structure(FILE *obj, bool rok, bool wok, string name = "") : place(obj), read_ok(rok), write_ok(wok), name(name) {}
 	operator FILE*&() {
 		return this->place;
 	}
@@ -83,8 +83,12 @@ public:
 	bool writeable() {
 		return this->write_ok;
 	}
+	string myname() {
+		return this->name;
+	}
 private:
 	FILE *place;
+	string name;
 	bool read_ok, write_ok;
 };
 
@@ -364,6 +368,9 @@ public:
 
 		//	}
 	}
+	static int query(int utoken) {
+		return uidctrl::uidof(utoken);
+	}
 	static int allocnew(void) {
 		int r;
 		do {
@@ -429,6 +436,15 @@ public:
 				file_token[tk] = fp;
 				return tk;
 			}
+		}
+	}
+	// Empty means error
+	static string query(int token) {
+		if (file_token.count(token)) {
+			return file_token[token].myname();
+		}
+		else {
+			return "";
 		}
 	}
 };
@@ -1402,6 +1418,16 @@ string ban_path = "$bans.txt";
 						sndinfo.code_info = "Bad request";
 					}
 				}
+				else if (op == "query") {
+					string res = file_operator::query(atoi(path_pinfo.exts["token"].c_str()));
+					if (res == "") {
+						sndinfo.codeid = 400;
+						sndinfo.code_info = "Bad request";
+					}
+					else {
+						sndinfo.content = res;
+					}
+				}
 				else {
 					sndinfo.codeid = 501;
 					sndinfo.code_info = "Not Implemented";
@@ -1594,6 +1620,16 @@ string ban_path = "$bans.txt";
 					}
 					// End
 					//fclose_m(f);*/
+				}
+				else if (op == "query") {
+					int res = user_operator::query(atoi(path_pinfo.exts["token"].c_str()));
+					if (res < 0) {
+						sndinfo.codeid = 400;
+						sndinfo.code_info = "Bad request";
+					}
+					else {
+						sndinfo.content = to_string(res);
+					}
 				}
 				else {
 				sndinfo.codeid = 501;
