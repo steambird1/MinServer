@@ -149,6 +149,15 @@ void bytes::release()
 	return move(string(toCharArray()));
 }
 
+ void bytes::toString(string & dest)
+ {
+	 if (this->len <= 0)
+		 return;
+	 const char *tca = toCharArray();
+	 dest = tca;
+	 delete[] tca;
+ }
+
  size_t bytes::length()
 {
 	return this->len;
@@ -720,13 +729,15 @@ void http_recv::toPost(vector<post_info> &t)
 	 post_info p;
 	 p.content.preallocate(this->content.length());
 	 bool flag = true;
+	 string s = "";
 	 for (size_t i = 0; i < l; i++) {
 		 if (c[i] == '\n') {
 			 // debug
 			 printf_d("Debugger: state=%d, tmp: %s\n", state, tmp.toCharArray());
 			 // end
 			 bool wflag = false;
-			 string s = tmp.toString();
+			 //string s = tmp.toString();
+			 tmp.toString(s);
 			 //if (!s.empty()) s.pop_back();	// Here wasn't this kind of thing ('r').
 			 while (s.length() && (s[s.length() - 1] == '\n' || s[s.length() - 1] == '\r')) s.pop_back();
 			 while (s.length() && s[0] == '-') s.erase(s.begin());

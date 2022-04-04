@@ -87,6 +87,7 @@ public:
 	const char* toCharArray();
 	string toString();							// Please notices that string
 												// Will search '\0' and ignore informations after it automaticly.
+	void toString(string &dest);
 	size_t length();
 	void operator += (string v);
 	void operator += (const bytes& b);
