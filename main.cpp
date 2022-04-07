@@ -1,6 +1,7 @@
 #include "framework.h"
 #include "util.h"
 #include "md5.h"
+#include <memory.h>
 #include <iostream>
 #include <set>
 #include <psapi.h>
@@ -114,11 +115,23 @@ public:
 	}
 };
 
+#define NO_MEMORY_RECORDER
+#define USE_TRADITIONAL_C_HEAP
+
+#pragma region Heap Setting Alert
+#if !defined(NO_MEMORY_RECORDER) && !defined(USE_TRADITIONAL_C_HEAP)
+#error Bad heap setting!
+#endif
+#pragma endregion
+
 // Preparing for DLL manager.
 class memory_manager {
 public:
 	static void* allocate(size_t size) {
 		void *ptr = nullptr;
+#ifdef USE_TRADITIONAL_C_HEAP
+		ptr = calloc(size, 1);
+#else
 		try {
 			ptr = (void*) new char[size];
 		} catch (...) {
@@ -126,22 +139,22 @@ public:
 		}
 		
 		if (ptr != nullptr) {
+#ifndef NO_MEMORY_RECORDER
 			dll_mem += size;
 			// To make sure "I'm going to use it"?
 			//Memset moved to debug
 			ptr_mem[ptr] = size;
+#endif
 			memset(ptr, 0, sizeof(char)*size);
 		}
 		else {
 			setDLLError(2);
 		}
+#endif
 		return ptr;
 	}
 	static void release(void *ptr) {
-		/*
-		setDLLError(-1);
-		return;
-		*/
+#ifndef NO_MEMORY_RECORDER
 		if (!ptr_mem.count(ptr)) {
 			// Bad free
 			setDLLError(1);
@@ -151,15 +164,26 @@ public:
 			ptr_mem.erase(ptr);
 			delete[] ptr;
 		}
+#else
+#ifdef USE_TRADITIONAL_C_HEAP
+		free(ptr);
+#else
+		delete[] ptr;
+#endif
+#endif
 	}
 private:
+#ifndef NO_MEMORY_RECORDER
 	static size_t dll_mem;
 	// Unused for now:
 	static map<void*, size_t> ptr_mem;//Count memory usage.
+#endif
 };
+#ifndef NO_MEMORY_RECORDER
 // Allocate memory for it
 size_t memory_manager::dll_mem;
 map<void*, size_t> memory_manager::ptr_mem;
+#endif
 
 map<int, file_structure> file_token;
 
