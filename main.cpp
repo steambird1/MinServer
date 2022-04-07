@@ -119,8 +119,8 @@ public:
 #define USE_TRADITIONAL_C_HEAP
 
 #pragma region Heap Setting Alert
-#if !defined(NO_MEMORY_RECORDER) && !defined(USE_TRADITIONAL_C_HEAP)
-#error Bad heap setting!
+#if !defined(NO_MEMORY_RECORDER) && defined(USE_TRADITIONAL_C_HEAP)
+#error Bad setting
 #endif
 #pragma endregion
 
@@ -607,7 +607,7 @@ int max_recesuive = 50;
 
 // To same memory, use once:
 http_recv hinfo;
-auto &&post_infolist = vector<post_info>();			// In file writes WOULD NOT SEND AS POST STANDARD
+vector<post_info> post_infolist;
 http_send sndinfo;
 const set<string> operations = { "file_operate", "auth_workspace", "uploader", "caller" };
 path_info path_pinfo;
