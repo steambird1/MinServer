@@ -153,9 +153,7 @@ void bytes::release()
  {
 	 if (this->len <= 0)
 		 return;
-	 const char *tca = toCharArray();
-	 dest = tca;
-	 delete[] tca;
+	 dest = this->byte_space;
  }
 
  size_t bytes::length()
