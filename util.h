@@ -14,8 +14,8 @@
 //#include "c_framework.h"
 using namespace std;
 
-// Didn't I save changes?
-#define MINSERVER_VER "3.0a"
+// For some reasons
+#define MINSERVER_VER "3.0b"
 
 BOOL FindFirstFileExists(LPCSTR lpPath, DWORD dwFilter)
 {
