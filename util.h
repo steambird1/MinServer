@@ -108,10 +108,10 @@ int random(int bitm = 16) {
 	return n;
 }
 
-string makeTemp(void) {
+string makeTemp(string end_suffix = "") {
 	string s;
 	do {
-		s = string(getenv("temp")) + "\\" + to_string(random());
+		s = string(getenv("temp")) + "\\" + to_string(random()) + end_suffix;
 	} while (fileExists(s));
 	return s;
 }
@@ -157,6 +157,9 @@ public:
 	}
 	static int size() {
 		return token_to_uid.size();
+	}
+	static auto getmap() {
+		return token_to_uid;
 	}
 private:
 	static map<int, int> token_to_uid, uid_to_token;
