@@ -138,7 +138,9 @@
   <ItemGroup>
     <None Include="cpp.hint" />
     <None Include="mslib.js" />
+    <None Include="mslib.vbs" />
     <None Include="mspara.js" />
+    <None Include="mspara.vbs" />
     <None Include="README.md" />
   </ItemGroup>
   <ItemGroup>

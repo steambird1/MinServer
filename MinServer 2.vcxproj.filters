@@ -20,6 +20,9 @@
     <Filter Include="Documents">
       <UniqueIdentifier>{c89b2057-b5c1-44ac-999f-9c2f93646f59}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Local VBS files">
+      <UniqueIdentifier>{338b1eea-84e2-4025-9145-7ea819aad0a1}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="framework.cpp">
@@ -60,6 +63,12 @@
       <Filter>Documents</Filter>
     </None>
     <None Include="cpp.hint" />
+    <None Include="mslib.vbs">
+      <Filter>Local VBS files</Filter>
+    </None>
+    <None Include="mspara.vbs">
+      <Filter>Local VBS files</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Text Include="help.txt">
