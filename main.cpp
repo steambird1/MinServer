@@ -584,16 +584,65 @@ bytes send_temp = bytes();
 string curr_ip = "";
 string script_engine = "wscript";
 
+string vbStrAndQuotes(string origin, string replacement = "q") {
+	string res = "\"";
+	for (auto &i : origin) {
+		if (i == '"') {
+			res += "\" & " + replacement + " & \"";
+		}
+		else {
+			res += i;
+		}
+	}
+	return res + '"';
+}
+
+void appendAllContent(FILE *target, string filename) {
+	static bytes b;
+	b = readAll(filename);
+	fputs(b.toCharArray(), target);
+	b.release();
+}
+
 void ProcessVBSCaller(bytes &returned, string script_name) {
 	// 1. Prepare Args.
 	// To be implemented...
+	string vbs_tmp = makeTemp(".vbs");
 	string send_tmp = makeTemp();	// To make temp to get information to send
 	// Simply tell where VBS to save it information, automaticly appends script.
+	// Fill "PARA" (it uses before lib)
+	
+	// Save content IF NECESSARY
+	string save_dest = " ";	// To be not empty ??
+	if (hinfo.content.length()) {
+		save_dest = makeTemp();
+		FILE *f = fopen(save_dest.c_str(), "wb");
+		auto hct = hinfo.content.toCharArray();
+		fwrite(hct, sizeof(char), hinfo.content.length(), f);
+		fclose(f);
+	}
+	
+	// Initalize attr
+	string para = readAll("mspara.vbs").toString();
 
+	string attcode = "";
+	for (auto &i : hinfo.attr) {
+		attcode += "attr.add " + vbStrAndQuotes(i.first) + " , " + vbStrAndQuotes(i.second) + "\n";
+	}
 
+	FILE *fv = fopen(vbs_tmp.c_str(), "w");
+	fprintf(fv, para.c_str(), hinfo.proto_ver.c_str(), hinfo.process.c_str(), hinfo.path.toCharArray(), save_dest.c_str(), attcode.c_str());
 
+	// Write down LIB
+	appendAllContent(fv, sCurrDir("mslib.vbs"));
+
+	// Write down others
+	appendAllContent(fv, script_name);
+
+	fclose(fv);
+	
 	// 2. Call.
-	string cmd = script_engine + " \"" + script_name + "\" " + send_tmp;
+	string cmd = script_engine + " \"" + vbs_tmp + "\" " + send_tmp;
 	system(cmd.c_str());
 
 	// 3. Get return values.

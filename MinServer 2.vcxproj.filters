@@ -60,6 +60,12 @@
       <Filter>Documents</Filter>
     </None>
     <None Include="cpp.hint" />
+    <None Include="mslib.vbs">
+      <Filter>VBS Files</Filter>
+    </None>
+    <None Include="mspara.vbs">
+      <Filter>VBS Files</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Text Include="help.txt">

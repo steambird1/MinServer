@@ -108,10 +108,10 @@ int random(int bitm = 16) {
 	return n;
 }
 
-string makeTemp(void) {
+string makeTemp(string end_suffix = "") {
 	string s;
 	do {
-		s = string(getenv("temp")) + "\\" + to_string(random());
+		s = string(getenv("temp")) + "\\" + to_string(random()) + end_suffix;
 	} while (fileExists(s));
 	return s;
 }
