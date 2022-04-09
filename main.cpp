@@ -1577,7 +1577,7 @@ int main(int argc, char* argv[]) {
 			if (op == "publish") {
 				if (path_pinfo.exts.count("file")) {
 					FILE *f = fopen(public_file_path.c_str(), "a");
-					fprintf(f, "%s\n", path_pinfo.exts["file"]);
+					fprintf(f, "%s\n", path_pinfo.exts["file"].c_str());
 					fclose(f);
 				}
 				else {
