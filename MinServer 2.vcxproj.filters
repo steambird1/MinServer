@@ -20,6 +20,9 @@
     <Filter Include="Documents">
       <UniqueIdentifier>{c89b2057-b5c1-44ac-999f-9c2f93646f59}</UniqueIdentifier>
     </Filter>
+    <Filter Include="VBS Files">
+      <UniqueIdentifier>{4d8f11e8-c567-4202-9e7c-4541bbec60a6}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="framework.cpp">
@@ -40,9 +43,6 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="md5.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="c_framework.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="debugs.h">

@@ -6,7 +6,6 @@
 #include <set>
 #include <psapi.h>
 #define _CP_DEFINED
-#include "c_framework.h"
 //#include "c_framework.h"
 // For MSVC:
 #ifdef _MSC_VER
@@ -36,17 +35,6 @@ string dll_path = "$dlls.txt";
 string ban_path = "$bans.txt";
 string log_path = "$log.txt";
 int default_join_g = -1;
-
-// Use for C framework
-cc_str c_perm_data_path;// = "$permission.txt";
-cc_str c_user_data_path;// = "$users.txt";
-cc_str c_public_file_path;// = "$public.txt";
-cc_str c_group_path;// = "$groups.txt";
-cc_str c_assiocate_path;// = "$assiocate.txt";
-cc_str c_redirect_path; // = "$redirect.txt";
-cc_str c_dll_path;// = "$dlls.txt";
-cc_str c_ban_path;// = "$bans.txt";
-cc_str c_log_path;
 
 // Allocate ONCE
 char buf4[4096], buf5[4096];
@@ -104,14 +92,6 @@ class quick_md5 {
 public:
 	static string get(string source) {
 		return MD5(source).toString();
-	}
-	static cc_str c_get(cc_str source) {
-		//return get(source).c_str();
-		// To make a new memory space.
-		string tmp = get(source);
-		char *res = new char[tmp.length() + 1];
-		strcpy(res, tmp.c_str());
-		return res;
 	}
 };
 
@@ -474,13 +454,6 @@ public:
 
 // C Supportings
 extern "C" {
-	bool c_user_auth(int uid, cc_str textpwd) {
-		MD5 m = MD5(textpwd);
-		return (m.toString() == user_operator::quser(uid));
-	}
-	int c_file_open(int uid, cc_str filename, cc_str method) {
-		return file_operator::open(uid, filename, method);
-	}
 	double c_memory_usage(void) {
 		PROCESS_MEMORY_COUNTERS p;
 		GetProcessMemoryInfo(GetCurrentProcess(), &p, sizeof(p));
@@ -501,17 +474,6 @@ extern "C" {
 		// It's in maxinum of fopen().
 		double ft_free = 100.0 - (ft_use / 2.54);
 		return ft_free;
-	}
-	ip_info c_ip_health(void) {
-		ip_info res;
-		res.data = (struct _single_ip_info*)calloc(visit.size() + 1, sizeof(struct _single_ip_info));
-		res.len = visit.size();
-		int it = 0;
-		for (auto &i : visit) {
-			res.data[it].ip_addr = i.first.c_str();
-			res.data[it].ip_vis = i.second;
-		}
-		return res;
 	}
 	bool c_ug_query(int uid, int gid) {
 		return user_groups::query(uid).count(gid);
@@ -615,12 +577,6 @@ path_info path_pinfo;
 const bytes not_found = not_found_c;
 const bytes not_supported = not_supported_c;
 const bytes no_perm = no_perm_c;
-// Also got something as C
-cc_str ec403 = no_perm_c.toCharArray();
-cc_str ec404 = not_found_c.toCharArray();
-cc_str ec501 = not_supported_c.toCharArray();
-cc_str ec200_ok = ok.c_str();
-cc_str ec200_redirect = redirect.c_str();
 #pragma endregion
 
 bytes send_temp = bytes();
@@ -631,11 +587,13 @@ string script_engine = "wscript";
 void ProcessVBSCaller(bytes &returned, string script_name) {
 	// 1. Prepare Args.
 	// To be implemented...
-	string recv_tmp = makeTemp();	// To make temp to store received information for VBS
 	string send_tmp = makeTemp();	// To make temp to get information to send
+	// Simply tell where VBS to save it information, automaticly appends script.
+
+
 
 	// 2. Call.
-	string cmd = script_engine + " \"" + script_name + "\" " + recv_tmp + " " + send_tmp;
+	string cmd = script_engine + " \"" + script_name + "\" " + send_tmp;
 	system(cmd.c_str());
 
 	// 3. Get return values.
@@ -1099,24 +1057,6 @@ int main(int argc, char* argv[]) {
 	cout << "* Listening started at port " << portz << " *" << endl;
 	bytes bs;
 	bool downgraded = false, al_cause = false;
-#pragma region(C Initalizer)
-
-#define __initalizer_0(var) c_##var = var.c_str()
-	__initalizer_0(perm_data_path);
-	__initalizer_0(user_data_path);
-	__initalizer_0(group_path);
-	__initalizer_0(assiocate_path);
-	__initalizer_0(redirect_path);
-	__initalizer_0(dll_path);
-	__initalizer_0(ban_path);
-	__initalizer_0(log_path);
-	__initalizer_0(public_file_path);
-
-#ifdef __initalizer_0
-#undef __initalizer_0
-#endif
-
-#pragma endregion
 	// End
 	if (vislog) {
 		FILE *vl = fopen(log_path.c_str(), "a");
