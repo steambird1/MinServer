@@ -6,6 +6,7 @@
 #include <set>
 #include <psapi.h>
 #define _CP_DEFINED
+#include "c_framework.h"
 //#include "c_framework.h"
 // For MSVC:
 #ifdef _MSC_VER
@@ -35,6 +36,17 @@ string dll_path = "$dlls.txt";
 string ban_path = "$bans.txt";
 string log_path = "$log.txt";
 int default_join_g = -1;
+
+// Use for C framework
+cc_str c_perm_data_path;// = "$permission.txt";
+cc_str c_user_data_path;// = "$users.txt";
+cc_str c_public_file_path;// = "$public.txt";
+cc_str c_group_path;// = "$groups.txt";
+cc_str c_assiocate_path;// = "$assiocate.txt";
+cc_str c_redirect_path; // = "$redirect.txt";
+cc_str c_dll_path;// = "$dlls.txt";
+cc_str c_ban_path;// = "$bans.txt";
+cc_str c_log_path;
 
 // Allocate ONCE
 char buf4[4096], buf5[4096];
@@ -93,9 +105,18 @@ public:
 	static string get(string source) {
 		return MD5(source).toString();
 	}
+	static cc_str c_get(cc_str source) {
+		//return get(source).c_str();
+		// To make a new memory space.
+		string tmp = get(source);
+		char *res = new char[tmp.length() + 1];
+		strcpy(res, tmp.c_str());
+		return res;
+	}
 };
 
 #define NO_MEMORY_RECORDER
+#define USE_TRADITIONAL_C_HEAP
 
 #pragma region Heap Setting Alert
 #if !defined(NO_MEMORY_RECORDER) && defined(USE_TRADITIONAL_C_HEAP)
@@ -454,6 +475,13 @@ public:
 
 // C Supportings
 extern "C" {
+	bool c_user_auth(int uid, cc_str textpwd) {
+		MD5 m = MD5(textpwd);
+		return (m.toString() == user_operator::quser(uid));
+	}
+	int c_file_open(int uid, cc_str filename, cc_str method) {
+		return file_operator::open(uid, filename, method);
+	}
 	double c_memory_usage(void) {
 		PROCESS_MEMORY_COUNTERS p;
 		GetProcessMemoryInfo(GetCurrentProcess(), &p, sizeof(p));
@@ -474,6 +502,17 @@ extern "C" {
 		// It's in maxinum of fopen().
 		double ft_free = 100.0 - (ft_use / 2.54);
 		return ft_free;
+	}
+	ip_info c_ip_health(void) {
+		ip_info res;
+		res.data = (struct _single_ip_info*)calloc(visit.size() + 1, sizeof(struct _single_ip_info));
+		res.len = visit.size();
+		int it = 0;
+		for (auto &i : visit) {
+			res.data[it].ip_addr = i.first.c_str();
+			res.data[it].ip_vis = i.second;
+		}
+		return res;
 	}
 	bool c_ug_query(int uid, int gid) {
 		return user_groups::query(uid).count(gid);
@@ -563,7 +602,7 @@ void stat() {
 
 bool auto_release = true;
 
-map<string, string> acaller;	// acaller symbols VBS path as calling
+map<string, as_func> acaller;
 int max_recesuive = 50;
 
 // To same memory, use once:
@@ -577,86 +616,98 @@ path_info path_pinfo;
 const bytes not_found = not_found_c;
 const bytes not_supported = not_supported_c;
 const bytes no_perm = no_perm_c;
+// Also got something as C
+cc_str ec403 = no_perm_c.toCharArray();
+cc_str ec404 = not_found_c.toCharArray();
+cc_str ec501 = not_supported_c.toCharArray();
+cc_str ec200_ok = ok.c_str();
+cc_str ec200_redirect = redirect.c_str();
 #pragma endregion
 
 bytes send_temp = bytes();
 
-string curr_ip = "";
-string script_engine = "wscript";
-
-string vbStrAndQuotes(string origin, string replacement = "q") {
-	string res = "\"";
-	for (auto &i : origin) {
-		if (i == '"') {
-			res += "\" & " + replacement + " & \"";
-		}
-		else {
-			res += i;
-		}
-	}
-	return res + '"';
+const char* copyStr(const char *origin, int len = -1) {
+	int slen = len;
+	if (len < 0) slen = strlen(origin);
+	char *reg = new char[slen + 1];
+	strcpy(reg, origin);
+	return reg;
+	//return origin;
 }
 
-void appendAllContent(FILE *target, string filename) {
-	bytes b;
-	b = readAll(filename);
-	fputs(b.toCharArray(), target);
-	b.release();
+const char* copyStr(bytes origin) {
+	return copyStr(origin.toCharArray(), origin.length());
 }
 
-void ProcessVBSCaller(bytes &returned, string script_name) {
-	// 1. Prepare Args.
-	// To be implemented...
-	string vbs_tmp = makeTemp(".vbs");
-	string send_tmp = makeTemp();	// To make temp to get information to send
-	// Simply tell where VBS to save it information, automaticly appends script.
-	// Fill "PARA" (it uses before lib)
-	
-	// Save content IF NECESSARY
-	string save_dest = " ";	// To be not empty ??
-	if (hinfo.content.length()) {
-		save_dest = makeTemp();
-		FILE *f = fopen(save_dest.c_str(), "wb");
-		auto hct = hinfo.content.toCharArray();
-		fwrite(hct, sizeof(char), hinfo.content.length(), f);
-		fclose(f);
-	}
-	
-	// Initalize attr
-	string para = readAll("mspara.vbs").toString();
 
-	string attcode = "";
+inline c_recv_info getMyReceiver(http_recv &hinfo) {
+	c_recv_info rc;
+	rc.attr.param = new c_pair[hinfo.attr.size() + 1];
+	if (hinfo.process == "POST") {
+		//auto inf = hinfo.toPost();
+		vector<post_info> inf;
+		hinfo.toPost(inf);
+		rc.posts.param = new struct _single_cpost_info[inf.size() + 1];
+		rc.posts.len = inf.size();
+		size_t pos = 0;
+		for (auto &i : inf) {
+			size_t apos = 0;
+			auto &target = rc.posts.param[pos];
+			target.attr.len = i.attr.size();
+			target.attr.param = new c_pair[i.attr.size() + 1];
+			for (auto &j : i.attr) {
+				target.attr.param[apos].key = copyStr(j.first.c_str());
+				target.attr.param[apos].value = copyStr(j.second.c_str());
+			}
+			target.cs_len = 0;
+			if (i.attr.count("Content-Length")) target.cs_len = atoi(i.attr["Content-Length"].c_str());
+			target.content = copyStr(i.content);
+			pos++;
+		}
+		// Free memory space
+		for (auto &i : inf) {
+			i.content.release();
+		}
+	}
+	else {
+		rc.posts.len = 0;
+	}
+	rc.proto = copyStr(hinfo.proto_ver.c_str());
+	rc.method = copyStr(hinfo.process.c_str());
+	rc.path = copyStr(hinfo.path);			// toCharArray already works as copy
+	rc.attr.len = hinfo.attr.size();
+	rc.content = copyStr(hinfo.content);
+	size_t pos = 0;
 	for (auto &i : hinfo.attr) {
-		attcode += "attr.add " + vbStrAndQuotes(i.first) + " , " + vbStrAndQuotes(i.second) + "\n";
+		rc.attr.param[pos].key = copyStr(i.first.c_str());
+		//*(rc.attr.param + pos)->key = i.first;
+		rc.attr.param[pos].value = copyStr(i.second.c_str());
+		pos++;
 	}
-
-	string ufcode = "";
-	for (auto &i : file_token) {
-		ufcode += "ftokens.add " + to_string(i.first) + ", " + vbStrAndQuotes(i.second.myname()) + "\n";
-	}
-	for (auto &i : uidctrl::getmap()) {
-		ufcode += "utokens.add " + to_string(i.first) + "," + to_string(i.second) + "\n";
-	}
-
-	FILE *fv = fopen(vbs_tmp.c_str(), "w");
-	fprintf(fv, para.c_str(), hinfo.proto_ver.c_str(), hinfo.process.c_str(), hinfo.path.toCharArray(), save_dest.c_str(), attcode.c_str(), curr_ip.c_str(), ufcode.c_str());
-
-	// Write down LIB
-	appendAllContent(fv, sCurrDir("mslib.vbs"));
-
-	// Write down others
-	appendAllContent(fv, script_name);
-
-	fclose(fv);
-	
-	// 2. Call.
-	string cmd = script_engine + " \"" + vbs_tmp + "\" " + send_tmp;
-	system(cmd.c_str());
-
-	// 3. Get return values.
-
-	returned = readAll(send_tmp);
+	return move(rc);
 }
+
+void releaseCReceiver(c_recv_info &r) {
+	
+//	for (size_t i = 0; i < r.attr.len; i++) {
+//		delete[] r.attr.param[i].key;
+//		delete[] r.attr.param[i].value;
+//	}
+//	delete[] r.method;
+//	delete[] r.path;
+//	delete[] r.posts.boundary;
+	for (size_t i = 0; i < r.posts.len; i++) {
+		delete[] r.posts.param[i].content;
+//		for (size_t j = 0; j < r.posts.param[i].attr.len; j++) {
+//			delete[] r.posts.param[i].attr.param[j].key;
+//			delete[] r.posts.param[i].attr.param[j].value;
+//		}
+	}
+	
+	delete[] r.content;
+}
+
+string curr_ip = "";
 
 void normalSender(ssocket &s, string path, string external, int recesuive = 0) {
 	if (recesuive > max_recesuive) {
@@ -872,10 +923,26 @@ void normalSender(ssocket &s, string path, string external, int recesuive = 0) {
 				// First of all scan for existing assiocation
 				string ex = getExt(rpath);	// Get extension, surely contains '.'.
 				if (acaller.count(ex)) {
-					// To be focus...
-					bytes vb_to_send;
-					ProcessVBSCaller(vb_to_send, acaller[ex]);
-					s.sends(vb_to_send);
+					asdata *s_prep = new asdata;	// Memory leak before here
+					s_prep->ext_lib = { quick_md5::c_get };
+					s_prep->cal_lib = { uidctrl::request, uidctrl::vaild, uidctrl::uidof, uidctrl::release, c_user_auth, file_operator::release, c_file_open, c_memory_usage, c_utoken_usage, c_ftoken_usage, c_ip_health, user_groups::insert, user_groups::remove, c_ug_query, c_uo_mod, c_uo_chperm, c_uo_exists, ec403, ec404, ec501, ec200_ok, ec200_redirect, c_perm_data_path, c_user_data_path, c_public_file_path, c_group_path, c_assiocate_path, c_redirect_path, c_dll_path, c_ban_path, c_log_path };
+					s_prep->mc_lib = { memory_manager::allocate, memory_manager::release };
+					s_prep->m_error = dll_err;
+					c_recv_info rc = move(getMyReceiver(hinfo));
+					s_prep->rcv = &rc;
+					bytes &q = s.get_prev();
+					cc_str stc = q.toCharArray();
+					q.release();
+					send_info sc;
+					acaller[ex](stc, rpath.c_str(), s_prep, &sc);
+					//delete s_prep;
+					delete[] stc;
+					releaseCReceiver(rc);
+					//sndinfo.content.add(sc.cdata, sc.len);
+					bytes b;
+					b.add(sc.cdata, sc.len);
+					s.sends(b);
+					b.release();
 					goto after_sentup;
 				}
 				else {
@@ -911,6 +978,12 @@ inline void postClear() {
 }
 
 int main(int argc, char* argv[]) {
+#if MINSERVER_DEBUG == 4
+	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
+	HANDLE logHandle = CreateFile(".\\memory.log", GENERIC_WRITE, FILE_SHARE_WRITE | FILE_SHARE_READ, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+	_CrtSetReportMode(_CRT_WARN, _CRTDBG_MODE_FILE);
+	_CrtSetReportFile(_CRT_WARN, logHandle);
+#endif
 	//cout << "Running in directory: " << sCurrDir("example") << endl;
 	const char *cbt = new char[60];
 	int tbuf = RCV_DEFAULT;
@@ -918,7 +991,6 @@ int main(int argc, char* argv[]) {
 //	cout_d << "C-Boundary tester:" << cbt << endl_d;
 	dll_err = new int;
 	
-#pragma region(Preparing Parameters)
 	for (int i = 1; i < argc; i++) {
 		string it = argv[i];
 		if (it == "--default-page") {
@@ -1002,10 +1074,6 @@ int main(int argc, char* argv[]) {
 		} else if (it == "--no-visit-log") {
 			vislog = false;
 		}
-		else if (it == "--script-engine") {
-			script_engine = argv[i + 1];
-			i++;
-		}
 		else if (it == "--user-group") {
 			// User-group operations
 			string op = argv[i + 1];
@@ -1079,7 +1147,18 @@ int main(int argc, char* argv[]) {
 		return 0;
 		}
 	}
-#pragma endregion
+	/*
+	FILE *f = fopen(public_file_path.c_str(), "r"); 
+	if (f != NULL) {
+		while (!feof(f)) {
+			// buf uses begin
+			fgets(buf, MAX_PATH, f);
+			pub_fn.insert(buf);
+			// buf uses end
+		}
+		fclose_m(f);
+	}
+	*/
 	ssocket s = ssocket(portz, tbuf);
 	if (!s.vaild()) {
 		cout << "Can't bind or listen!" << endl;
@@ -1090,10 +1169,27 @@ int main(int argc, char* argv[]) {
 	FILE *fa = fopen(assiocate_path.c_str(), "r");
 	if (fa != NULL) {
 		while (!feof(fa)) {
-			// To be focus, changed as JS
 			// buf, buf2 uses begin
 			fscanf(fa, "%s%s", buf, buf2);	// DLLPath Extension
-			acaller[buf2] = buf;
+			HINSTANCE h = LoadLibrary(buf);
+			if (h == NULL) {
+				FreeLibrary(h);
+				cout << "Unable to assiocate: " << buf2 << " for " << buf << endl;
+				failure = true;
+			}
+			else {
+				as_func df = (as_func)GetProcAddress(h, "AssiocateMain");
+				if (df == NULL) {
+					FreeLibrary(h);
+					cout << "Unable to assiocate: " << buf2 << " for " << buf << endl;
+					failure = true;
+				}
+				else {
+					acaller[buf2] = df;
+				}
+				aldr++;
+				// Seemed to be not able to free
+			}
 			// buf, buf2 uses end
 		}
 		fclose(fa);
@@ -1114,6 +1210,37 @@ int main(int argc, char* argv[]) {
 	cout << "* Listening started at port " << portz << " *" << endl;
 	bytes bs;
 	bool downgraded = false, al_cause = false;
+	//volatile char leak_detector[] = { "TESTtestTESTtestTESTtestTESTtestTESTtest" };
+	
+	/*
+	Initalizes:
+	string perm_data_path = "$permission.txt";
+string user_data_path = "$users.txt";
+string public_file_path = "$public.txt";
+string group_path = "$groups.txt";
+string assiocate_path = "$assiocate.txt";
+string redirect_path = "$redirect.txt";
+string dll_path = "$dlls.txt";
+string ban_path = "$bans.txt";
+	*/
+#pragma region(C Initalizer)
+
+#define __initalizer_0(var) c_##var = var.c_str()
+	__initalizer_0(perm_data_path);
+	__initalizer_0(user_data_path);
+	__initalizer_0(group_path);
+	__initalizer_0(assiocate_path);
+	__initalizer_0(redirect_path);
+	__initalizer_0(dll_path);
+	__initalizer_0(ban_path);
+	__initalizer_0(log_path);
+	__initalizer_0(public_file_path);
+
+#ifdef __initalizer_0
+#undef __initalizer_0
+#endif
+
+#pragma endregion
 	// End
 	if (vislog) {
 		FILE *vl = fopen(log_path.c_str(), "a");
@@ -1126,6 +1253,12 @@ int main(int argc, char* argv[]) {
 			stat();
 			cout << endl << "* Listening at port " << portz << " *" << endl;
 		}
+#if MINSERVER_DEBUG == 4
+		cout << "Press any key to exit and view memory state" << endl;
+		if (_kbhit()) {
+			break;
+		}
+#endif
 		if (al_cause) cout << endl << "* Auto-release runned" << endl;
 		if (c_ftoken_usage() <= 0.0 || c_utoken_usage() <= 0.0) downgraded = true;
 		s.accepts();
@@ -1151,8 +1284,7 @@ int main(int argc, char* argv[]) {
 		sndinfo.code_info = "OK";
 		sndinfo.proto_ver = hinfo.proto_ver;
 		sndinfo.attr.clear();
-		//sndinfo.attr["Connection"] = "Keep-Alive";
-		sndinfo.attr["Connection"] = "Close";	// To be confirmed
+		sndinfo.attr["Connection"] = "Keep-Alive";
 		sndinfo.content.release();
 
 		send_temp.release();
@@ -1606,12 +1738,42 @@ int main(int argc, char* argv[]) {
 				sndinfo.code_info = "Forbidden";
 				goto sendup;
 			}
-				// To call VBS here, to focus
-			bytes ret;
-			ProcessVBSCaller(ret, fs);
-			s.sends(ret);
+				HINSTANCE h = LoadLibrary(fs.c_str());
+				d_func df = (d_func)GetProcAddress(h, "ServerMain");	// So uses as: const char* ServerMain(const char *receive)
+				if (df == NULL) {
+					FreeLibrary(h);
+					cout << "Warning: Error " << GetLastError() << " while loading ServerMain() of library " << md << endl;
+					sndinfo.codeid = 400;
+					sndinfo.code_info = "Bad Request";
+				}
+				else {
+					//sdata *s_prep = new sdata;
+					sdata s_prep;
+					s_prep.cal_lib = { uidctrl::request, uidctrl::vaild, uidctrl::uidof, uidctrl::release, c_user_auth, file_operator::release, c_file_open, c_memory_usage, c_utoken_usage, c_ftoken_usage, c_ip_health, user_groups::insert, user_groups::remove, c_ug_query, c_uo_mod, c_uo_chperm, c_uo_exists, ec403, ec404, ec501, ec200_ok, ec200_redirect, c_perm_data_path, c_user_data_path, c_public_file_path, c_group_path, c_assiocate_path, c_redirect_path, c_dll_path, c_ban_path, c_log_path };
+					s_prep.mc_lib = { memory_manager::allocate, memory_manager::release };
+					s_prep.m_error = dll_err;
+					s_prep.ext_lib = { quick_md5::c_get };
+					
+					c_recv_info rc = move(getMyReceiver(hinfo));
+					s_prep.rcv = &rc;
+					
+					bytes &b = s.get_prev();
+					const char *tc = b.toCharArray();
+					b.release();
+					send_info ds;
+					ds = df(tc, &s_prep, nullptr);
+					bytes bq;
+					bq.add(ds.cdata, ds.len);	// Leaks somewhere. Probably here.
+					cout_d << "Trans back: " << endl_d;
+					cout_d << b.toCharArray() << endl_d;
+					cout_d << "End" << endl_d;
+					s.sends(bq);
+					delete[] tc;
+					releaseCReceiver(rc);
+					b.release();
+					bq.release();
 					goto after_sentup;
-				
+				}
 }
 sendup: s.sends(sndinfo);
 bs.release();
@@ -1636,6 +1798,14 @@ s.release_prev();
 
 	WSACleanup();
 	s.end();
+
+	// View memory state
+#if MINSERVER_DEBUG == 4
+	system("cls");
+	_CrtDumpMemoryLeaks();
+	//system("pause");
+	CloseHandle(logHandle);
+#endif
 
 	return 0;
 }

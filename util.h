@@ -15,7 +15,7 @@
 using namespace std;
 
 // Didn't I save changes?
-#define MINSERVER_VER "3.0"
+#define MINSERVER_VER "2.4"
 
 BOOL FindFirstFileExists(LPCSTR lpPath, DWORD dwFilter)
 {
@@ -108,10 +108,10 @@ int random(int bitm = 16) {
 	return n;
 }
 
-string makeTemp(string end_suffix = "") {
+string makeTemp(void) {
 	string s;
 	do {
-		s = string(getenv("temp")) + "\\" + to_string(random()) + end_suffix;
+		s = string(getenv("temp")) + "\\" + to_string(random());
 	} while (fileExists(s));
 	return s;
 }
@@ -157,9 +157,6 @@ public:
 	}
 	static int size() {
 		return token_to_uid.size();
-	}
-	static auto getmap() {
-		return token_to_uid;
 	}
 private:
 	static map<int, int> token_to_uid, uid_to_token;
