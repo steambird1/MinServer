@@ -11,7 +11,16 @@ path = "%s"
 ' Content SAVE AS FILES, here shows path
 content_path = "%s"
 
-set attr = createobject("Scripting.Dictionary")
+' HTTP Attributes.
+set attr = CreateObject("Scripting.Dictionary")
+
+%s
+
+client_ip = "%s"
+
+' User tokens and file tokens.
+set utokens = CreateObject("Scripting.Dictionary")
+set ftokens = CreateObject("Scripting.Dictionary")
 
 %s
 

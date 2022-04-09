@@ -598,7 +598,7 @@ string vbStrAndQuotes(string origin, string replacement = "q") {
 }
 
 void appendAllContent(FILE *target, string filename) {
-	static bytes b;
+	bytes b;
 	b = readAll(filename);
 	fputs(b.toCharArray(), target);
 	b.release();
@@ -630,8 +630,16 @@ void ProcessVBSCaller(bytes &returned, string script_name) {
 		attcode += "attr.add " + vbStrAndQuotes(i.first) + " , " + vbStrAndQuotes(i.second) + "\n";
 	}
 
+	string ufcode = "";
+	for (auto &i : file_token) {
+		ufcode += "ftokens.add " + to_string(i.first) + ", " + vbStrAndQuotes(i.second.myname()) + "\n";
+	}
+	for (auto &i : uidctrl::getmap()) {
+		ufcode += "utokens.add " + to_string(i.first) + "," + to_string(i.second) + "\n";
+	}
+
 	FILE *fv = fopen(vbs_tmp.c_str(), "w");
-	fprintf(fv, para.c_str(), hinfo.proto_ver.c_str(), hinfo.process.c_str(), hinfo.path.toCharArray(), save_dest.c_str(), attcode.c_str());
+	fprintf(fv, para.c_str(), hinfo.proto_ver.c_str(), hinfo.process.c_str(), hinfo.path.toCharArray(), save_dest.c_str(), attcode.c_str(), curr_ip.c_str(), ufcode.c_str());
 
 	// Write down LIB
 	appendAllContent(fv, sCurrDir("mslib.vbs"));
@@ -646,8 +654,8 @@ void ProcessVBSCaller(bytes &returned, string script_name) {
 	system(cmd.c_str());
 
 	// 3. Get return values.
-	// To be implemented ...
-	returned = "HTTP/1.1 200 OK\nContent-Length: 2\n\nOK";
+
+	returned = readAll(send_tmp);
 }
 
 void normalSender(ssocket &s, string path, string external, int recesuive = 0) {

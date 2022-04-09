@@ -158,6 +158,9 @@ public:
 	static int size() {
 		return token_to_uid.size();
 	}
+	static auto getmap() {
+		return token_to_uid;
+	}
 private:
 	static map<int, int> token_to_uid, uid_to_token;
 };
