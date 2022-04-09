@@ -11,9 +11,15 @@ Specify:
 2. fname=
 */
 
+//mem_alloc MemoryAllocator;
+
+void* MemoryAllocator(size_t size) {
+	void *res = new (nothrow) byte[size];
+	return res;
+}
 
 extern "C" FILESEARCHER_API send_info ServerMain(const char *data, sdata *sdata, void *out) {
-//	recv_info rc = c_resolve(data, sdata->mc_lib.m_alloc);
+	//MemoryAllocator = sdata->mc_lib.m_alloc;
 	// What will happen if we not use c_resolve?
 	// Get raw path just from data, not caring about data remaining
 	char path[MAX_PATH * 3];
@@ -49,7 +55,7 @@ extern "C" FILESEARCHER_API send_info ServerMain(const char *data, sdata *sdata,
 					break;
 				case 2:
 					usesub = true;
-					subname = (char*)sdata->mc_lib.m_alloc(bp);
+					subname = (char*)MemoryAllocator(bp);
 					strcpy(subname, buf2);
 					break;
 				}
@@ -70,7 +76,7 @@ extern "C" FILESEARCHER_API send_info ServerMain(const char *data, sdata *sdata,
 			break;
 		case 2:
 			usesub = true;
-			subname = (char*)sdata->mc_lib.m_alloc(bp);
+			subname = (char*)MemoryAllocator(bp);
 			strcpy(subname, buf2);
 			break;
 		}
@@ -88,12 +94,14 @@ extern "C" FILESEARCHER_API send_info ServerMain(const char *data, sdata *sdata,
 			fscanf(rd, "%*d%s%*d", buf);	// Where 'buf' is the file name
 			int tt = strlen(buf);
 			le += (tt+1);
-			rtmp[pt] = (char*)sdata->mc_lib.m_alloc(tt + 1);
-			strcpy(rtmp[pt], buf);
+			rtmp[pt] = (char*)MemoryAllocator(tt + 1);
+			//strcpy(rtmp[pt], buf);
+			strncpy(rtmp[pt], buf, tt);
+			rtmp[tt] = '\0';
 			pt++;		// Last PT should be ignored
 		}
 		fclose(rd);
-		wtmp = (char*)sdata->mc_lib.m_alloc(le + pt + 40);
+		wtmp = (char*)MemoryAllocator(le + pt + 40);
 		memset(wtmp, 0, sizeof(wtmp));
 		for (size_t i = 0; i < pt; i++) {
 			if (usesub) {
@@ -102,18 +110,20 @@ extern "C" FILESEARCHER_API send_info ServerMain(const char *data, sdata *sdata,
 			sprintf(wtmp, "%s\n%s", wtmp, rtmp[i]);
 //			sdata->mc_lib.m_free(rtmp[i]);
 		}
-		tmp = (char*)sdata->mc_lib.m_alloc(strlen(wtmp) + strlen(sendup) + 40);
+		tmp = (char*)MemoryAllocator(strlen(wtmp) + strlen(sendup) + 40);
 		sprintf(tmp, sendup, 200, "OK", strlen(wtmp), wtmp);
 	}
 	else {
-		tmp = (char*)sdata->mc_lib.m_alloc(strlen(sendup)+40);
+		tmp = (char*)MemoryAllocator(strlen(sendup)+40);
 		sprintf(tmp, sendup, 500, "Internal server error", 0, "");
 	}
 	send_info s;
 	s.cdata = tmp;
 	s.len = strlen(tmp);
-	return s;
-	//(*out) = s;//??
 
-	//return {};
+	// End of sending
+	//MemoryRelease();
+
+	return s;
+
 }

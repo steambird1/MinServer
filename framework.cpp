@@ -137,8 +137,8 @@ void bytes::release()
 		 return "";
 	 char *memspec = new char[this->len + 2];
 	 memset(memspec, 0, sizeof(char)*this->len);
-	 memspec[this->len] = char(0);
 	 memcpy(memspec, this->byte_space, sizeof(char)*this->len);
+	 memspec[this->len] = memspec[this->len + 1] = char(0);
 	 return memspec;
 }
 
