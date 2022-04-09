@@ -34,6 +34,7 @@ string redirect_path = "$redirect.txt";
 string dll_path = "$dlls.txt";
 string ban_path = "$bans.txt";
 string log_path = "$log.txt";
+string adm_passwd_path = "$admpwd.txt";
 int default_join_g = -1;
 
 // Allocate ONCE
@@ -94,75 +95,6 @@ public:
 		return MD5(source).toString();
 	}
 };
-
-#define NO_MEMORY_RECORDER
-
-#pragma region Heap Setting Alert
-#if !defined(NO_MEMORY_RECORDER) && defined(USE_TRADITIONAL_C_HEAP)
-#error Bad setting
-#endif
-#pragma endregion
-
-// Preparing for DLL manager.
-class memory_manager {
-public:
-	static void* allocate(size_t size) {
-		void *ptr = nullptr;
-#ifdef USE_TRADITIONAL_C_HEAP
-		ptr = calloc(size, 1);
-#else
-		try {
-			ptr = (void*) new char[size];
-		} catch (...) {
-			return nullptr;
-		}
-		
-		if (ptr != nullptr) {
-#ifndef NO_MEMORY_RECORDER
-			dll_mem += size;
-			// To make sure "I'm going to use it"?
-			//Memset moved to debug
-			ptr_mem[ptr] = size;
-#endif
-			memset(ptr, 0, sizeof(char)*size);
-		}
-		else {
-			setDLLError(2);
-		}
-#endif
-		return ptr;
-	}
-	static void release(void *ptr) {
-#ifndef NO_MEMORY_RECORDER
-		if (!ptr_mem.count(ptr)) {
-			// Bad free
-			setDLLError(1);
-		}
-		else {
-			dll_mem -= ptr_mem[ptr];
-			ptr_mem.erase(ptr);
-			delete[] ptr;
-		}
-#else
-#ifdef USE_TRADITIONAL_C_HEAP
-		free(ptr);
-#else
-		delete[] ptr;
-#endif
-#endif
-	}
-private:
-#ifndef NO_MEMORY_RECORDER
-	static size_t dll_mem;
-	// Unused for now:
-	static map<void*, size_t> ptr_mem;//Count memory usage.
-#endif
-};
-#ifndef NO_MEMORY_RECORDER
-// Allocate memory for it
-size_t memory_manager::dll_mem;
-map<void*, size_t> memory_manager::ptr_mem;
-#endif
 
 map<int, file_structure> file_token;
 
@@ -570,7 +502,7 @@ int max_recesuive = 50;
 http_recv hinfo;
 vector<post_info> post_infolist;
 http_send sndinfo;
-const set<string> operations = { "file_operate", "auth_workspace", "uploader", "caller" };
+const set<string> operations = { "file_operate", "auth_workspace", "uploader", "caller", "administrative" };
 path_info path_pinfo;
 
 #pragma region(preparations)
@@ -910,6 +842,8 @@ inline void postClear() {
 	post_infolist.clear();
 }
 
+string admpwd = "";
+
 int main(int argc, char* argv[]) {
 	//cout << "Running in directory: " << sCurrDir("example") << endl;
 	const char *cbt = new char[60];
@@ -1085,6 +1019,15 @@ int main(int argc, char* argv[]) {
 		cout << "Can't bind or listen!" << endl;
 		exit(1);
 	}
+	cout << "Loading auth info..." << endl;
+	FILE *fd = fopen(adm_passwd_path.c_str(), "r");
+	// buf2 uses begin
+	if (fd != NULL) {
+		fgets(buf2, 100, fd);
+		admpwd = buf2;
+		fclose(fd);
+	}
+	// buf2 uses end
 	cout << "Loading assiocation..." << endl;
 	bool failure = false;
 	FILE *fa = fopen(assiocate_path.c_str(), "r");
@@ -1094,6 +1037,7 @@ int main(int argc, char* argv[]) {
 			// buf, buf2 uses begin
 			fscanf(fa, "%s%s", buf, buf2);	// DLLPath Extension
 			acaller[buf2] = buf;
+			aldr++;
 			// buf, buf2 uses end
 		}
 		fclose(fa);
@@ -1319,6 +1263,21 @@ int main(int argc, char* argv[]) {
 					else {
 						sndinfo.content = res;
 					}
+				}
+				else if (op == "list") {
+					// List files, instead of FileLister DLL
+					set<string> results;
+					FILE *f = fopen(perm_data_path.c_str(), "r");
+					while (!feof(f)) {
+						// buf uses begin
+						fscanf(f, "%*d%s%*d", buf);
+						results.insert(buf);
+					}
+					string res = "";
+					for (auto &i : results) {
+						res += i + "\n";
+					}
+					sndinfo.content = res;
 				}
 				else {
 					sndinfo.codeid = 501;
@@ -1612,6 +1571,26 @@ int main(int argc, char* argv[]) {
 			s.sends(ret);
 					goto after_sentup;
 				
+}
+			else if (path_pinfo.path[0] == "administrative") {
+			string op = path_pinfo.exts["operate"];
+			if (op == "publish") {
+				if (path_pinfo.exts.count("file")) {
+					FILE *f = fopen(public_file_path.c_str(), "a");
+					fprintf(f, "%s\n", path_pinfo.exts["file"]);
+					fclose(f);
+				}
+				else {
+					sndinfo.codeid = 400;
+					sndinfo.code_info = "Bad request";
+				}
+				
+			}
+			else {
+				sndinfo.codeid = 501;
+				sndinfo.code_info = "Not Implemented";
+				sndinfo.content = bytes(not_supported);
+			}
 }
 sendup: s.sends(sndinfo);
 bs.release();
