@@ -626,9 +626,21 @@ cc_str ec200_redirect = redirect.c_str();
 bytes send_temp = bytes();
 
 string curr_ip = "";
+string script_engine = "wscript";
 
-void ProcessVBSCaller(bytes &returned) {
+void ProcessVBSCaller(bytes &returned, string script_name) {
+	// 1. Prepare Args.
+	// To be implemented...
+	string recv_tmp = makeTemp();	// To make temp to store received information for VBS
+	string send_tmp = makeTemp();	// To make temp to get information to send
+
+	// 2. Call.
+	string cmd = script_engine + " \"" + script_name + "\" " + recv_tmp + " " + send_tmp;
+	system(cmd.c_str());
+
+	// 3. Get return values.
 	// To be implemented ...
+	returned = "HTTP/1.1 200 OK\nContent-Length: 2\n\nOK";
 }
 
 void normalSender(ssocket &s, string path, string external, int recesuive = 0) {
@@ -847,7 +859,7 @@ void normalSender(ssocket &s, string path, string external, int recesuive = 0) {
 				if (acaller.count(ex)) {
 					// To be focus...
 					bytes vb_to_send;
-					ProcessVBSCaller(vb_to_send);
+					ProcessVBSCaller(vb_to_send, acaller[ex]);
 					s.sends(vb_to_send);
 					goto after_sentup;
 				}
@@ -891,6 +903,7 @@ int main(int argc, char* argv[]) {
 //	cout_d << "C-Boundary tester:" << cbt << endl_d;
 	dll_err = new int;
 	
+#pragma region(Preparing Parameters)
 	for (int i = 1; i < argc; i++) {
 		string it = argv[i];
 		if (it == "--default-page") {
@@ -974,6 +987,10 @@ int main(int argc, char* argv[]) {
 		} else if (it == "--no-visit-log") {
 			vislog = false;
 		}
+		else if (it == "--script-engine") {
+			script_engine = argv[i + 1];
+			i++;
+		}
 		else if (it == "--user-group") {
 			// User-group operations
 			string op = argv[i + 1];
@@ -1047,6 +1064,7 @@ int main(int argc, char* argv[]) {
 		return 0;
 		}
 	}
+#pragma endregion
 	ssocket s = ssocket(portz, tbuf);
 	if (!s.vaild()) {
 		cout << "Can't bind or listen!" << endl;
@@ -1593,7 +1611,7 @@ int main(int argc, char* argv[]) {
 			}
 				// To call VBS here, to focus
 			bytes ret;
-			ProcessVBSCaller(ret);
+			ProcessVBSCaller(ret, fs);
 			s.sends(ret);
 					goto after_sentup;
 				
