@@ -116,7 +116,6 @@ public:
 };
 
 #define NO_MEMORY_RECORDER
-#define USE_TRADITIONAL_C_HEAP
 
 #pragma region Heap Setting Alert
 #if !defined(NO_MEMORY_RECORDER) && defined(USE_TRADITIONAL_C_HEAP)
@@ -640,7 +639,7 @@ const char* copyStr(bytes origin) {
 }
 
 
-inline c_recv_info getMyReceiver(http_recv &hinfo) {
+inline c_recv_info getMyReceiver(http_recv &hinfo) { // Here is memory problem.
 	c_recv_info rc;
 	rc.attr.param = new c_pair[hinfo.attr.size() + 1];
 	if (hinfo.process == "POST") {
