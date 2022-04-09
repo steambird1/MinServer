@@ -22,6 +22,7 @@ Options are:
 	--max-recesuive		Set the max recesuive depth of redirection. (Note: Too big number may causes 403 at first instead of expected 500)
 	--log-target		Set where will the log (mainly about visiting) write to (Default: $log.txt)
 	--no-visit-log		Set that there will be no visit log.
+	--script-engine		Set the script engine will the VBS code runner use. (Default: wscript; Note: It requires mslib change)
 
 Executable options are:
 	--user-operate		User operations.
@@ -37,6 +38,12 @@ Executable options are:
 		--insert [uid] [gid]
 		--remove [uid] [gid]
 		--query [uid]
+
+	--admin				Administrative tools.
+	Operations are:
+		--setpwd [password]
+		--getpwd
+		--disable
 
 	--help				Show help message and exit.
 

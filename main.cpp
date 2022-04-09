@@ -916,6 +916,10 @@ int main(int argc, char* argv[]) {
 			ban_path = argv[i + 1];
 			i++;
 		}
+		else if (it == "--adm-path") {
+			adm_passwd_path = argv[i + 1];
+			i++;
+		}
 		else if (it == "--no-display") {
 			no_data_screen = 1;
 		}
@@ -1008,6 +1012,38 @@ int main(int argc, char* argv[]) {
 			}
 			return 0;
 		}
+		else if (it == "--admin") {
+			string op = argv[i + 1];
+			if (op == "--setpwd") {
+				MD5 pwd = MD5(argv[i + 2]);
+				FILE *f = fopen(adm_passwd_path.c_str(), "w");
+				fprintf(f, "%s\n", pwd.toString().c_str());
+				fclose(f);
+				i += 1;
+			}
+			else if (op == "--getpwd") {
+				FILE *f = fopen(adm_passwd_path.c_str(), "r");
+				if (f == NULL) {
+					cout << "Function disabled" << endl;
+				}
+				else {
+					// buf2 uses begin
+					fgets(buf2, 100, f);
+					if (strlen(buf2) == 0) {
+						cout << "Function disabled" << endl;
+					}
+					else {
+						cout << "Administrative Password MD5: " << buf2 << endl;
+					}
+				}
+			}
+			else if (op == "--disable") {
+				FILE *f = fopen(adm_passwd_path.c_str(), "w");
+				fclose(f);	// Clear file data
+			}
+			i += 1;
+			return 0;
+		}
 		else if (it == "--help") {
 		cout << readAll("help.txt").toString() << endl;
 		return 0;
@@ -1024,7 +1060,7 @@ int main(int argc, char* argv[]) {
 	// buf2 uses begin
 	if (fd != NULL) {
 		fgets(buf2, 100, fd);
-		admpwd = buf2;
+		admpwd = sRemovingEOL(buf2);
 		fclose(fd);
 	}
 	// buf2 uses end
@@ -1573,23 +1609,31 @@ int main(int argc, char* argv[]) {
 				
 }
 			else if (path_pinfo.path[0] == "administrative") {
-			string op = path_pinfo.exts["operate"];
-			if (op == "publish") {
-				if (path_pinfo.exts.count("file")) {
-					FILE *f = fopen(public_file_path.c_str(), "a");
-					fprintf(f, "%s\n", path_pinfo.exts["file"].c_str());
-					fclose(f);
+			string pwd = path_pinfo.exts["password"];
+			MD5 m = MD5(pwd);
+			if (m.toString() == admpwd) {
+				string op = path_pinfo.exts["operate"];
+				if (op == "publish") {
+					if (path_pinfo.exts.count("file")) {
+						FILE *f = fopen(public_file_path.c_str(), "a");
+						fprintf(f, "%s\n", decodeHTMLBytes(path_pinfo.exts["file"]).toCharArray());
+						fclose(f);
+					}
+					else {
+						sndinfo.codeid = 400;
+						sndinfo.code_info = "Bad request";
+					}
+
 				}
 				else {
-					sndinfo.codeid = 400;
-					sndinfo.code_info = "Bad request";
+					sndinfo.codeid = 501;
+					sndinfo.code_info = "Not Implemented";
+					sndinfo.content = bytes(not_supported);
 				}
-				
 			}
 			else {
-				sndinfo.codeid = 501;
-				sndinfo.code_info = "Not Implemented";
-				sndinfo.content = bytes(not_supported);
+				sndinfo.codeid = 403;
+				sndinfo.code_info = "Forbidden";
 			}
 }
 sendup: s.sends(sndinfo);
