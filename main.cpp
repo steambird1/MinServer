@@ -546,6 +546,7 @@ void appendAllContent(FILE *target, string filename) {
 // To change settings to this
 map<string, string> preferences;
 
+bool always_display_err = false;
 
 void ProcessVBSCaller(bytes &returned, string script_name) {
 	// 1. Prepare Args.
@@ -640,8 +641,13 @@ void ProcessVBSCaller(bytes &returned, string script_name) {
 	// If here's error
 	bytes err_data = readAll(err_tmp);
 	if (err_data.length()) {
-		char *err_tmp = new char[strlen(err_ret_d) + 10 + err_data.length()];
-		sprintf(err_tmp, err_ret_d, err_data.toCharArray());
+		char *err_tmp = new char[strlen(err_ret_d) + 10 + max(strlen(err_ret_ndisp),err_data.length())];
+		if (always_display_err || curr_ip == "127.0.0.1") {
+			sprintf(err_tmp, err_ret_d, err_data.toCharArray());
+		}
+		else {
+			sprintf(err_tmp, err_ret_d, err_ret_ndisp);
+		}
 		returned = err_tmp;
 		err_data.release();
 		delete[] err_tmp;
@@ -1001,6 +1007,9 @@ int main(int argc, char* argv[]) {
 		else if (it == "--script-engine") {
 			script_engine = argv[i + 1];
 			i++;
+		}
+		else if (it == "--always-display-err") {
+			always_display_err = true;
 		}
 		else if (it == "--user-group") {
 			// User-group operations

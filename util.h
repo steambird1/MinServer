@@ -123,6 +123,7 @@ const bytes no_perm_d = "<html><head><title>Forbidden - 403</title></head><body>
 
 // Uses for VBS.
 const char* no_ret_d = "<html><head><title>Internal Server Error - 500</title></head><body><h1>500 Internal Server Error</h1><p>Background process did not return any content.</p><hr /><p>MinServer " MINSERVER_VER "</p></body></html>";
+const char* err_ret_ndisp = "Error message set as not publish. Use --always-display-err or local machine to display error.";
 // !! It requires sprintf() with error information !!
 const char* err_ret_d = "<html><head><title>Internal Server Error - 500</title></head><body><h1>500 Internal Server Error</h1><p>Background process reported an error: </p>%s<hr /><p>MinServer " MINSERVER_VER "</p></body></html>";
 
