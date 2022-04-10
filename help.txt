@@ -3,26 +3,27 @@ Usage: MinServer [options]
 
 Run MinServer without executable options to launch server.
 Options are:
-	--default-page		Set default display page (Show on 404).
-	--default-ns		Set not-implemented page (Show on 500).
-	--default-na		Set default Permission Denied page (Show on 403).
-	--default-ok		Set default OK page (Show on 200, especially /upload).
-	--perm-table		Set where permission table is (Default: $permission.txt).
-	--users-table		Set where user table is (Default: $users.txt).
-	--public-table		Set where published-file table is (Can be visited directly or as a 403, Default: $public.txt).
-	--groups-table		Set where group-file table is (Default: $groups.txt).
-	--dll-table			Set what DLLs can be runned by caller (Default: $dlls.txt).
-	--ban-table			Set what IPs will be banned (Default: $bans.txt).
-	--port				Set the port that server will listen.
-	--buffer			Set the buffer size for basic information (header).
-	--no-display		Set that server will not refresh information on console.
-	--root-file			Add file that will try to be resolved when giving a directory (Existing: /index.html, /index.htm).
-	--no-auto-release	Set that server will not release file tokens when downgraded because of file token. [Not suggested, may causes server down]
-	--redirect-table	Set that what paths will be redirected to others.
-	--max-recesuive		Set the max recesuive depth of redirection. (Note: Too big number may causes 403 at first instead of expected 500)
-	--log-target		Set where will the log (mainly about visiting) write to (Default: $log.txt)
-	--no-visit-log		Set that there will be no visit log.
-	--script-engine		Set the script engine will the VBS code runner use. (Default: wscript; Note: It requires mslib change)
+	--default-page			Set default display page (Show on 404).
+	--default-ns			Set not-implemented page (Show on 500).
+	--default-na			Set default Permission Denied page (Show on 403).
+	--default-ok			Set default OK page (Show on 200, especially /upload).
+	--perm-table			Set where permission table is (Default: $permission.txt).
+	--users-table			Set where user table is (Default: $users.txt).
+	--public-table			Set where published-file table is (Can be visited directly or as a 403, Default: $public.txt).
+	--groups-table			Set where group-file table is (Default: $groups.txt).
+	--dll-table				Set what DLLs can be runned by caller (Default: $dlls.txt).
+	--ban-table				Set what IPs will be banned (Default: $bans.txt).
+	--port					Set the port that server will listen.
+	--buffer				Set the buffer size for basic information (header).
+	--no-display			Set that server will not refresh information on console.
+	--root-file				Add file that will try to be resolved when giving a directory (Existing: /index.html, /index.htm).
+	--no-auto-release		Set that server will not release file tokens when downgraded because of file token. [Not suggested, may causes server down]
+	--redirect-table		Set that what paths will be redirected to others.
+	--max-recesuive			Set the max recesuive depth of redirection. (Note: Too big number may causes 403 at first instead of expected 500)
+	--log-target			Set where will the log (mainly about visiting) write to (Default: $log.txt)
+	--no-visit-log			Set that there will be no visit log.
+	--script-engine			Set the script engine will the VBS code runner use. (Default: wscript; Note: It requires mslib change)
+	--always-display-err	Set if the server will always display VBS error.
 
 Executable options are:
 	--user-operate		User operations.
