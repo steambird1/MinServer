@@ -15,7 +15,7 @@
 using namespace std;
 
 // For some reasons
-#define MINSERVER_VER "3.0b"
+#define MINSERVER_VER "3.0d"
 
 BOOL FindFirstFileExists(LPCSTR lpPath, DWORD dwFilter)
 {
@@ -54,6 +54,7 @@ int getSize(string filename) {
 
 bytes readAll(string cwtemp) {
 	int cws = getSize(cwtemp);
+	if (cws == 0) return bytes();
 	FILE *rs = fopen(cwtemp.c_str(), "rb"); // not 'r'
 	//auto rs = file_object(cwtemp, "rb");
 	fseek(rs, 0, SEEK_SET); // to head
@@ -119,6 +120,11 @@ string makeTemp(string end_suffix = "") {
 const bytes not_found_d = "<html><head><title>Page not found - 404</title></head><body><h1>404 Not found</h1><p>Requested page not found on this server.</p><hr /><p>MinServer " MINSERVER_VER "</p></body></html>";
 const bytes not_supported_d = "<html><head><title>Not Implemented - 501</title></head><body><h1>501 Not Implemented</h1><p>Request not implemented by server.</p><hr /><p>MinServer " MINSERVER_VER "</p></body></html>";
 const bytes no_perm_d = "<html><head><title>Forbidden - 403</title></head><body><h1>403 Forbidden</h1><p>You don't have permission to view this page. It might because:</p><ul><li>Your administrator doesn't give you the permission to view this page.</li><li>There are too many redirections.</li><li>Your IP is banned (if you can't view any page).</li></ul><hr /><p>MinServer " MINSERVER_VER "</p></body></html>";
+
+// Uses for VBS.
+const char* no_ret_d = "<html><head><title>Internal Server Error - 500</title></head><body><h1>500 Internal Server Error</h1><p>Background process did not return any content.</p><hr /><p>MinServer " MINSERVER_VER "</p></body></html>";
+// !! It requires sprintf() with error information !!
+const char* err_ret_d = "<html><head><title>Internal Server Error - 500</title></head><body><h1>500 Internal Server Error</h1><p>Background process reported an error: </p>%s<hr /><p>MinServer " MINSERVER_VER "</p></body></html>";
 
 bytes not_found_c = not_found_d, not_supported_c = not_supported_d, no_perm_c = no_perm_d;
 

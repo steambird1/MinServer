@@ -553,6 +553,7 @@ void ProcessVBSCaller(bytes &returned, string script_name) {
 	string vbs_tmp = makeTemp(".vbs");
 	string send_tmp = makeTemp();	// To make temp to get information to send
 	string cmd_tmp = makeTemp();	// Commands in this directory will be resolved.
+	string err_tmp = makeTemp();
 	// Simply tell where VBS to save it information, automaticly appends script.
 	// Fill "PARA" (it uses before lib)
 	
@@ -588,7 +589,7 @@ void ProcessVBSCaller(bytes &returned, string script_name) {
 	}
 
 	FILE *fv = fopen(vbs_tmp.c_str(), "w");
-	fprintf(fv, para.c_str(), hinfo.proto_ver.c_str(), hinfo.process.c_str(), hinfo.path.toCharArray(), save_dest.c_str(), attcode.c_str(), curr_ip.c_str(), ufcode.c_str(), prefcode.c_str(), cmd_tmp.c_str());
+	fprintf(fv, para.c_str(), hinfo.proto_ver.c_str(), hinfo.process.c_str(), hinfo.path.toCharArray(), save_dest.c_str(), attcode.c_str(), curr_ip.c_str(), ufcode.c_str(), prefcode.c_str(), cmd_tmp.c_str(), err_tmp.c_str());
 
 	// Write down LIB
 	appendAllContent(fv, sCurrDir("mslib.vbs"));
@@ -632,8 +633,19 @@ void ProcessVBSCaller(bytes &returned, string script_name) {
 		}
 		fclose(fc);
 	}
-
 	returned = readAll(send_tmp);
+	if (returned.length() == 0) {
+		returned = "HTTP/1.1 500 Internal Server Error\nConnection: close\nContent-Length: " + to_string(strlen(no_ret_d)) + "\n\n" + no_ret_d;
+	}
+	// If here's error
+	bytes err_data = readAll(err_tmp);
+	if (err_data.length()) {
+		char *err_tmp = new char[strlen(err_ret_d) + 10 + err_data.length()];
+		sprintf(err_tmp, err_ret_d, err_data.toCharArray());
+		returned = err_tmp;
+		err_data.release();
+		delete[] err_tmp;
+	}
 }
 
 void normalSender(ssocket &s, string path, string external, int recesuive = 0) {

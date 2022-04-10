@@ -1,8 +1,7 @@
 ' VBS Library.
 
-' Raise critial error. It inttrupts server!
 sub RaiseFatalError(msg)
-    msgbox msg, vbOKOnly, "Critial Error - MinServer VBS"
+    err.Raise 1, "MinServer VBS", msg
 end sub
 
 dim send_target
@@ -77,6 +76,15 @@ end sub
 sub EndOfProgram()
     send_buf.Close
     req_buf.Close
+
+    if err.number <> 0 then
+        set err_buf = fso.CreateTextFile(err_target)
+        err_buf.WriteLine("Error ID: " & err.number)
+        err_buf.WriteLine("Error Description: " & err.Description)
+        err_buf.WriteLine("Error Source: " & err.Source)
+        err_buf.Close
+        err.Clear()
+    end if
 end sub
 
 '''''''''''''''''''''''''''''''''''''''''''''''

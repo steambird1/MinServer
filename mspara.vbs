@@ -1,6 +1,6 @@
 
 ' MS VBS Parameters
-
+on error resume next
 ' Quote support
 q = """"
 
@@ -31,6 +31,7 @@ set srvsetting = CreateObject("Scripting.Dictionary")
 
 ' Set where could requests save to.
 req_target = "%s"
+err_target = "%s"
 
 '''''''''''''''''''''
 
