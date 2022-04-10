@@ -54,6 +54,24 @@ function RequireFileToken(fname,operate)
     RequireFileToken = tk
 end function
 
+' Automaticly send header.
+sub SendHeader(ver, codeid, info, attrdict, content, autolen)
+    s_ver = ver
+    Send(s_ver & " " & codeid & " " & info)
+    if not IsNull(attrdict) then
+        for each i in attrdict
+            Send(i & ": " & attrdict.Item(i))
+        next
+    end if
+    if not IsNull(content) then
+        if autolen then
+            Send("Content-Length: " & len(content))
+        end if
+        Send("")    ' 2 LFs to symbol the beginning of content
+        Send(content)
+    end if
+end sub
+
 ' Automaticly call in the end of program.
 ' Don't call it manually.
 sub EndOfProgram()
