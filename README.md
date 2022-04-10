@@ -30,7 +30,7 @@ After adding filenames you can try visiting your page again, and you'll see your
 
 ### Advanced Use
 MinServer is able to do file operation, user authorize in JavaScript.
-Also, The function **be extended** by DLL extension in "C++ in `extern C`".
+Also, The function **be extended** by VBScript, and in VBScript it can also require file and user token (but without authorization).
 To learn more about them, see Wiki (*Maybe implementing*).
 
 ## How to help with me (us ?)
