@@ -24,5 +24,13 @@ set ftokens = CreateObject("Scripting.Dictionary")
 
 %s
 
+' Server settings.
+set srvsetting = CreateObject("Scripting.Dictionary")
+
+%s
+
+' Set where could requests save to.
+req_target = "%s"
+
 '''''''''''''''''''''
 

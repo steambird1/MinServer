@@ -38,7 +38,7 @@ string adm_passwd_path = "$admpwd.txt";
 int default_join_g = -1;
 
 // Allocate ONCE
-char buf4[4096], buf5[4096];
+char buf4[4096], buf5[4096], buf6[4096];
 
 int portz = 80;
 
@@ -326,6 +326,20 @@ public:
 	}
 	const static int perm_denied = -400;	// Permission denied
 	const static int op_err = -500;		// Error in operation
+	// Force open without confirming permission, only uses internally
+	static int force_open(string filename, string operate, int token = -1) {
+		int tk;
+		if (token < 0) tk = findToken();
+		else tk = token;
+		file_structure fp = file_structure(filename.c_str(), operate.c_str());
+		if (fp == NULL) {
+			return op_err;
+		}
+		else {
+			file_token[tk] = fp;
+			return tk;
+		}
+	}
 	// To abs() for sending code id
 	static int open(int suid, string filename, string operate) {
 		if (filename[0] == '\\' || filename[0] == '/') filename.erase(filename.begin());
@@ -362,15 +376,7 @@ public:
 			return perm_denied;
 		}
 		else {
-			int tk = findToken();
-			file_structure fp = file_structure(filename.c_str(), operate.c_str());
-			if (fp == NULL) {
-				return op_err;
-			}
-			else {
-				file_token[tk] = fp;
-				return tk;
-			}
+			force_open(filename, operate);
 		}
 	}
 	// Empty means error
@@ -532,15 +538,21 @@ string vbStrAndQuotes(string origin, string replacement = "q") {
 void appendAllContent(FILE *target, string filename) {
 	bytes b;
 	b = readAll(filename);
-	fputs(b.toCharArray(), target);
+	//fputs(b.toCharArray(), target);
+	fprintf(target, "%s", b.toCharArray());	// Or here's another LF
 	b.release();
 }
+
+// To change settings to this
+map<string, string> preferences;
+
 
 void ProcessVBSCaller(bytes &returned, string script_name) {
 	// 1. Prepare Args.
 	// To be implemented...
 	string vbs_tmp = makeTemp(".vbs");
 	string send_tmp = makeTemp();	// To make temp to get information to send
+	string cmd_tmp = makeTemp();	// Commands in this directory will be resolved.
 	// Simply tell where VBS to save it information, automaticly appends script.
 	// Fill "PARA" (it uses before lib)
 	
@@ -570,14 +582,22 @@ void ProcessVBSCaller(bytes &returned, string script_name) {
 		ufcode += "utokens.add " + to_string(i.first) + "," + to_string(i.second) + "\n";
 	}
 
+	string prefcode = "";
+	for (auto &i : preferences) {
+		prefcode += "srvsetting.add " + vbStrAndQuotes(i.first) + " , " + vbStrAndQuotes(i.second) + "\n";
+	}
+
 	FILE *fv = fopen(vbs_tmp.c_str(), "w");
-	fprintf(fv, para.c_str(), hinfo.proto_ver.c_str(), hinfo.process.c_str(), hinfo.path.toCharArray(), save_dest.c_str(), attcode.c_str(), curr_ip.c_str(), ufcode.c_str());
+	fprintf(fv, para.c_str(), hinfo.proto_ver.c_str(), hinfo.process.c_str(), hinfo.path.toCharArray(), save_dest.c_str(), attcode.c_str(), curr_ip.c_str(), ufcode.c_str(), prefcode.c_str(), cmd_tmp.c_str());
 
 	// Write down LIB
 	appendAllContent(fv, sCurrDir("mslib.vbs"));
 
 	// Write down others
 	appendAllContent(fv, script_name);
+
+	// Finish entire program, in mslib.vbs
+	fprintf(fv, "\nEndOfProgram()\n");
 
 	fclose(fv);
 	
@@ -586,6 +606,32 @@ void ProcessVBSCaller(bytes &returned, string script_name) {
 	system(cmd.c_str());
 
 	// 3. Get return values.
+
+	// Proceed on requests
+	FILE *fc = fopen(cmd_tmp.c_str(), "r");
+	if (fc != NULL) {
+		while (!feof(fc)) {
+			// buf6 uses begin
+			fgets(buf6, 4096, fc);
+			auto spl = splitLines(sRemovingEOL(buf6).c_str(), ' ');
+			if (spl.size() < 1) continue;
+#define argument_check(num) if (spl.size() < num) goto w_cont
+			string &ord = spl[0];
+			if (ord == "user_alloc") {
+				argument_check(3);
+				uidctrl::force_request(atoi(spl[1].c_str()), atoi(spl[2].c_str()));
+			}
+			else if (ord == "file_alloc") {
+				argument_check(4);
+				file_operator::force_open(spl[2], spl[3], atoi(spl[1].c_str()));
+			}
+		w_cont: continue;
+#ifdef argument_check
+#undef argument_check
+#endif
+		}
+		fclose(fc);
+	}
 
 	returned = readAll(send_tmp);
 }
@@ -1050,6 +1096,39 @@ int main(int argc, char* argv[]) {
 		}
 	}
 #pragma endregion
+
+#pragma region (Preparing Preference Map)
+	/*
+	string perm_data_path = "$permission.txt";
+string user_data_path = "$users.txt";
+string public_file_path = "$public.txt";
+string group_path = "$groups.txt";
+string assiocate_path = "$assiocate.txt";
+string redirect_path = "$redirect.txt";
+string dll_path = "$dlls.txt";
+string ban_path = "$bans.txt";
+string log_path = "$log.txt";
+string adm_passwd_path = "$admpwd.txt";
+int default_join_g = -1;
+	*/
+#define __preference_str_initalizer(var) preferences[#var] = var
+
+	__preference_str_initalizer(perm_data_path);
+	__preference_str_initalizer(user_data_path);
+	__preference_str_initalizer(public_file_path);
+	__preference_str_initalizer(group_path);
+	__preference_str_initalizer(assiocate_path);
+	__preference_str_initalizer(redirect_path);
+	__preference_str_initalizer(dll_path);
+	__preference_str_initalizer(ban_path);
+	__preference_str_initalizer(log_path);
+	__preference_str_initalizer(adm_passwd_path);
+
+#ifdef __preference_str_initalizer
+#undef __preference_str_initalizer
+#endif
+#pragma endregion
+
 	ssocket s = ssocket(portz, tbuf);
 	if (!s.vaild()) {
 		cout << "Can't bind or listen!" << endl;

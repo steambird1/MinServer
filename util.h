@@ -130,16 +130,21 @@ string redirect = "<p>You are going to be redirect. If this page does not redire
 // Controller class.
 class uidctrl {
 public:
-	static int request(int uid) {
+	// Not check!
+	static void force_request(int uid, int tk) {
 		if (uid_to_token.count(uid)) {
 			token_to_uid.erase(uid_to_token[uid]);
 		}
+		token_to_uid[tk] = uid;
+		uid_to_token[uid] = tk;
+	}
+	// Normal request
+	static int request(int uid) {
 		int tk;
 		do {
 			tk = random();
 		} while (token_to_uid.count(tk));
-		token_to_uid[tk] = uid;
-		uid_to_token[uid] = tk;
+		force_request(uid, tk);
 		return tk;
 	}
 	static bool vaild(int token) {
