@@ -79,9 +79,9 @@ sub EndOfProgram()
 
     if err.number <> 0 then
         set err_buf = fso.CreateTextFile(err_target)
-        err_buf.WriteLine("Error ID: " & err.number)
-        err_buf.WriteLine("Error Description: " & err.Description)
-        err_buf.WriteLine("Error Source: " & err.Source)
+        err_buf.WriteLine("<p>Error ID: " & err.number & "</p>")
+        err_buf.WriteLine("<p>Error Description: " & err.Description & "</p>")
+        err_buf.WriteLine("<p>Error Source: " & err.Source & "</p>")
         err_buf.Close
         err.Clear()
     end if
