@@ -15,7 +15,7 @@
 using namespace std;
 
 // For some reasons
-#define MINSERVER_VER "3.0d"
+#define MINSERVER_VER "3.0e"
 
 BOOL FindFirstFileExists(LPCSTR lpPath, DWORD dwFilter)
 {
