@@ -590,7 +590,7 @@ void ProcessVBSCaller(bytes &returned, string script_name) {
 	}
 
 	FILE *fv = fopen(vbs_tmp.c_str(), "w");
-	fprintf(fv, para.c_str(), hinfo.proto_ver.c_str(), hinfo.process.c_str(), hinfo.path.toCharArray(), save_dest.c_str(), attcode.c_str(), curr_ip.c_str(), ufcode.c_str(), prefcode.c_str(), cmd_tmp.c_str(), err_tmp.c_str());
+	fprintf(fv, para.c_str(), hinfo.proto_ver.c_str(), hinfo.process.c_str(), vbStrAndQuotes(hinfo.path.toString()).c_str(), save_dest.c_str(), attcode.c_str(), curr_ip.c_str(), ufcode.c_str(), prefcode.c_str(), cmd_tmp.c_str(), err_tmp.c_str());
 
 	// Write down LIB
 	appendAllContent(fv, sCurrDir("mslib.vbs"));

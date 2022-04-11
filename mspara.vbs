@@ -6,7 +6,7 @@ q = """"
 
 http_proto = "%s"
 method = "%s"
-path = "%s"
+path = %s
 
 ' Content SAVE AS FILES, here shows path
 content_path = "%s"
