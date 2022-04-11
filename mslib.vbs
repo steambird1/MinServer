@@ -53,6 +53,11 @@ function RequireFileToken(fname,operate)
     RequireFileToken = tk
 end function
 
+' Call in hook, to show this document is hooked
+sub SetHook()
+    req_buf.WriteLine("hook")
+end sub
+
 ' Automaticly send header.
 sub SendHeader(ver, codeid, info, attrdict, content, autolen)
     s_ver = ver

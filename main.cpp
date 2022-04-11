@@ -548,7 +548,13 @@ map<string, string> preferences;
 
 bool always_display_err = false;
 
-void ProcessVBSCaller(bytes &returned, string script_name) {
+struct vbs_result {
+	bool hooked = false;	// true if script specifies HOOK
+};
+
+vbs_result ProcessVBSCaller(bytes &returned, string script_name) {
+	vbs_result ret;
+	ret.hooked = false;
 	// 1. Prepare Args.
 	// To be implemented...
 	string vbs_tmp = makeTemp(".vbs");
@@ -627,6 +633,9 @@ void ProcessVBSCaller(bytes &returned, string script_name) {
 				argument_check(4);
 				file_operator::force_open(spl[2], spl[3], atoi(spl[1].c_str()));
 			}
+			else if (ord == "hook") {
+				ret.hooked = true;
+			}
 		w_cont: continue;
 #ifdef argument_check
 #undef argument_check
@@ -652,7 +661,10 @@ void ProcessVBSCaller(bytes &returned, string script_name) {
 		err_data.release();
 		delete[] err_tmp;
 	}
+	return move(ret);
 }
+
+set<string> ns_hooked;
 
 void normalSender(ssocket &s, string path, string external, int recesuive = 0) {
 	if (recesuive > max_recesuive) {
@@ -670,9 +682,18 @@ void normalSender(ssocket &s, string path, string external, int recesuive = 0) {
 	bool flag = false;
 	string rpath = "";
 	bool flag2 = false;
-	FILE *f = fopen(public_file_path.c_str(), "r");
-	cout_d << "Expected main path: " << m.first << endl_d;
-	cout_d << "Expected external: " << m.second << endl_d;
+	// Hook simply before
+	bytes hook_prep;
+	FILE *f = nullptr;
+	for (auto &i : ns_hooked) {
+		hook_prep.clear();
+		auto res = ProcessVBSCaller(hook_prep, i);
+		if (res.hooked) {
+			s.sends(hook_prep);
+			goto after_sentup;
+		}
+	}
+	f = fopen(public_file_path.c_str(), "r");
 	if (m.first.find('$') != string::npos) {
 		sndinfo.codeid = 403;
 		sndinfo.code_info = "Forbidden";
@@ -894,6 +915,7 @@ sendup: s.sends(sndinfo);
 sndinfo.content.release();
 after_sentup: s.end_accept();
 s.release_prev();
+hook_prep.release();
 	// Doesn't need to send in the end
 }
 
@@ -1171,8 +1193,14 @@ int default_join_g = -1;
 		while (!feof(fa)) {
 			// To be focus, changed as JS
 			// buf, buf2 uses begin
-			fscanf(fa, "%s%s", buf, buf2);	// DLLPath Extension
-			acaller[buf2] = buf;
+			fscanf(fa, "%s%s", buf, buf2);	// With '.'
+			if (buf2 == "hook") {
+				// hook all request (expect reserved)
+				ns_hooked.insert(sCurrDir(buf));
+			}
+			else {
+				acaller[buf2] = sCurrDir(buf);
+			}
 			aldr++;
 			// buf, buf2 uses end
 		}
