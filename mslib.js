@@ -67,6 +67,9 @@ function msuser(token, xhobject, f_operate, u_operate, d_operate, myuid) {
 
     // Operations
     this.openfile = function (filename, operate) {
+        if (filename == undefined || operate == undefined) {
+            throw new msexception("Bad format of parameter", 6);
+        }
         this.xhobject.open("GET", this.f_operate + "?operate=open&name=" + filename + "&utoken=" + this.token + "&type=" + operate, false);
         this.xhobject.send(null);
         if (this.xhobject.status != 200) {
@@ -77,6 +80,9 @@ function msuser(token, xhobject, f_operate, u_operate, d_operate, myuid) {
     }
 
     this.chown = function (filename, chto) {
+        if (filename == undefined || chto == undefined) {
+            throw new msexception("Bad format of parameter", 6);
+        }
         this.xhobject.open("GET", this.u_operate + "?operate=chown&file=" + filename + "&token=" + this.token + "&touid=" + chto, false);
         this.xhobject.send(null);
         if (this.xhobject.status != 200) {
@@ -85,6 +91,9 @@ function msuser(token, xhobject, f_operate, u_operate, d_operate, myuid) {
     }
 
     this.chperm = function (filename, chto, perm) {
+        if (filename == undefined || chto == undefined || perm == undefined) {
+            throw new msexception("Bad format of parameter", 6);
+        }
         this.xhobject.open("GET", this.u_operate + "?operate=chperm&file=" + filename + "&token=" + this.token + "&touid=" + chto + "&toperm=" + perm, false);
         this.xhobject.send(null);
         if (this.xhobject.status != 200) {
@@ -93,6 +102,9 @@ function msuser(token, xhobject, f_operate, u_operate, d_operate, myuid) {
     }
 
     this.modify = function (new_pass) {
+        if (new_pass == undefined) {
+            throw new msexception("Bad format of parameter", 6);
+        }
         this.xhobject.send("GET", this.u_operate + "?operate=create&id=" + this.myuid + "&passwd=" + new_pass + "&token=" + this.token, false);
         if (this.xhobject.status != 200) {
             throw new msexception("Permission denied", 1);
@@ -100,11 +112,15 @@ function msuser(token, xhobject, f_operate, u_operate, d_operate, myuid) {
     }
 
     this.upload = function (content, target, jump_to) {
+        if (content == undefined || target == undefined || jump_to == undefined) {
+            throw new msexception("Bad format of parameter", 6);
+        }
         wjumpto = "&jumpto=" + jump_to;
         if (jump_to == undefined) {
             wjumpto = "";
         }
-        this.xhobject.send("POST", this.d_operate + "?utoken=" + this.token + "&name=" + target + wjumpto, false);
+        this.xhobject.open("POST", this.d_operate + "?utoken=" + this.token + "&name=" + target + wjumpto, false);
+        this.xhobject.send(content);
         if (this.xhobject.status != 200) {
             throw new msexception("Permission denied", 1);
         }
@@ -138,6 +154,9 @@ function mslib() {
     this.default_user = new msuser(0, this.xhobject, this.f_operate, this.u_operate, this.d_operate, 0);
 
     this.auth = function (uid, passwd) {
+        if (uid == undefined || passwd == undefined) {
+            throw new msexception("Bad format of parameter", 6);
+        }
         this.xhobject.open("GET", this.u_operate + "?operate=check&request=" + uid + "&passwd=" + passwd, false);
         this.xhobject.send(null);
         if (this.xhobject.status != 200) {
@@ -148,8 +167,11 @@ function mslib() {
     }
 
     this.request = function (operator, path, content) {
+        if (operator == undefined || path == undefined) {
+            throw new msexception("Bad format of parameter", 6);
+        }
         this.xhobject.open(operator, path, false);
-        this.xhobject.send(null);
+        this.xhobject.send(content);
         return this.xhobject.responseText;
     }
 
@@ -157,7 +179,10 @@ function mslib() {
         return this.xhobject.status;
     }
 
-    this.call = function (dll, parameter, method, content) {
+    this.call = function (script, parameter, method, content) {
+        if (script == undefined) {
+            throw new msexception("Bad format of parameter", 6);
+        }
         wmethod = method;
         if (method == undefined) {
             wmethod = "GET";
@@ -174,13 +199,16 @@ function mslib() {
         for (var i in wparameter) {
             calls += ("&" + i + "=" + wparameter[i]);
         }
-        this.xhobject.open(wmethod, this.d_operate + "?module=" + dll + calls, false);
+        this.xhobject.open(wmethod, this.d_operate + "?module=" + script + calls, false);
         this.xhobject.send(wcontent);
         return this.xhobject.responseText;
     }
 
     this.register = function (passwd, uid) {
         // To be implemented ...
+        if (passwd == undefined) {
+            throw new msexception("Bad format of parameter", 6);
+        }
         ider = "";
         if (uid == undefined) {
             ider = "";
@@ -198,6 +226,9 @@ function mslib() {
     }
 
     this.file_query = function (token) {
+        if (token == undefined) {
+            throw new msexception("Bad format of parameter", 6);
+        }
         this.xhobject.open("GET", this.f_operate + "?operate=query&token=" + token, false);
         this.xhobject.send(null);
         if (this.xhobject.status != 200) {
@@ -208,6 +239,9 @@ function mslib() {
     }
 
     this.user_query = function (token) {
+        if (token == undefined) {
+            throw new msexception("Bad format of parameter", 6);
+        }
         this.xhobject.open("GET", this.u_operate + "?operate=query&token=" + token, false);
         this.xhobject.send(null);
         if (this.xhobject.status != 200) {
