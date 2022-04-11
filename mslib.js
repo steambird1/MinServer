@@ -217,6 +217,16 @@ function mslib() {
         }
     }
 
+    this.list = function () {
+        this.xhobject.open("GET", this.f_operate + "?operate=list", false);
+        this.xhobject.send(null);
+        if (this.xhobject.status != 200) {
+            throw new msexception("Unexpected error", 5);
+        } else {
+            return this.xhobject.responseText;
+        }
+    }
+
 }
 
 // Some tools useful

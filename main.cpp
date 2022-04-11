@@ -376,7 +376,7 @@ public:
 			return perm_denied;
 		}
 		else {
-			force_open(filename, operate);
+			return force_open(filename, operate);
 		}
 	}
 	// Empty means error
