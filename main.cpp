@@ -620,6 +620,7 @@ vbs_result ProcessVBSCaller(bytes &returned, string script_name) {
 	if (fc != NULL) {
 		while (!feof(fc)) {
 			// buf6 uses begin
+			memset(buf6, 0, 4096);
 			fgets(buf6, 4096, fc);
 			auto spl = splitLines(sRemovingEOL(buf6).c_str(), ' ');
 			if (spl.size() < 1) continue;
@@ -1194,7 +1195,7 @@ int default_join_g = -1;
 			// To be focus, changed as JS
 			// buf, buf2 uses begin
 			fscanf(fa, "%s%s", buf, buf2);	// With '.'
-			if (buf2 == "hook") {
+			if (string(buf2) == "hook") {
 				// hook all request (expect reserved)
 				ns_hooked.insert(sCurrDir(buf));
 			}
