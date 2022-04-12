@@ -105,7 +105,8 @@ function msuser(token, xhobject, f_operate, u_operate, d_operate, myuid) {
         if (new_pass == undefined) {
             throw new msexception("Bad format of parameter", 6);
         }
-        this.xhobject.send("GET", this.u_operate + "?operate=create&id=" + this.myuid + "&passwd=" + new_pass + "&token=" + this.token, false);
+        this.xhobject.open("GET", this.u_operate + "?operate=create&id=" + this.myuid + "&passwd=" + new_pass + "&token=" + this.token, false);
+        this.xhobject.send(null);
         if (this.xhobject.status != 200) {
             throw new msexception("Permission denied", 1);
         }
