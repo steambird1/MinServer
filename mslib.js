@@ -105,7 +105,8 @@ function msuser(token, xhobject, f_operate, u_operate, d_operate, myuid) {
         if (new_pass == undefined) {
             throw new msexception("Bad format of parameter", 6);
         }
-        this.xhobject.send("GET", this.u_operate + "?operate=create&id=" + this.myuid + "&passwd=" + new_pass + "&token=" + this.token, false);
+        this.xhobject.open("GET", this.u_operate + "?operate=create&id=" + this.myuid + "&passwd=" + new_pass + "&token=" + this.token, false);
+        this.xhobject.send(null);
         if (this.xhobject.status != 200) {
             throw new msexception("Permission denied", 1);
         }
@@ -238,6 +239,14 @@ function mslib() {
         }
     }
 
+    this.file_get = function (token, nocheck) {
+        // Simply check
+        if (nocheck != undefined && nocheck == true) {
+            this.file_query(token);
+        }
+        return new msfile(token, this.xhobject, this.f_operate);
+    }
+
     this.user_query = function (token) {
         if (token == undefined) {
             throw new msexception("Bad format of parameter", 6);
@@ -249,6 +258,10 @@ function mslib() {
         } else {
             return this.xhobject.responseText;
         }
+    }
+
+    this.user_get = function (token) {
+        return new msuser(token, this.xhobject, this.f_operate, this.u_operate, this.d_operate, this.user_query(token));
     }
 
     this.list = function () {
