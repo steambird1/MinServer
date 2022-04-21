@@ -23,33 +23,51 @@
     <Filter Include="Local VBS files">
       <UniqueIdentifier>{338b1eea-84e2-4025-9145-7ea819aad0a1}</UniqueIdentifier>
     </Filter>
+    <Filter Include="头文件\Seabird Network Framework">
+      <UniqueIdentifier>{708f9b25-ce22-483e-bee7-6c49d9e543c6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\Deprecated">
+      <UniqueIdentifier>{b67a7c8c-284e-4393-98f0-030e3c48f709}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\MD5 Library">
+      <UniqueIdentifier>{e43210b0-ad0b-4cb3-89ca-2930364019cb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\Seabird Buffed FileSystem">
+      <UniqueIdentifier>{eb51ddba-a4df-47a4-bc0f-727260b9403c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="framework.cpp">
-      <Filter>头文件</Filter>
-    </ClCompile>
     <ClCompile Include="main.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="framework.cpp">
+      <Filter>头文件\Seabird Network Framework</Filter>
+    </ClCompile>
     <ClCompile Include="md5.cpp">
-      <Filter>头文件</Filter>
+      <Filter>头文件\MD5 Library</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="framework.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="util.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="md5.h">
-      <Filter>头文件</Filter>
+    <ClInclude Include="framework.h">
+      <Filter>头文件\Seabird Network Framework</Filter>
     </ClInclude>
     <ClInclude Include="c_framework.h">
-      <Filter>头文件</Filter>
+      <Filter>头文件\Deprecated</Filter>
     </ClInclude>
     <ClInclude Include="debugs.h">
-      <Filter>头文件</Filter>
+      <Filter>头文件\Deprecated</Filter>
+    </ClInclude>
+    <ClInclude Include="md5.h">
+      <Filter>头文件\MD5 Library</Filter>
+    </ClInclude>
+    <ClInclude Include="sfs.h">
+      <Filter>头文件\Seabird Buffed FileSystem</Filter>
+    </ClInclude>
+    <ClInclude Include="sfs_util.h">
+      <Filter>头文件\Seabird Buffed FileSystem</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

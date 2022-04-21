@@ -1,5 +1,6 @@
 #include "framework.h"
 #include "util.h"
+#include "sfs.h"
 #include "md5.h"
 #include <memory.h>
 #include <iostream>
