@@ -1159,6 +1159,8 @@ int default_join_g = -1;
 #endif
 #pragma endregion
 
+	//_setmaxstdio(50);	// For test only
+
 	ssocket s = ssocket(portz, tbuf);
 	if (!s.vaild()) {
 		cout << "Can't bind or listen!" << endl;
@@ -1765,6 +1767,7 @@ s.release_prev();
 		hinfo.release();
 		hinfo.content.release();
 		postClear();
+		_fcloseall();
 	/*sendup: bs = sndinfo.toSender();
 		s.sends(bs);
 		bs.release();
