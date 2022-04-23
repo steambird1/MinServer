@@ -12,7 +12,9 @@ public:
 		invaild = -1,
 		read = 0,
 		overriding = 1,
-		append = 2
+		append = 2,
+		ext_overriding = 3,
+		ext_append = 4
 	};
 
 	struct file_node {
@@ -41,28 +43,51 @@ public:
 			return op_type == invaild;
 		}
 
+		string myname() {
+			return this->file_name;
+		}
+
+#define check_read() do { if (!readable()) return bytes(); } while (false)
+
+		bool readable() {
+			if (this->op_type != 0 && this->op_type != 3 && this->op_type != 4) return false;
+			return true;
+		}
+
+		bool writeable() {
+			if (this->op_type >= 1 && this->op_type <= 4) return true;
+			return false;
+		}
+
 		bytes readAll() {
+			check_read();
 			return (*this->buffer)[file_name].data;
 		}
 
 		bytes readLine(char eol = '\n', int preallocate = 0) {
+			check_read();
 			bytes cont;
 			if (preallocate > 0) cont.preallocate(preallocate);
 			bytes &mycont = (*this->buffer)[file_name].data;
-			for (size_t i = 0; i < mycont.length() && mycont[i] != eol; i++) {
+			for (size_t &i = myptr; i < mycont.length() && mycont[i] != eol; i++) {
 				cont += mycont[i];
 			}
 			return cont;
 		}
 
-		
-		bool write(bytes content) {
+		bool eof() {
+			bytes &mycont = (*this->buffer)[file_name].data;
+			return myptr >= mycont.length();
+		}
+
+		// Also a way to save memory
+		bool write(bytes &content) {
 			bytes &mycont = (*this->buffer)[file_name].data;
 			switch (op_type) {
-			case 1:
+			case 1: case 3:
 				mycont = content;
 				break;
-			case 2:
+			case 2: case 4:
 				mycont += content;
 				break;
 			default:
@@ -75,6 +100,7 @@ public:
 		file_operate op_type;		// 0 - Read, 1 - Override write, 2 - Append
 		string file_name;
 		fs_type *buffer;
+		size_t myptr = 0;
 	};
 
 	class __invaild_file : public file {

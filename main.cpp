@@ -45,44 +45,6 @@ int portz = 80;
 
 map<string, int> visit;
 
-// Uses for MinServer file opener for permission verify
-class file_structure {
-public:
-	file_structure(int nptr = 0) : read_ok(false), write_ok(false) {
-		// For map or fclose_m()
-	}
-	file_structure(const char *filename, const char *operate) : name(filename) {
-		size_t sl = strlen(operate);
-		for (size_t i = 0; i < sl; i++) {
-			if (roks.count(operate[i])) this->read_ok = true;
-			if (woks.count(operate[i])) this->write_ok = true;
-		}
-		this->place = fopen(filename, operate);
-		// Make sure no error on RW
-		if (this->place == NULL) {
-			this->read_ok = false;
-			this->write_ok = false;
-		}
-	}
-	file_structure(FILE *obj, bool rok, bool wok, string name = "") : place(obj), read_ok(rok), write_ok(wok), name(name) {}
-	operator FILE*&() {
-		return this->place;
-	}
-	bool readable() {
-		return this->read_ok;
-	}
-	bool writeable() {
-		return this->write_ok;
-	}
-	string myname() {
-		return this->name;
-	}
-private:
-	FILE *place;
-	string name;
-	bool read_ok, write_ok;
-};
-
 // DLL LastError System
 int *dll_err;
 void setDLLError(int err) {
@@ -97,7 +59,8 @@ public:
 	}
 };
 
-map<int, file_structure> file_token;
+basic_file_system myfs;
+map<int, basic_file_system::file> file_token;
 
 int findToken() {
 	int r;
@@ -321,24 +284,45 @@ class file_operator {
 public:
 	static bool release(int tk) {
 		if (!file_token.count(tk)) return false;
-		fclose_m(file_token[tk]);
+		myfs.release_file(file_token[tk]);
 		file_token.erase(tk);
 		return true;
 	}
 	const static int perm_denied = -400;	// Permission denied
 	const static int op_err = -500;		// Error in operation
+
+	static basic_file_system::file_operate get_operate(string operate) {
+		int d = 0;
+		switch (operate.length()) {
+		case 0:
+			d = -1;
+			break;
+		case 2:
+			if (operate[1] == '+') d += 2;
+		case 1:
+			switch (operate[0]) {
+			case 'r': case 'R':
+				break;
+			case 'w': case 'W':
+				d += 1;
+			case 'a': case 'A':
+				d += 2;
+			}
+		}
+		return basic_file_system::file_operate(d);
+	}
+
 	// Force open without confirming permission, only uses internally
 	static int force_open(string filename, string operate, int token = -1) {
 		int tk;
 		if (token < 0) tk = findToken();
 		else tk = token;
-		file_structure fp = file_structure(filename.c_str(), operate.c_str());
-		if (fp == NULL) {
-			return op_err;
+		basic_file_system::file f = myfs.get_file(filename, get_operate(operate));
+		if (f.isInvaild()) {
+			return -1;
 		}
 		else {
-			file_token[tk] = fp;
-			return tk;
+			file_token[tk] = f;
 		}
 	}
 	// To abs() for sending code id
@@ -1273,8 +1257,9 @@ int default_join_g = -1;
 			// A server downgrade is because the limit of fopen().
 			if (auto_release) {
 				for (auto &i : file_token) {
-					fclose_m(i.second);
+					myfs.release_file(i.second);
 				}
+				myfs.sync(true);
 				file_token.clear();
 				downgraded = false;
 				al_cause = true;
@@ -1366,19 +1351,17 @@ int default_join_g = -1;
 					// Read line
 					int tk = atoi(path_pinfo.exts["token"].c_str());
 					if (file_token.count(tk)) {
-						file_structure fk = file_token[tk];
+						basic_file_system::file& fk = file_token[tk];
 						if (!fk.readable()) {
 							sndinfo.codeid = 400;
 							sndinfo.code_info = "Bad request";
 						}
 						else try {
-							sndinfo.content = CReadLine(fk);
+							sndinfo.content = fk.readLine();
 						}
 						catch (...) {
 							sndinfo.codeid = 500;
 							sndinfo.code_info = "Internal server error";
-							// At the end of file
-							//file_operator::release(tk);
 						}
 						
 					}
@@ -1397,7 +1380,7 @@ int default_join_g = -1;
 							sndinfo.code_info = "Bad request";
 						}
 						else try {
-							fputs(hinfo.content.toCharArray(), file_token[tk]);
+							file_token[tk].write(hinfo.content);
 						}
 						catch (...) {
 							sndinfo.codeid = 500;
@@ -1413,7 +1396,7 @@ int default_join_g = -1;
 				else if (op == "eof") {
 					int tk = atoi(path_pinfo.exts["token"].c_str());
 					if (file_token.count(tk)) {
-						sndinfo.content = int(feof(file_token[tk])) + '0';
+						sndinfo.content = int(file_token[tk].eof()) + '0';
 					}
 					else {
 						sndinfo.codeid = 400;
@@ -1692,7 +1675,8 @@ int default_join_g = -1;
 							flag = true;
 							break;
 						}
-						i.saveContent(file_token[t]);
+						//i.saveContent(file_token[t]);
+						file_token[t].write(i.content);
 						file_operator::release(t);
 					}
 
