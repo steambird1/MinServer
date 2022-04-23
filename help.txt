@@ -24,6 +24,7 @@ Options are:
 	--no-visit-log			Set that there will be no visit log.
 	--script-engine			Set the script engine will the VBS code runner use. (Default: wscript; Note: It requires mslib change)
 	--always-display-err	Set if the server will always display VBS error.
+	--no-case-ignore		Set that the SFS will not ignore the cases. (For SFS please see wiki)
 
 Executable options are:
 	--user-operate		User operations.
