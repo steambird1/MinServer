@@ -917,7 +917,16 @@ inline void postClear() {
 
 string admpwd = "";
 
+ssocket s;
+
+void ProcessAtExit() {
+	WSACleanup();
+	s.end();
+	myfs.sync(true);
+}
+
 int main(int argc, char* argv[]) {
+
 	//cout << "Running in directory: " << sCurrDir("example") << endl;
 	const char *cbt = new char[60];
 	int tbuf = RCV_DEFAULT;
@@ -925,6 +934,8 @@ int main(int argc, char* argv[]) {
 //	cout_d << "C-Boundary tester:" << cbt << endl_d;
 	dll_err = new int;
 	
+	myfs.set_case_ignore(true);
+
 #pragma region(Preparing Parameters)
 	for (int i = 1; i < argc; i++) {
 		string it = argv[i];
@@ -1016,6 +1027,9 @@ int main(int argc, char* argv[]) {
 		else if (it == "--script-engine") {
 			script_engine = argv[i + 1];
 			i++;
+		}
+		else if (it == "--no-case-ignore") {
+			myfs.set_case_ignore(false);
 		}
 		else if (it == "--always-display-err") {
 			always_display_err = true;
@@ -1161,7 +1175,7 @@ int default_join_g = -1;
 
 	//_setmaxstdio(50);	// For test only
 
-	ssocket s = ssocket(portz, tbuf);
+	s = ssocket(portz, tbuf);
 	if (!s.vaild()) {
 		cout << "Can't bind or listen!" << endl;
 		exit(1);
@@ -1217,6 +1231,9 @@ int default_join_g = -1;
 		fprintf(vl, "[Server execution begin]\n");
 		fclose(vl);
 	}
+
+	atexit(ProcessAtExit);
+		
 	while (true) {
 		if (!no_data_screen) 
 		{
@@ -1742,6 +1759,11 @@ int default_join_g = -1;
 					}
 
 				}
+				else if (op == "sync") {
+					int rel = 0;
+					if (path_pinfo.exts.count("release")) rel = atoi(path_pinfo.exts["release"].c_str());
+					myfs.sync(rel);
+				}
 				else {
 					sndinfo.codeid = 501;
 					sndinfo.code_info = "Not Implemented";
@@ -1775,8 +1797,7 @@ s.release_prev();
 		s.release_prev();*/
 	}
 
-	WSACleanup();
-	s.end();
+	ProcessAtExit();
 
 	return 0;
 }

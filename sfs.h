@@ -114,7 +114,14 @@ public:
 		}
 	} invaild_file;
 
+	void set_case_ignore(bool state) {
+		this->isignore = state;
+	}
+
+#define process_ignore() do { if (this->isignore) name = sToLower(name); } while (false)
+
 	void auto_init_file(string name) {
+		process_ignore();
 		if (fileExists(name)) {
 			init_file(name);
 		}
@@ -124,14 +131,17 @@ public:
 	}
 
 	void init_file(string name) {
+		process_ignore();
 		init_ramfile(name, readAll(name));
 	}
 
 	void init_ramfile(string name, bytes data = "", bool nosync = false) {
+		process_ignore();
 		file_store[name] = file_node(data, nosync);
 	}
 
 	file get_file(string name, file_operate operation) {
+		process_ignore();
 		if (!file_store.count(name)) auto_init_file(name);
 		if (operation == invaild) return invaild_file;
 		if (operation == overriding) {
@@ -170,5 +180,6 @@ public:
 protected:
 
 	fs_type file_store;
+	bool isignore = false;
 
 };
