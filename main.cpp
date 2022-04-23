@@ -323,6 +323,7 @@ public:
 		}
 		else {
 			file_token[tk] = f;
+			return tk;
 		}
 	}
 	// To abs() for sending code id

@@ -72,6 +72,7 @@ public:
 			for (size_t &i = myptr; i < mycont.length() && mycont[i] != eol; i++) {
 				cont += mycont[i];
 			}
+			myptr++;
 			return cont;
 		}
 
@@ -81,7 +82,7 @@ public:
 		}
 
 		// Also a way to save memory
-		bool write(bytes &content) {
+		bool write(bytes content) {
 			bytes &mycont = (*this->buffer)[file_name].data;
 			switch (op_type) {
 			case 1: case 3:
