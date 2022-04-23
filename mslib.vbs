@@ -58,6 +58,30 @@ sub SetHook()
     req_buf.WriteLine("hook")
 end sub
 
+sub ReloadFile(filename)
+    req_buf.WriteLine("reload " & filename)
+end sub
+
+sub ReloadAll()
+    ReloadFile "#"
+end sub
+
+sub Sync(syntype, filename)
+    req_buf.WriteLine("sync " & syntype & " " & filename)
+end sub
+
+sub SyncDirectory(directory)
+    Sync "directory", directory
+end sub
+
+sub SyncFile(file)
+    Sync "file", file
+end sub
+
+sub SyncAll()
+    Sync "all", ""
+end sub
+
 ' Automaticly send header.
 sub SendHeader(ver, codeid, info, attrdict, content, autolen)
     s_ver = ver

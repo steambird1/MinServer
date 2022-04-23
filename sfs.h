@@ -168,17 +168,53 @@ public:
 	void sync(bool release = false) {
 		for (auto &i : file_store) {
 			if (!i.second.nosync) {
-				FILE *f = fopen(i.first.c_str(), "wb");
-				const char *tca = i.second.data.toCharArray();
-				fwrite(tca, sizeof(char), i.second.data.length(), f);
-				fclose(f);
-				delete[] tca;
-			}
-			if (i.second.refcount <= 0 && release) {
-				i.second.data.release();
-				file_store.erase(i.first);
+				sync_file(i.first, release);
 			}
 		}
+	}
+
+	void sync_directory(string directory, bool release = false, bool load_ramfile = false) {
+		for (auto &i : file_store) {
+			if (load_ramfile || (!i.second.nosync)) {
+				if (isBeginWith(directory, i.first))
+					sync_file(i.first, release);
+			}
+		}
+	}
+
+	void sync_file(string name, bool release = false) {
+		if (file_store.count(name)) {
+			FILE *f = fopen(name.c_str(), "wb");
+			const char *tca = file_store[name].data.toCharArray();
+			fwrite(tca, sizeof(char), file_store[name].data.length(), f);
+			fclose(f);
+			delete[] tca;
+		}
+		if (file_store[name].refcount <= 0 && release) {
+			file_store[name].data.release();
+			file_store.erase(name);
+		}
+	}
+
+	void discard(string name, bool force = false) {
+		if (file_store[name].refcount <= 0 || force) {
+			auto_init_file(name);
+		}
+	}
+
+	void discard_all(bool force = false) {
+		for (auto &i : file_store) {
+			discard(i.first, force);
+		}
+	}
+
+	// Unit: KB
+	size_t usage() {
+		size_t o = file_store.size() * 1024;
+		for (auto &i : file_store) {
+			o += i.second.data.length();
+		}
+		return o / 1024;
 	}
 
 protected:

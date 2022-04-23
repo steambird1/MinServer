@@ -33,5 +33,9 @@ set srvsetting = CreateObject("Scripting.Dictionary")
 req_target = "%s"
 err_target = "%s"
 
+' Set the startup directory of the program.
+start_directory = %s
+kb_buf_usage = %ld
+
 '''''''''''''''''''''
 

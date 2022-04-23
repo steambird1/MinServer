@@ -62,3 +62,10 @@ string sToLower(string s) {
 	for (auto &i : s) t += tolower(i);
 	return t;
 }
+
+bool isBeginWith(string a, string b) {
+	if (a.length() <= b.length()) {
+		return (b.substr(0, a.length()) == a);
+	}
+	return false;
+}

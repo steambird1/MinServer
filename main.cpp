@@ -39,7 +39,7 @@ string adm_passwd_path = "$admpwd.txt";
 int default_join_g = -1;
 
 // Allocate ONCE
-char buf4[4096], buf5[4096], buf6[4096];
+char buf4[4096], buf5[4096], buf6[4096], buf7[4096];
 
 int portz = 80;
 
@@ -393,10 +393,8 @@ extern "C" {
 		return ut_free;
 	}
 	double c_ftoken_usage(void) {
-		//int ut_use = uidctrl::size();
 		int ft_use = file_token.size();
-		// It's in maxinum of fopen().
-		double ft_free = 100.0 - (ft_use / 2.54);
+		double ft_free = 100.0 - (ft_use / (double(1 << 16) - 1.0));
 		return ft_free;
 	}
 	bool c_ug_query(int uid, int gid) {
@@ -457,6 +455,7 @@ void stat() {
 	if (ut_free < 0.0) ut_free = 0.00;
 	if (ft_free < 0.0) ft_free = 0.00;
 
+	printf("Filesystem usage: %ld KB\n\n", myfs.usage());
 	printf("User token usage: %d (%.2lf %% Free)\n\n", ut_use, ut_free);
 	printf("File token usage: %d (%.2lf %% Free)\n\n", ft_use, ft_free);
 	
@@ -582,13 +581,40 @@ vbs_result ProcessVBSCaller(bytes &returned, string script_name) {
 	}
 
 	FILE *fv = fopen(vbs_tmp.c_str(), "w");
-	fprintf(fv, para.c_str(), hinfo.proto_ver.c_str(), hinfo.process.c_str(), vbStrAndQuotes(hinfo.path.toString()).c_str(), save_dest.c_str(), attcode.c_str(), curr_ip.c_str(), ufcode.c_str(), prefcode.c_str(), cmd_tmp.c_str(), err_tmp.c_str());
+	fprintf(fv, para.c_str(), hinfo.proto_ver.c_str(), hinfo.process.c_str(), vbStrAndQuotes(hinfo.path.toString()).c_str(), save_dest.c_str(), attcode.c_str(), curr_ip.c_str(), ufcode.c_str(), prefcode.c_str(), cmd_tmp.c_str(), err_tmp.c_str(), vbStrAndQuotes(sCurrDir()).c_str(), myfs.usage());
 
 	// Write down LIB
 	appendAllContent(fv, sCurrDir("mslib.vbs"));
 
 	// Write down others
 	appendAllContent(fv, script_name);
+
+	FILE *fs = fopen(script_name.c_str(), "r");
+	while (!feof(fs)) {
+		// buf7 uses begin
+		fgets(buf7, 4096, fs);
+		auto spl = splitLines(buf7, ' ');
+		if (spl.size() == 0) continue;
+		if (spl[0][0] == '\'' && spl[0][1] == '@') {
+			if (spl[0].length() <= 2) continue;
+			string method = spl[0].substr(2);
+			if (method == "sync") {
+				if (spl[1] == "directory") {
+					// Directory mode
+					myfs.sync_directory(spl[2]);
+				}
+				else if (spl[1] == "file") {
+					// Single file mode
+					myfs.sync_file(spl[2]);
+				}
+				else if (spl[1] == "all") {
+					myfs.sync();
+				}
+			}
+		}
+		// buf7 uses end
+	}
+	fclose(fs);
 
 	// Finish entire program, in mslib.vbs
 	fprintf(fv, "\nEndOfProgram()\n");
@@ -622,6 +648,33 @@ vbs_result ProcessVBSCaller(bytes &returned, string script_name) {
 			}
 			else if (ord == "hook") {
 				ret.hooked = true;
+			}
+			else if (ord == "reload") {
+				argument_check(2);
+				bool force = false, dall = false;
+				if (spl[1] == "#") dall = true;
+				if (spl.size() >= 3 && spl[2] == "force") force = true;
+				if (dall) {
+					myfs.discard_all(force);
+				}
+				else {
+					myfs.discard(spl[1], force);
+				}	
+			} else if (ord == "sync") {
+				argument_check(2);
+				if (spl[1] == "directory") {
+					argument_check(3);
+					// Directory mode
+					myfs.sync_directory(spl[2]);
+				}
+				else if (spl[1] == "file") {
+					argument_check(3);
+					// Single file mode
+					myfs.sync_file(spl[2]);
+				}
+				else if (spl[1] == "all") {
+					myfs.sync();
+				}
 			}
 		w_cont: continue;
 #ifdef argument_check
@@ -1141,7 +1194,7 @@ int main(int argc, char* argv[]) {
 		}
 	}
 #pragma endregion
-
+ 
 #pragma region (Preparing Preference Map)
 	/*
 	string perm_data_path = "$permission.txt";
