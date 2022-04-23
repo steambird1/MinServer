@@ -335,7 +335,7 @@ public:
 		FILE *f = fopen(perm_data_path.c_str(), "r");
 		bool flag3 = false;
 		int uid, uperm = 10, rperm = getPermOf(operate);
-		if (!fileExists(filename)) {
+		if ((!fileExists(filename)) && (!myfs.file_exist(filename))) {
 			flag3 = true;
 			if (f != NULL) fclose_m(f);	// Close older one
 			f = fopen(perm_data_path.c_str(), "a+");
@@ -920,9 +920,10 @@ string admpwd = "";
 ssocket s;
 
 void ProcessAtExit() {
+	myfs.sync(true);
 	WSACleanup();
 	s.end();
-	myfs.sync(true);
+	exit(0);
 }
 
 int main(int argc, char* argv[]) {

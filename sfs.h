@@ -140,6 +140,10 @@ public:
 		file_store[name] = file_node(data, nosync);
 	}
 
+	bool file_exist(string name) {
+		return this->file_store.count(name);
+	}
+
 	file get_file(string name, file_operate operation) {
 		process_ignore();
 		if (!file_store.count(name)) auto_init_file(name);
