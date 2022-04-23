@@ -15,32 +15,6 @@ public:
 		append = 2
 	};
 
-	class file {
-	public:
-		friend class basic_file_system;
-
-		virtual bool isInvaild() {
-			return op_type == invaild;
-		}
-
-
-
-	protected:
-		file_operate op_type;		// 0 - Read, 1 - Override write, 2 - Append
-		string file_name;
-	};
-
-	class __invaild_file : public file {
-	public:
-		__invaild_file() {
-
-		}
-		virtual bool isInvaild() {
-			return true;
-		}
-	} invaild_file;
-
-
 	struct file_node {
 
 		file_node(bytes init = "", bool nosync = false) {
@@ -52,6 +26,66 @@ public:
 		int refcount = 0;
 		bool nosync = false;
 	};
+
+	using fs_type = map<string, file_node>;
+
+	class file {
+	public:
+		friend class basic_file_system;
+
+		file() {
+			this->op_type = invaild;
+		}
+
+		virtual bool isInvaild() {
+			return op_type == invaild;
+		}
+
+		bytes readAll() {
+			return (*this->buffer)[file_name].data;
+		}
+
+		bytes readLine(char eol = '\n', int preallocate = 0) {
+			bytes cont;
+			if (preallocate > 0) cont.preallocate(preallocate);
+			bytes &mycont = (*this->buffer)[file_name].data;
+			for (size_t i = 0; i < mycont.length() && mycont[i] != eol; i++) {
+				cont += mycont[i];
+			}
+			return cont;
+		}
+
+		
+		bool write(bytes content) {
+			bytes &mycont = (*this->buffer)[file_name].data;
+			switch (op_type) {
+			case 1:
+				mycont = content;
+				break;
+			case 2:
+				mycont += content;
+				break;
+			default:
+				return false;
+			}
+			return true;
+		}
+
+	protected:
+		file_operate op_type;		// 0 - Read, 1 - Override write, 2 - Append
+		string file_name;
+		fs_type *buffer;
+	};
+
+	class __invaild_file : public file {
+	public:
+		__invaild_file() {
+
+		}
+		virtual bool isInvaild() {
+			return true;
+		}
+	} invaild_file;
 
 	void auto_init_file(string name) {
 		if (fileExists(name)) {
@@ -80,6 +114,7 @@ public:
 		file f;
 		f.op_type = operation;
 		f.file_name = name;
+		f.buffer = &file_store;
 		return f;
 	}
 
@@ -95,6 +130,7 @@ public:
 				FILE *f = fopen(i.first.c_str(), "wb");
 				const char *tca = i.second.data.toCharArray();
 				fwrite(tca, sizeof(char), i.second.data.length(), f);
+				fclose(f);
 				delete[] tca;
 			}
 			if (i.second.refcount <= 0 && release) {
@@ -106,6 +142,6 @@ public:
 
 protected:
 
-	map<string, file_node> file_store;
+	fs_type file_store;
 
 };
