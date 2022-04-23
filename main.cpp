@@ -705,6 +705,7 @@ vbs_result ProcessVBSCaller(bytes &returned, string script_name) {
 }
 
 set<string> ns_hooked;
+const char *mslb;
 
 void normalSender(ssocket &s, string path, string external, int recesuive = 0) {
 	if (recesuive > max_recesuive) {
@@ -905,7 +906,7 @@ void normalSender(ssocket &s, string path, string external, int recesuive = 0) {
 
 							// 2. Default APIs
 							// (Copy from javascript)
-							fprintf(fr, "// Default MSLIB API\n%s\n", readAll("mslib.js").toCharArray());
+							fprintf(fr, "// Default MSLIB API\n%s\n", mslb);
 
 							// End
 							fprintf(fr, "\n</script>");
@@ -1285,6 +1286,8 @@ int default_join_g = -1;
 		fprintf(vl, "[Server execution begin]\n");
 		fclose(vl);
 	}
+
+	mslb = readAll("mslib.js").toCharArray();
 
 	atexit(ProcessAtExit);
 		

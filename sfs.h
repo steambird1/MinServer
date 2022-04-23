@@ -132,11 +132,13 @@ public:
 
 	void init_file(string name) {
 		process_ignore();
-		init_ramfile(name, readAll(name));
+		if (file_store.count(name)) file_store[name].data.release();
+		file_store[name] = file_node(move(readAll(name)), false);
 	}
 
 	void init_ramfile(string name, bytes data = "", bool nosync = false) {
 		process_ignore();
+		if (file_store.count(name)) file_store[name].data.release();
 		file_store[name] = file_node(data, nosync);
 	}
 
